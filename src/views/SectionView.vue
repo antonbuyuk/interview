@@ -14,10 +14,22 @@
     <div v-else class="section-wrapper">
       <article class="content" ref="contentRef" v-html="htmlContent" @click="handleCodeBlockClick"></article>
       <div class="right-sidebar">
+        <div class="test-section">
+          <button @click="showTest = true" class="test-btn" v-if="questions.length > 0">
+            🧪 Начать тест
+          </button>
+        </div>
         <Search :current-section="section" :questions="questions" />
         <QuestionNav :questions="questions" />
       </div>
     </div>
+
+    <Test
+      v-if="showTest"
+      :questions="questions"
+      :section-dir="section.dir"
+      @close="showTest = false"
+    />
   </div>
 </template>
 
@@ -28,6 +40,7 @@ import { marked } from 'marked'
 import hljs from 'highlight.js'
 import QuestionNav from '../components/QuestionNav.vue'
 import Search from '../components/Search.vue'
+import Test from '../components/Test.vue'
 // Используем темную тему и переопределим цвета для VS Code стиля
 import 'highlight.js/styles/github-dark.css'
 import '../styles/code.css'
@@ -47,6 +60,7 @@ const error = ref(null)
 const htmlContent = ref('')
 const contentRef = ref(null)
 const questions = ref([])
+const showTest = ref(false)
 
 // Настройка marked для подсветки синтаксиса
 marked.setOptions({
@@ -713,6 +727,34 @@ const initAccordions = () => {
   position: sticky;
   top: 2rem;
   align-self: start;
+}
+
+.test-section {
+  margin-bottom: 0.5rem;
+}
+
+.test-btn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #42b883 0%, #369461 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(66, 184, 131, 0.3);
+}
+
+.test-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(66, 184, 131, 0.4);
+  background: linear-gradient(135deg, #369461 0%, #2d7a4f 100%);
+}
+
+.test-btn:active {
+  transform: translateY(0);
 }
 
 @media (max-width: 1200px) {
