@@ -1,0 +1,107 @@
+/* Кастомная тема VS Code для highlight.js */
+
+/* Базовые цвета VS Code - применяем только внутри pre */
+pre .hljs,
+pre code,
+pre code.hljs {
+  background: transparent !important;
+  color: #d4d4d4 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* Ключевые слова - синий */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-built_in,
+pre code .hljs-keyword,
+pre code .hljs-selector-tag {
+  color: #569cd6 !important;
+}
+
+/* Строки - оранжевый */
+.hljs-string,
+pre code .hljs-string {
+  color: #ce9178 !important;
+}
+
+/* Комментарии - зеленый */
+.hljs-comment,
+.hljs-quote,
+pre code .hljs-comment,
+pre code .hljs-quote {
+  color: #6a9955 !important;
+  font-style: italic !important;
+}
+
+/* Числа - светло-зеленый */
+.hljs-number,
+.hljs-literal,
+pre code .hljs-number,
+pre code .hljs-literal {
+  color: #b5cea8 !important;
+}
+
+/* Функции - желтый */
+.hljs-function,
+.hljs-title,
+.hljs-title.function_,
+pre code .hljs-function,
+pre code .hljs-title:not(.hljs-class):not(.hljs-type) {
+  color: #dcdcaa !important;
+}
+
+/* Типы - бирюзовый */
+.hljs-type,
+.hljs-class,
+.hljs-title.hljs-class,
+pre code .hljs-type,
+pre code .hljs-class {
+  color: #4ec9b0 !important;
+}
+
+/* Переменные - светло-голубой */
+.hljs-variable,
+.hljs-params,
+pre code .hljs-variable,
+pre code .hljs-params {
+  color: #9cdcfe !important;
+}
+
+/* Свойства - голубой */
+.hljs-property,
+.hljs-attr,
+pre code .hljs-property,
+pre code .hljs-attr {
+  color: #92c5f7 !important;
+}
+
+/* Операторы */
+.hljs-operator,
+pre code .hljs-operator {
+  color: #d4d4d4 !important;
+}
+
+/* Регулярные выражения - красный */
+.hljs-regexp,
+pre code .hljs-regexp {
+  color: #d16969 !important;
+}
+
+/* Метаданные */
+.hljs-meta,
+pre code .hljs-meta {
+  color: #569cd6 !important;
+}
+
+/* Важные - жирный */
+.hljs-strong,
+pre code .hljs-strong {
+  font-weight: bold !important;
+}
+
+/* Курсив */
+.hljs-emphasis,
+pre code .hljs-emphasis {
+  font-style: italic !important;
+}

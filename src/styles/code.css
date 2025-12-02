@@ -1,0 +1,40 @@
+/* Дополнительные стили для улучшения подсветки кода */
+
+/* Улучшенная типографика для кода */
+code, pre code {
+  font-feature-settings: "liga" 1, "calt" 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Убеждаемся, что блоки кода имеют правильный стиль */
+pre {
+  background: #1e1e1e !important;
+  color: #d4d4d4 !important;
+}
+
+pre code {
+  background: transparent !important;
+  color: inherit !important;
+}
+
+/* Подсветка выбранного текста в блоках кода */
+pre::selection,
+pre code::selection {
+  background: rgba(0, 122, 204, 0.4);
+  color: inherit;
+}
+
+/* Улучшение для длинных строк */
+pre code {
+  white-space: pre;
+  word-wrap: normal;
+  overflow-wrap: normal;
+}
+
+/* Убираем лишние отступы */
+pre code * {
+  margin: 0;
+  padding: 0;
+}

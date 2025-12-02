@@ -1,0 +1,145 @@
+/* Исправление подсветки синтаксиса */
+
+/* Базовый стиль для всех блоков кода */
+.content pre code,
+.content pre code.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  background: transparent;
+  color: #d4d4d4;
+}
+
+/* Убеждаемся, что все классы highlight.js работают */
+.content pre code.hljs * {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace !important;
+}
+
+/* Комментарии */
+.content pre code.hljs .hljs-comment,
+.content pre code.hljs .hljs-quote {
+  color: #6a9955 !important;
+  font-style: italic !important;
+}
+
+/* Ключевые слова */
+.content pre code.hljs .hljs-keyword,
+.content pre code.hljs .hljs-selector-tag,
+.content pre code.hljs .hljs-built_in,
+.content pre code.hljs .hljs-type {
+  color: #569cd6 !important;
+}
+
+/* Строки */
+.content pre code.hljs .hljs-string,
+.content pre code.hljs .hljs-meta .hljs-meta-string {
+  color: #ce9178 !important;
+}
+
+/* Числа */
+.content pre code.hljs .hljs-number,
+.content pre code.hljs .hljs-literal {
+  color: #b5cea8 !important;
+}
+
+/* Функции */
+.content pre code.hljs .hljs-function,
+.content pre code.hljs .hljs-title:not(.hljs-class):not(.hljs-type) {
+  color: #dcdcaa !important;
+}
+
+/* Типы и классы */
+.content pre code.hljs .hljs-type,
+.content pre code.hljs .hljs-class,
+.content pre code.hljs .hljs-title.hljs-class {
+  color: #4ec9b0 !important;
+}
+
+/* Переменные */
+.content pre code.hljs .hljs-variable,
+.content pre code.hljs .hljs-params {
+  color: #9cdcfe !important;
+}
+
+/* Свойства */
+.content pre code.hljs .hljs-property,
+.content pre code.hljs .hljs-attr {
+  color: #92c5f7 !important;
+}
+
+/* Регулярные выражения */
+.content pre code.hljs .hljs-regexp {
+  color: #d16969 !important;
+}
+
+/* Метаданные */
+.content pre code.hljs .hljs-meta {
+  color: #569cd6 !important;
+}
+
+/* Операторы */
+.content pre code.hljs .hljs-operator {
+  color: #d4d4d4 !important;
+}
+
+/* Код внутри аккордеонов */
+.content .answer-accordion pre code,
+.content .answer-accordion pre code.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  background: transparent;
+  color: #d4d4d4;
+}
+
+/* Все классы highlight.js внутри аккордеонов */
+.content .answer-accordion pre code.hljs .hljs-keyword,
+.content .answer-accordion pre code.hljs .hljs-selector-tag,
+.content .answer-accordion pre code.hljs .hljs-built_in {
+  color: #569cd6 !important;
+}
+
+.content .answer-accordion pre code.hljs .hljs-string,
+.content .answer-accordion pre code.hljs .hljs-meta .hljs-meta-string {
+  color: #ce9178 !important;
+}
+
+.content .answer-accordion pre code.hljs .hljs-comment,
+.content .answer-accordion pre code.hljs .hljs-quote {
+  color: #6a9955 !important;
+  font-style: italic !important;
+}
+
+.content .answer-accordion pre code.hljs .hljs-number,
+.content .answer-accordion pre code.hljs .hljs-literal {
+  color: #b5cea8 !important;
+}
+
+.content .answer-accordion pre code.hljs .hljs-function,
+.content .answer-accordion pre code.hljs .hljs-title:not(.hljs-class):not(.hljs-type) {
+  color: #dcdcaa !important;
+}
+
+.content .answer-accordion pre code.hljs .hljs-type,
+.content .answer-accordion pre code.hljs .hljs-class {
+  color: #4ec9b0 !important;
+}
+
+.content .answer-accordion pre code.hljs .hljs-variable,
+.content .answer-accordion pre code.hljs .hljs-params {
+  color: #9cdcfe !important;
+}
+
+.content .answer-accordion pre code.hljs .hljs-property,
+.content .answer-accordion pre code.hljs .hljs-attr {
+  color: #92c5f7 !important;
+}
+
+.content .answer-accordion pre code.hljs .hljs-regexp {
+  color: #d16969 !important;
+}
+
+.content .answer-accordion pre {
+  background: #1e1e1e !important;
+}
+
