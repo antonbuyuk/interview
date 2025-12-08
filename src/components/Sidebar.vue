@@ -1,8 +1,10 @@
 <template>
-  <aside class="sidebar">
+  <div v-if="isOpen" class="sidebar-overlay" @click="closeSidebar" @touchstart="closeSidebar"></div>
+  <aside class="sidebar" :class="{ open: isOpen }">
     <div class="sidebar-header">
       <h1 class="logo">📚 Frontend Interview</h1>
       <p class="subtitle">Вопросы для собеседования</p>
+      <button class="close-sidebar" @click="closeSidebar" aria-label="Закрыть меню">×</button>
     </div>
 
     <nav class="nav">
@@ -32,8 +34,44 @@
 </template>
 
 <script setup>
+import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { sections } from '../data/sections.js'
 import SectionDropdown from './SectionDropdown.vue'
+
+const route = useRoute()
+const isOpen = ref(false)
+
+const toggleSidebar = () => {
+  isOpen.value = !isOpen.value
+}
+
+const closeSidebar = () => {
+  isOpen.value = false
+  // Эмитим событие для синхронизации с Header
+  const event = new CustomEvent('sidebar-closed')
+  window.dispatchEvent(event)
+}
+
+// Слушаем события от Header
+const handleToggleSidebar = (event) => {
+  isOpen.value = event.detail.open
+}
+
+onMounted(() => {
+  window.addEventListener('toggle-sidebar', handleToggleSidebar)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('toggle-sidebar', handleToggleSidebar)
+})
+
+// Закрываем меню при изменении маршрута на мобильных
+watch(() => route.path, () => {
+  if (window.innerWidth <= 768) {
+    closeSidebar()
+  }
+})
 </script>
 
 <style scoped>
@@ -46,7 +84,7 @@ import SectionDropdown from './SectionDropdown.vue'
   background: #1e1e1e;
   color: #e0e0e0;
   overflow-y: auto;
-  overflow-x: visible;
+  overflow-x: hidden;
   z-index: 100;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   display: flex;
@@ -55,9 +93,11 @@ import SectionDropdown from './SectionDropdown.vue'
 
 .sidebar-header {
   padding: 1.5rem;
+  padding-right: 3rem;
   border-bottom: 1px solid #333;
   background: #252525;
   flex-shrink: 0;
+  position: relative;
 }
 
 .logo {
@@ -77,6 +117,7 @@ import SectionDropdown from './SectionDropdown.vue'
   padding: 1rem 0;
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .nav-item {
@@ -87,6 +128,9 @@ import SectionDropdown from './SectionDropdown.vue'
   text-decoration: none;
   transition: all 0.2s;
   border-left: 3px solid transparent;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .nav-item:hover {
@@ -108,6 +152,9 @@ import SectionDropdown from './SectionDropdown.vue'
 
 .nav-text {
   font-size: 0.9375rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nav-section {
@@ -138,10 +185,57 @@ import SectionDropdown from './SectionDropdown.vue'
   text-align: center;
 }
 
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+}
+
+.close-sidebar {
+  display: none;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  color: #e0e0e0;
+  font-size: 1.5rem;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.close-sidebar:hover {
+  background: #2a2a2a;
+  color: #fff;
+}
+
 @media (max-width: 768px) {
+  .sidebar-overlay {
+    display: block;
+    top: 56px; /* Отступ под шапку */
+  }
+
+  .close-sidebar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .sidebar {
     transform: translateX(-100%);
     transition: transform 0.3s ease;
+    z-index: 101;
+    top: 56px; /* Отступ под шапку */
+    height: calc(100vh - 56px);
   }
 
   .sidebar.open {

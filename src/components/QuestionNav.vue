@@ -55,6 +55,12 @@ const scrollToQuestion = (questionId) => {
 
     activeQuestion.value = questionId
     emit('question-click', questionId)
+
+    // Закрываем фильтр на мобильных после клика на вопрос
+    if (window.innerWidth <= 768) {
+      const event = new CustomEvent('filter-closed')
+      window.dispatchEvent(event)
+    }
   }
 }
 
@@ -120,6 +126,14 @@ onUnmounted(() => {
   width: 100%;
   z-index: 10;
   will-change: transform;
+}
+
+.question-nav.mobile {
+  position: relative !important;
+  top: 0 !important;
+  max-height: 400px;
+  border-radius: 8px;
+  margin-bottom: 1rem;
 }
 
 .question-nav-header {
@@ -228,11 +242,75 @@ onUnmounted(() => {
 }
 
 @media (max-width: 1200px) {
-  .question-nav {
+  .question-nav:not(.mobile) {
     position: relative;
     top: 0;
     max-height: none;
     margin-bottom: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .question-nav {
+    min-width: auto;
+    padding: 0.75rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .question-nav-header {
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .question-nav-header h3 {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .question-count {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.35rem;
+  }
+
+  .question-list {
+    max-height: 350px;
+    overflow-y: auto;
+  }
+
+  .question-link {
+    padding: 0.625rem 0.5rem;
+    border-radius: 6px;
+  }
+
+  .question-text {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  .question-number {
+    font-size: 0.75rem;
+    margin-right: 0.5rem;
+    min-width: 20px;
+  }
+
+  .no-questions {
+    padding: 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  /* Улучшенный скроллбар для мобильных */
+  .question-nav::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .question-nav::-webkit-scrollbar-track {
+    background: #f5f5f5;
+  }
+
+  .question-nav::-webkit-scrollbar-thumb {
+    background: #ddd;
+    border-radius: 2px;
   }
 }
 </style>

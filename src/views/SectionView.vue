@@ -12,6 +12,9 @@
     </div>
 
     <div v-else class="section-wrapper">
+      <div class="mobile-nav-wrapper">
+        <Search :current-section="section" :questions="questions" />
+      </div>
       <article class="content" ref="contentRef" v-html="htmlContent" @click="handleCodeBlockClick"></article>
       <div class="right-sidebar">
         <div class="test-section">
@@ -20,7 +23,25 @@
           </button>
         </div>
         <Search :current-section="section" :questions="questions" />
-        <QuestionNav :questions="questions" />
+        <QuestionNav :questions="questions" class="desktop-nav" />
+      </div>
+    </div>
+
+    <!-- Модальное окно для вопросов на мобильных -->
+    <div v-if="filterOpen" class="filter-overlay" @click="closeFilter">
+      <div class="filter-modal" @click.stop>
+        <div class="filter-modal-header">
+          <h3>Навигация по вопросам</h3>
+          <button @click="closeFilter" class="filter-close-btn" aria-label="Закрыть">×</button>
+        </div>
+        <div class="filter-modal-content">
+          <div class="test-section-modal">
+            <button @click="showTest = true; closeFilter()" class="test-btn" v-if="questions.length > 0">
+              🧪 Начать тест
+            </button>
+          </div>
+          <QuestionNav :questions="questions" class="mobile-filter" />
+        </div>
       </div>
     </div>
 
@@ -34,7 +55,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { marked } from 'marked'
 import hljs from 'highlight.js'
@@ -61,6 +82,27 @@ const htmlContent = ref('')
 const contentRef = ref(null)
 const questions = ref([])
 const showTest = ref(false)
+const filterOpen = ref(false)
+
+// Закрытие фильтра
+const closeFilter = () => {
+  filterOpen.value = false
+  const event = new CustomEvent('filter-closed')
+  window.dispatchEvent(event)
+}
+
+// Обработчик открытия/закрытия фильтра
+const handleToggleFilter = (event) => {
+  filterOpen.value = event.detail.open
+}
+
+// Передаем количество вопросов в Header через событие
+watch(questions, (newQuestions) => {
+  const event = new CustomEvent('questions-count-updated', {
+    detail: { count: newQuestions.length }
+  })
+  window.dispatchEvent(event)
+}, { immediate: true })
 
 // Настройка marked для подсветки синтаксиса
 marked.setOptions({
@@ -116,8 +158,14 @@ const loadContent = async () => {
   }
 }
 
+// Слушаем события от Header для открытия/закрытия фильтра
 onMounted(() => {
+  window.addEventListener('toggle-filter', handleToggleFilter)
   loadContent()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('toggle-filter', handleToggleFilter)
 })
 
 watch(() => props.section.id, () => {
@@ -720,6 +768,10 @@ const initAccordions = () => {
   position: relative;
 }
 
+.mobile-nav-wrapper {
+  display: none;
+}
+
 .right-sidebar {
   display: flex;
   flex-direction: column;
@@ -771,11 +823,33 @@ const initAccordions = () => {
 
 @media (max-width: 768px) {
   .section-view {
-    padding: 0 1rem;
+    padding: 0;
   }
 
   .section-wrapper {
-    gap: 1.5rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobile-nav-wrapper {
+    display: block;
+    padding: 1rem;
+    background: white;
+    border-bottom: 1px solid #e0e0e0;
+    width: 100%;
+  }
+
+  .content {
+    padding: 1rem;
+    border-radius: 0;
+  }
+
+  .right-sidebar {
+    display: none;
+  }
+
+  .right-sidebar .desktop-nav {
+    display: none;
   }
 }
 
@@ -841,6 +915,7 @@ const initAccordions = () => {
 
 @media (max-width: 768px) {
   .content {
+    max-width: 100%;
     padding: 1.5rem;
     border-radius: 8px;
   }
@@ -1176,15 +1251,203 @@ const initAccordions = () => {
 
 @media (max-width: 768px) {
   .content {
-    padding: 1.5rem;
+    padding: 1rem;
+    border-radius: 0;
+    font-size: 0.9375rem;
   }
 
   .content :deep(h1) {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
   }
 
   .content :deep(h2) {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
+    margin: 1.5rem 0 0.75rem 0;
+  }
+
+  .content :deep(h3) {
+    font-size: 1.125rem;
+    margin: 1.5rem 0 0.75rem 0;
+    padding-top: 0.75rem;
+  }
+
+  .content :deep(p) {
+    margin: 0.75rem 0;
+    line-height: 1.7;
+  }
+
+  .content :deep(ul),
+  .content :deep(ol) {
+    padding-left: 1.5rem;
+    margin: 0.75rem 0;
+  }
+
+  .content :deep(li) {
+    margin: 0.5rem 0;
+  }
+
+  .content :deep(pre) {
+    padding: 1rem;
+    padding-top: 2.5rem;
+    font-size: 0.8125rem;
+    margin: 1rem 0;
+    border-radius: 6px;
+    overflow-x: auto;
+  }
+
+  .content :deep(.copy-code-btn) {
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .content :deep(table) {
+    font-size: 0.875rem;
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .content :deep(table th),
+  .content :deep(table td) {
+    padding: 0.5rem;
+    min-width: 100px;
+  }
+
+  .content :deep(.answer-accordion-toggle) {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.8125rem;
+  }
+}
+
+/* Модальное окно фильтра вопросов */
+.filter-overlay {
+  position: fixed;
+  top: 56px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.filter-modal {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  max-height: calc(100vh - 56px - 2rem);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.filter-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f5f5f5;
+}
+
+.filter-modal-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+  color: #1e1e1e;
+}
+
+.filter-close-btn {
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 1.5rem;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.filter-close-btn:hover {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.filter-modal-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.test-section-modal {
+  margin-bottom: 1rem;
+}
+
+.test-section-modal .test-btn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #42b883 0%, #369461 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(66, 184, 131, 0.3);
+}
+
+.test-section-modal .test-btn:active {
+  transform: translateY(0);
+}
+
+.question-nav.mobile-filter {
+  position: relative !important;
+  top: 0 !important;
+  max-height: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.question-nav.mobile-filter .question-list {
+  max-height: calc(100vh - 300px);
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .filter-overlay {
+    padding: 0.5rem;
+  }
+
+  .filter-modal {
+    max-height: calc(100vh - 56px - 1rem);
+    border-radius: 8px;
+  }
+
+  .filter-modal-header {
+    padding: 0.875rem 1rem;
+  }
+
+  .filter-modal-header h3 {
+    font-size: 1rem;
+  }
+
+  .filter-modal-content {
+    padding: 0.75rem;
   }
 }
 

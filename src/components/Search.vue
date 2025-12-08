@@ -529,7 +529,7 @@ watch(() => props.currentSection, async (newSection) => {
 <style scoped>
 .search-container {
   position: relative;
-  z-index: 1100;
+  z-index: 11;
 }
 
 .search-input-wrapper {
@@ -699,6 +699,17 @@ watch(() => props.currentSection, async (newSection) => {
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 1100 !important;
+}
+
+@media (max-width: 768px) {
+  .search-results {
+    max-height: calc(100vh - 200px);
+    border-radius: 6px;
+  }
+
+  .search-input {
+    font-size: 1rem; /* Увеличиваем для лучшей читаемости на мобильных */
+  }
 }
 
 .results-section {

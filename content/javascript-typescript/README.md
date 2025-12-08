@@ -1504,21 +1504,176 @@ class Component {
 
 **`bind`, `call`, `apply` детально:**
 
+Эти три метода позволяют явно указать контекст `this` для функции. Все они являются методами объекта `Function.prototype`.
+
+**1. `call` — немедленный вызов с указанным контекстом:**
+
 ```javascript
-// bind создает новую функцию с привязанным this
-const bound = func.bind(context, arg1, arg2);
-// Параметры можно передать частично
+// Синтаксис: func.call(thisArg, arg1, arg2, ...)
+function greet(greeting, punctuation) {
+  console.log(`${greeting}, я ${this.name}${punctuation}`);
+}
 
-// call вызывает сразу с аргументами
-func.call(context, arg1, arg2, ...);
+const person = { name: 'Алиса' };
+greet.call(person, 'Привет', '!'); // "Привет, я Алиса!"
 
-// apply вызывает с массивом аргументов
-func.apply(context, [arg1, arg2]);
-
-// Практическое применение
-const arrayLike = { 0: 'a', 1: 'b', length: 2 };
-Array.prototype.slice.call(arrayLike); // ['a', 'b']
+// call передает аргументы через запятую
+function introduce(age, city) {
+  return `Меня зовут ${this.name}, мне ${age}, я из ${city}`;
+}
+introduce.call({ name: 'Иван' }, 25, 'Москва'); // "Меня зовут Иван, мне 25, я из Москва"
 ```
+
+**2. `apply` — немедленный вызов с массивом аргументов:**
+
+```javascript
+// Синтаксис: func.apply(thisArg, [arg1, arg2, ...])
+greet.apply(person, ['Привет', '!']); // "Привет, я Алиса!"
+
+// apply полезен когда аргументы в массиве
+const args = ['Здравствуй', '.'];
+greet.apply(person, args); // "Здравствуй, я Алиса."
+
+// Практическое применение: передача массива в функцию, ожидающую отдельные аргументы
+const numbers = [5, 6, 2, 3, 7];
+Math.max.apply(null, numbers); // 7 (эквивалент Math.max(5, 6, 2, 3, 7))
+
+// В ES6+ можно использовать spread оператор вместо apply
+Math.max(...numbers); // 7
+```
+
+**3. `bind` — создание новой функции с привязанным контекстом:**
+
+```javascript
+// Синтаксис: func.bind(thisArg, arg1, arg2, ...)
+// Возвращает НОВУЮ функцию, не вызывает исходную
+
+const boundGreet = greet.bind(person);
+boundGreet('Привет', '!'); // "Привет, я Алиса!"
+
+// bind можно использовать для частичного применения (partial application)
+const greetHello = greet.bind(person, 'Привет');
+greetHello('!'); // "Привет, я Алиса!"
+
+// Привязка контекста для колбэков
+class Button {
+  constructor(name) {
+    this.name = name;
+  }
+
+  click() {
+    console.log(`Кнопка ${this.name} нажата`);
+  }
+}
+
+const button = new Button('Отправить');
+// ❌ Потеря контекста
+setTimeout(button.click, 1000); // undefined
+
+// ✅ Решение через bind
+setTimeout(button.click.bind(button), 1000); // "Кнопка Отправить нажата"
+```
+
+**Различия и когда использовать:**
+
+```javascript
+// call vs apply - разница только в способе передачи аргументов
+function sum(a, b, c) {
+  return a + b + c;
+}
+
+sum.call(null, 1, 2, 3); // 6 (аргументы через запятую)
+sum.apply(null, [1, 2, 3]); // 6 (аргументы в массиве)
+
+// bind vs call/apply - bind НЕ вызывает функцию сразу
+const boundSum = sum.bind(null, 1, 2);
+boundSum(3); // 6 (вызов позже)
+
+sum.call(null, 1, 2, 3); // 6 (вызов сразу)
+```
+
+**Практические применения:**
+
+**1. Заимствование методов (method borrowing):**
+```javascript
+// Преобразование array-like объектов в массивы
+const arrayLike = { 0: 'a', 1: 'b', 2: 'c', length: 3 };
+const realArray = Array.prototype.slice.call(arrayLike); // ['a', 'b', 'c']
+
+// Использование методов массивов на NodeList
+const divs = document.querySelectorAll('div');
+const divsArray = Array.prototype.slice.call(divs);
+divsArray.forEach(div => console.log(div));
+
+// В ES6+ можно использовать Array.from()
+const divsArray2 = Array.from(divs);
+```
+
+**2. Решение проблемы потери контекста:**
+```javascript
+const calculator = {
+  value: 0,
+  add(num) {
+    this.value += num;
+    return this;
+  },
+  multiply(num) {
+    this.value *= num;
+    return this;
+  }
+};
+
+// ❌ Потеря контекста
+const add = calculator.add;
+add(5); // TypeError или undefined
+
+// ✅ Решения:
+add.call(calculator, 5); // Явное указание контекста
+const boundAdd = calculator.add.bind(calculator);
+boundAdd(5); // Привязка контекста
+```
+
+**3. Каррирование и частичное применение:**
+```javascript
+function multiply(a, b, c) {
+  return a * b * c;
+}
+
+// Частичное применение через bind
+const multiplyBy2 = multiply.bind(null, 2);
+multiplyBy2(3, 4); // 24 (2 * 3 * 4)
+
+const multiplyBy2And3 = multiply.bind(null, 2, 3);
+multiplyBy2And3(4); // 24 (2 * 3 * 4)
+```
+
+**4. Сохранение контекста в классах:**
+```javascript
+class Logger {
+  constructor(prefix) {
+    this.prefix = prefix;
+    // Привязываем метод к экземпляру
+    this.log = this.log.bind(this);
+  }
+
+  log(message) {
+    console.log(`[${this.prefix}] ${message}`);
+  }
+}
+
+const logger = new Logger('APP');
+const log = logger.log;
+log('Тест'); // "[APP] Тест" (контекст сохранен)
+```
+
+**Важные особенности:**
+
+- `call` и `apply` вызывают функцию немедленно
+- `bind` возвращает новую функцию, не вызывая исходную
+- `call` принимает аргументы через запятую
+- `apply` принимает аргументы в виде массива
+- `bind` позволяет частично применить аргументы (currying)
+- Все три метода игнорируются стрелочными функциями (они не имеют собственного `this`)
 
 ### 12. Что такое прототипы и прототипное наследование?
 **Ответ:** Прототипное наследование — механизм, при котором объекты могут наследовать свойства и методы от других объектов через цепочку прототипов.
@@ -2690,5 +2845,289 @@ const routes = ['home', 'about', 'contact'] as const;
 type Route = typeof routes[number]; // 'home' | 'about' | 'contact'
 ```
 
----
+### 19. Что такое инкапсуляция в JavaScript?
 
+**Ответ:** Инкапсуляция — принцип объектно-ориентированного программирования, который позволяет скрывать внутреннюю реализацию объекта и предоставлять только необходимый публичный интерфейс. В JavaScript инкапсуляция достигается через замыкания, приватные поля классов (ES2022) и паттерны проектирования.
+
+**Основные способы реализации:**
+
+**1. Замыкания (Closures):**
+```javascript
+function createCounter() {
+  let count = 0; // Приватная переменная
+
+  return {
+    increment() {
+      count++;
+    },
+    decrement() {
+      count--;
+    },
+    getValue() {
+      return count;
+    }
+  };
+}
+
+const counter = createCounter();
+counter.increment();
+console.log(counter.getValue()); // 1
+console.log(counter.count); // undefined (недоступно извне)
+```
+
+**2. Приватные поля классов (ES2022):**
+```javascript
+class BankAccount {
+  #balance = 0; // Приватное поле
+
+  deposit(amount) {
+    this.#balance += amount;
+  }
+
+  getBalance() {
+    return this.#balance;
+  }
+}
+
+const account = new BankAccount();
+account.deposit(100);
+console.log(account.getBalance()); // 100
+console.log(account.#balance); // SyntaxError: Private field
+```
+
+**3. Символы (Symbols):**
+```javascript
+const _balance = Symbol('balance');
+
+class Account {
+  constructor() {
+    this[_balance] = 0;
+  }
+
+  deposit(amount) {
+    this[_balance] += amount;
+  }
+}
+
+const account = new Account();
+account.deposit(100);
+console.log(account[_balance]); // 100 (доступно, но сложно найти)
+```
+
+**Ответ Senior:**
+
+**Продвинутые паттерны инкапсуляции:**
+
+**1. Модульный паттерн (Module Pattern):**
+```javascript
+const UserModule = (function() {
+  // Приватные переменные и функции
+  let users = [];
+  let nextId = 1;
+
+  function validateUser(user) {
+    return user.name && user.email;
+  }
+
+  function generateId() {
+    return nextId++;
+  }
+
+  // Публичный API
+  return {
+    add(user) {
+      if (validateUser(user)) {
+        user.id = generateId();
+        users.push(user);
+        return user;
+      }
+      throw new Error('Invalid user');
+    },
+
+    get(id) {
+      return users.find(u => u.id === id);
+    },
+
+    getAll() {
+      return [...users]; // Возвращаем копию
+    },
+
+    remove(id) {
+      users = users.filter(u => u.id !== id);
+    }
+  };
+})();
+
+// Приватные функции недоступны извне
+UserModule.validateUser({}); // TypeError
+UserModule.add({ name: 'John', email: 'john@example.com' }); // ✅
+```
+
+**2. WeakMap для приватных данных:**
+```javascript
+const privateData = new WeakMap();
+
+class Person {
+  constructor(name, age) {
+    // Сохраняем приватные данные в WeakMap
+    privateData.set(this, {
+      name,
+      age,
+      secret: 'confidential'
+    });
+  }
+
+  getName() {
+    return privateData.get(this).name;
+  }
+
+  getAge() {
+    return privateData.get(this).age;
+  }
+
+  // Приватные данные недоступны извне
+}
+
+const person = new Person('Alice', 30);
+console.log(person.getName()); // 'Alice'
+console.log(person.secret); // undefined
+```
+
+**3. Приватные методы и геттеры/сеттеры:**
+```javascript
+class Temperature {
+  #celsius = 0;
+
+  // Приватный метод
+  #validate(value) {
+    if (value < -273.15) {
+      throw new Error('Temperature below absolute zero');
+    }
+  }
+
+  set celsius(value) {
+    this.#validate(value);
+    this.#celsius = value;
+  }
+
+  get celsius() {
+    return this.#celsius;
+  }
+
+  get fahrenheit() {
+    return this.#celsius * 9/5 + 32;
+  }
+
+  set fahrenheit(value) {
+    this.celsius = (value - 32) * 5/9;
+  }
+}
+
+const temp = new Temperature();
+temp.celsius = 25;
+console.log(temp.fahrenheit); // 77
+temp.celsius = -300; // Error: Temperature below absolute zero
+```
+
+**4. Инкапсуляция через Proxy:**
+```javascript
+function createPrivateObject(target, privateProps) {
+  const privateSet = new Set(privateProps);
+
+  return new Proxy(target, {
+    get(obj, prop) {
+      if (privateSet.has(prop)) {
+        throw new Error(`Property ${prop} is private`);
+      }
+      return obj[prop];
+    },
+
+    set(obj, prop, value) {
+      if (privateSet.has(prop)) {
+        throw new Error(`Property ${prop} is private`);
+      }
+      obj[prop] = value;
+      return true;
+    },
+
+    has(obj, prop) {
+      return !privateSet.has(prop) && prop in obj;
+    },
+
+    ownKeys(obj) {
+      return Object.keys(obj).filter(key => !privateSet.has(key));
+    }
+  });
+}
+
+const obj = createPrivateObject(
+  { public: 'visible', secret: 'hidden' },
+  ['secret']
+);
+
+console.log(obj.public); // 'visible'
+console.log(obj.secret); // Error: Property secret is private
+```
+
+**5. Инкапсуляция состояния в функциональном стиле:**
+```javascript
+function createStatefulCounter() {
+  let state = {
+    count: 0,
+    history: []
+  };
+
+  function updateState(updater) {
+    const newState = updater(state);
+    state = { ...newState };
+    return state;
+  }
+
+  return {
+    increment() {
+      return updateState(s => ({
+        count: s.count + 1,
+        history: [...s.history, 'increment']
+      }));
+    },
+
+    decrement() {
+      return updateState(s => ({
+        count: s.count - 1,
+        history: [...s.history, 'decrement']
+      }));
+    },
+
+    getState() {
+      return { ...state }; // Возвращаем копию
+    },
+
+    reset() {
+      state = { count: 0, history: [] };
+    }
+  };
+}
+
+const counter = createStatefulCounter();
+counter.increment();
+counter.increment();
+console.log(counter.getState()); // { count: 2, history: ['increment', 'increment'] }
+```
+
+**Преимущества инкапсуляции:**
+
+1. **Защита данных** — предотвращение неконтролируемого изменения состояния
+2. **Упрощение интерфейса** — скрытие сложной внутренней реализации
+3. **Поддержка кода** — изменения внутренней реализации не влияют на внешний код
+4. **Предотвращение ошибок** — контроль доступа к данным через валидацию
+5. **Модульность** — четкое разделение ответственности
+
+**Когда использовать:**
+
+- Когда нужно защитить внутреннее состояние объекта
+- При создании библиотек и API
+- Для реализации бизнес-логики с ограничениями доступа
+- При работе с чувствительными данными
+- Для создания переиспользуемых компонентов
+
+---

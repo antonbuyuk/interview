@@ -1,5 +1,6 @@
 <template>
   <div class="app">
+    <Header />
     <Sidebar />
     <main class="main-content">
       <router-view v-slot="{ Component }">
@@ -12,6 +13,7 @@
 </template>
 
 <script setup>
+import Header from './components/Header.vue'
 import Sidebar from './components/Sidebar.vue'
 </script>
 
@@ -56,7 +58,8 @@ body {
   .main-content {
     margin-left: 0;
     max-width: 100vw;
-    padding: 1rem;
+    padding: 0;
+    padding-top: 56px; /* Отступ для шапки */
   }
 }
 </style>
