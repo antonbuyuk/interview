@@ -8,6 +8,13 @@
 - **FID (First Input Delay)**: задержка первого взаимодействия
 - **CLS (Cumulative Layout Shift)**: стабильность визуального контента
 
+**Answer EN:** Web Vitals is a set of key website performance metrics defined by Google to assess user experience. Core metrics include LCP (Largest Contentful Paint), INP (Interaction to Next Paint), and CLS (Cumulative Layout Shift). These metrics directly impact search engine rankings and help identify performance issues.
+
+Performance metrics:
+- **LCP (Largest Contentful Paint)**: time to load main content
+- **FID (First Input Delay)**: delay of first interaction
+- **CLS (Cumulative Layout Shift)**: visual content stability
+
 **Ответ Senior:**
 
 **Core Web Vitals (2024):**
@@ -32,6 +39,13 @@
 - Lazy loading
 - Responsive images (`srcset`, `sizes`)
 - Оптимизация размера файлов
+
+**Answer EN:** Image optimization includes using modern formats (WebP, AVIF) that provide better compression while maintaining quality. Lazy loading delays image loading until they appear in viewport, reducing initial page size. Responsive images via `srcset` and `sizes` allow loading appropriately sized images based on device, significantly saving traffic and speeding up loading.
+
+- Use modern formats (WebP, AVIF)
+- Lazy loading
+- Responsive images (`srcset`, `sizes`)
+- File size optimization
 
 **Ответ Senior:**
 
@@ -62,6 +76,18 @@
 
 ### 3. Что такое code splitting?
 **Ответ:** Code splitting — это техника разделения JavaScript кода на более мелкие части (chunks), которые загружаются по требованию, а не все сразу. Это уменьшает начальный размер бандла, ускоряет первичную загрузку страницы и позволяет параллельно загружать отдельные части приложения. Современные сборщики поддерживают автоматический code splitting на основе динамических импортов и маршрутов.
+
+```javascript
+// Динамический импорт
+const Component = () => import('./Component.vue')
+```
+
+**Answer EN:** Code splitting is a technique of dividing JavaScript code into smaller chunks that are loaded on demand, not all at once. This reduces initial bundle size, speeds up initial page load and allows parallel loading of separate parts of the application. Modern bundlers support automatic code splitting based on dynamic imports and routes.
+
+```javascript
+// Dynamic import
+const Component = () => import('./Component.vue')
+```
 
 **Ответ Senior:**
 

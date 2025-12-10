@@ -43,6 +43,48 @@
 <footer>Footer content</footer>
 ```
 
+**Answer EN:** ARIA (Accessible Rich Internet Applications) attributes enhance web accessibility for assistive technologies.
+
+**Key attributes:**
+```html
+<!-- Roles -->
+<div role="button" tabindex="0">Click me</div>
+<div role="alert">Error message</div>
+
+<!-- States and properties -->
+<button aria-expanded="false" aria-controls="menu">
+  Menu
+</button>
+<div id="menu" aria-hidden="true">Menu content</div>
+
+<!-- Labels -->
+<input aria-label="Search" type="text">
+<button aria-labelledby="close-btn-label">
+  <span id="close-btn-label">Close</span>
+</button>
+```
+
+**Semantic HTML:**
+```html
+<!-- Use semantic tags -->
+<header>
+  <nav>
+    <ul>
+      <li><a href="/">Home</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <article>
+    <h1>Article Title</h1>
+    <p>Content</p>
+  </article>
+</main>
+
+<footer>Footer content</footer>
+```
+
 **Ответ Senior:**
 
 **Принципы ARIA:**
@@ -68,6 +110,44 @@
   <button tabindex="-1">Disabled</button>
 
   <!-- Обработка клавиш -->
+  <div
+    @keydown.enter="handleClick"
+    @keydown.space.prevent="handleClick"
+    role="button"
+    tabindex="0"
+  >
+    Clickable div
+  </div>
+</template>
+
+<script setup>
+const handleKeydown = (event) => {
+  switch (event.key) {
+    case 'ArrowDown':
+      focusNext();
+      break;
+    case 'ArrowUp':
+      focusPrevious();
+      break;
+    case 'Escape':
+      closeModal();
+      break;
+  }
+};
+</script>
+```
+
+**Answer EN:** Applications must be fully keyboard accessible.
+
+**Practices:**
+```vue
+<template>
+  <!-- Correct tabindex order -->
+  <button tabindex="0">First</button>
+  <button tabindex="0">Second</button>
+  <button tabindex="-1">Disabled</button>
+
+  <!-- Keyboard handling -->
   <div
     @keydown.enter="handleClick"
     @keydown.space.prevent="handleClick"

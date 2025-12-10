@@ -13,6 +13,18 @@ function debounce(func, delay) {
 }
 ```
 
+**Answer EN:** Debounce is a function that delays execution of another function until a certain time passes without new calls. Used to optimize frequent events (search, resize, scroll), preventing unnecessary calculations and requests. Implementation is based on clearing previous timer on each new call and setting new timer.
+
+```javascript
+function debounce(func, delay) {
+  let timeoutId;
+  return function(...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func.apply(this, args), delay);
+  };
+}
+```
+
 **Ответ Senior:**
 
 **Продвинутая версия с immediate:**
@@ -49,7 +61,20 @@ function debounce<T extends (...args: any[]) => any>(
 **Ответ:** Для получения уникальных значений массива самый простой и эффективный способ — использовать объект `Set`, который автоматически удаляет дубликаты. Альтернативный вариант через `filter` и `indexOf` работает медленнее, но полезен если нужна поддержка старых браузеров. Для объектов используйте `Map` с уникальными ключами.
 
 ```javascript
-const unique = [...new Set(array)];
+const unique = [...new Set(array)]
+// или
+const unique = array.filter((item, index) => array.indexOf(item) === index)
+```
+
+**Answer EN:** To get unique values from array, the simplest and most efficient way is to use `Set` object which automatically removes duplicates. Alternative via `filter` and `indexOf` works slower but useful if old browser support is needed. For objects use `Map` with unique keys.
+
+```javascript
+const unique = [...new Set(array)]
+// or
+const unique = array.filter((item, index) => array.indexOf(item) === index)
+```
+
+**Ответ Senior:**
 // или
 const unique = array.filter((item, index) => array.indexOf(item) === index);
 ```
@@ -77,9 +102,17 @@ const unique = Array.from(
 **Ответ:** Глубокое копирование создает полностью независимую копию объекта со всеми вложенными структурами. Простой способ через `JSON.parse(JSON.stringify())` работает для простых объектов, но теряет функции, даты и другие не-JSON типы. Современный `structuredClone()` лучше обрабатывает большинство типов данных, но также не поддерживает функции.
 
 ```javascript
-const deepCopy = JSON.parse(JSON.stringify(obj));
+const deepCopy = JSON.parse(JSON.stringify(obj))
 // или
-const deepCopy = structuredClone(obj); // современный способ
+const deepCopy = structuredClone(obj) // современный способ
+```
+
+**Answer EN:** Deep copying creates a completely independent copy of object with all nested structures. Simple way via `JSON.parse(JSON.stringify())` works for simple objects but loses functions, dates and other non-JSON types. Modern `structuredClone()` better handles most data types but also doesn't support functions.
+
+```javascript
+const deepCopy = JSON.parse(JSON.stringify(obj))
+// or
+const deepCopy = structuredClone(obj) // modern way
 ```
 
 **Ответ Senior:**

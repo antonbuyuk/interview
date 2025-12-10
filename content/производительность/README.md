@@ -3,6 +3,28 @@
 ### 1. Bundle optimization стратегии?
 **Ответ:** Оптимизация бандла направлена на уменьшение размера JavaScript файлов и улучшение времени загрузки. Основные техники включают tree shaking для удаления неиспользуемого кода, code splitting для разделения кода на части и загрузку их по требованию, а также правильную настройку chunking для выделения vendor библиотек в отдельные файлы. Это позволяет загружать только необходимый код, улучшая производительность приложения.
 
+**Стратегии:**
+- Tree shaking — удаление неиспользуемого кода
+- Code splitting — разделение на части
+- Chunking — выделение vendor библиотек
+
+```javascript
+// Tree shaking
+import { debounce } from 'lodash-es' // только нужная функция
+```
+
+**Answer EN:** Bundle optimization aims to reduce JavaScript file size and improve load time. Main techniques include tree shaking for removing unused code, code splitting for dividing code into parts and loading on demand, and proper chunking configuration for separating vendor libraries into separate files. This allows loading only necessary code, improving application performance.
+
+**Strategies:**
+- Tree shaking — remove unused code
+- Code splitting — divide into parts
+- Chunking — separate vendor libraries
+
+```javascript
+// Tree shaking
+import { debounce } from 'lodash-es' // only needed function
+```
+
 **Ответ Senior:**
 
 **Tree Shaking:**
@@ -64,6 +86,20 @@ module.exports = {
 ### 2. Resource Hints: preload, prefetch, dns-prefetch?
 **Ответ:** Resource hints — это HTML атрибуты и элементы, которые дают браузеру подсказки о том, какие ресурсы нужно загрузить заранее. `preload` используется для критически важных ресурсов, которые нужны сразу, `prefetch` — для ресурсов, которые понадобятся в будущем (например, следующая страница). `dns-prefetch` предварительно выполняет DNS-запрос для внешних доменов, уменьшая задержку при реальном запросе.
 
+```html
+<link rel="preload" href="/critical.css" as="style">
+<link rel="prefetch" href="/next-page.html">
+<link rel="dns-prefetch" href="https://api.example.com">
+```
+
+**Answer EN:** Resource hints are HTML attributes and elements that give browser hints about which resources to load in advance. `preload` is used for critical resources needed immediately, `prefetch` — for resources needed in future (e.g., next page). `dns-prefetch` pre-resolves DNS for external domains, reducing delay on actual request.
+
+```html
+<link rel="preload" href="/critical.css" as="style">
+<link rel="prefetch" href="/next-page.html">
+<link rel="dns-prefetch" href="https://api.example.com">
+```
+
 **Ответ Senior:**
 
 **preload — критически важные ресурсы:**
@@ -92,6 +128,32 @@ module.exports = {
 
 ### 3. Service Workers и PWA?
 **Ответ:** Service Worker — скрипт, работающий в фоне для кэширования и offline функциональности. PWA (Progressive Web App) — веб-приложение, которое работает как нативное мобильное приложение.
+
+**Требования PWA:**
+- HTTPS
+- Web App Manifest
+- Service Worker
+- Responsive design
+- Иконки
+
+```javascript
+// Service Worker registration
+navigator.serviceWorker.register('/sw.js')
+```
+
+**Answer EN:** Service Worker is a background script for caching and offline functionality. PWA (Progressive Web App) is a web application that works like a native mobile app.
+
+**PWA requirements:**
+- HTTPS
+- Web App Manifest
+- Service Worker
+- Responsive design
+- Icons
+
+```javascript
+// Service Worker registration
+navigator.serviceWorker.register('/sw.js')
+```
 
 **Ответ Senior:**
 
@@ -396,7 +458,25 @@ async function syncData() {
 7. ✅ Работает офлайн
 
 ### 4. Web Workers для тяжелых вычислений?
-**Ответ:** Web Workers — это механизм браузера для выполнения JavaScript кода в отдельном потоке, параллельно основному потоку выполнения.
+**Ответ:** Web Workers — это механизм браузера для выполнения JavaScript кода в отдельном потоке, параллельно основному потоку выполнения. Позволяет выполнять тяжелые вычисления без блокировки UI.
+
+```javascript
+// main.js
+const worker = new Worker('worker.js')
+worker.postMessage({ data: largeArray })
+worker.onmessage = (e) => console.log(e.data)
+```
+
+**Answer EN:** Web Workers is a browser mechanism for executing JavaScript code in a separate thread, parallel to main execution thread. Allows performing heavy calculations without blocking UI.
+
+```javascript
+// main.js
+const worker = new Worker('worker.js')
+worker.postMessage({ data: largeArray })
+worker.onmessage = (e) => console.log(e.data)
+```
+
+**Ответ Senior:**
 
 **Ответ Senior:**
 

@@ -6,6 +6,11 @@
 - **GET**: получение данных, параметры в URL, кэшируется
 - **POST**: отправка данных, данные в теле запроса, не кэшируется
 
+**Answer EN:** GET and POST are two fundamental HTTP methods with fundamentally different purposes. GET is used for retrieving data, parameters are passed in the URL, requests are cached by the browser and should be idempotent. POST is designed for sending data to the server, information is passed in the request body, is not cached and can cause side effects (creating, modifying data).
+
+- **GET**: retrieving data, parameters in URL, cached
+- **POST**: sending data, data in request body, not cached
+
 **Ответ Senior:**
 
 **HTTP методы и идемпотентность:**
@@ -22,6 +27,8 @@
 
 ### 2. Что такое CORS?
 **Ответ:** CORS (Cross-Origin Resource Sharing) — это механизм браузера, который позволяет веб-страницам делать запросы к ресурсам на другом домене, порту или протоколе. Без CORS такие запросы блокируются политикой Same-Origin Policy. Сервер должен явно разрешить кросс-доменные запросы, отправляя специальные заголовки, такие как `Access-Control-Allow-Origin`. Для сложных запросов браузер сначала отправляет preflight запрос (OPTIONS) для проверки разрешений.
+
+**Answer EN:** CORS (Cross-Origin Resource Sharing) is a browser mechanism that allows web pages to make requests to resources on a different domain, port, or protocol. Without CORS, such requests are blocked by the Same-Origin Policy. The server must explicitly allow cross-origin requests by sending special headers such as `Access-Control-Allow-Origin`. For complex requests, the browser first sends a preflight request (OPTIONS) to check permissions.
 
 **Ответ Senior:**
 
@@ -41,6 +48,11 @@
 
 - **REST**: архитектурный стиль с фиксированными endpoints
 - **GraphQL**: язык запросов, один endpoint, клиент запрашивает нужные поля
+
+**Answer EN:** REST and GraphQL are two different approaches to API design. REST is an architectural style with multiple fixed endpoints, each returning a predefined set of data. GraphQL is a query language with a single entry point where the client determines what data and in what format it needs. GraphQL eliminates over-fetching and under-fetching problems, but requires more complex infrastructure and can complicate caching.
+
+- **REST**: architectural style with fixed endpoints
+- **GraphQL**: query language, one endpoint, client requests needed fields
 
 **Ответ Senior:**
 

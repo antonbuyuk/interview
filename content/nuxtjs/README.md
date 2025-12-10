@@ -3,6 +3,8 @@
 ### 1. Что такое Nuxt.js и его основные возможности?
 **Ответ:** Nuxt.js — фреймворк на основе Vue.js для создания универсальных веб-приложений с SSR, SSG и SPA режимами.
 
+**Answer EN:** Nuxt.js is a framework built on top of Vue.js for creating universal web applications with SSR, SSG, and SPA modes.
+
 **Ответ Senior:**
 
 **Основные возможности:**
@@ -29,6 +31,8 @@ export default defineNuxtConfig({
 
 ### 2. Что такое SSR и SSG? Разница и когда использовать?
 **Ответ:** SSR и SSG — разные стратегии рендеринга приложений.
+
+**Answer EN:** SSR and SSG are different rendering strategies for applications.
 
 **Ответ Senior:**
 
@@ -87,6 +91,24 @@ const { data } = await useFetch('/api/posts', {
 
 ### 3. Разница между `useFetch` и `useAsyncData`?
 **Ответ:** `useFetch` — упрощенный composable специально для API запросов, который автоматически парсит JSON и обрабатывает ошибки. `useAsyncData` — более универсальный инструмент для любых асинхронных операций, требующий указания ключа для кэширования и функции-обертки. Выбирайте `useFetch` для простых HTTP запросов, а `useAsyncData` — когда нужна гибкость или работа с не-HTTP операциями.
+
+```javascript
+// useFetch - для API запросов
+const { data } = await useFetch('/api/users')
+
+// useAsyncData - для любых асинхронных операций
+const { data } = await useAsyncData('users', () => fetchUsers())
+```
+
+**Answer EN:** `useFetch` is a simplified composable specifically for API requests that automatically parses JSON and handles errors. `useAsyncData` is a more universal tool for any asynchronous operations, requiring a key for caching and a wrapper function. Choose `useFetch` for simple HTTP requests, and `useAsyncData` when you need flexibility or work with non-HTTP operations.
+
+```javascript
+// useFetch - for API requests
+const { data } = await useFetch('/api/users')
+
+// useAsyncData - for any async operations
+const { data } = await useAsyncData('users', () => fetchUsers())
+```
 
 **Ответ Senior:**
 
@@ -203,6 +225,26 @@ const { data: dashboard } = await useAsyncData(
 ### 4. Что такое middleware в Nuxt?
 **Ответ:** Middleware — функции, выполняемые перед рендерингом страницы или компонента.
 
+```javascript
+// middleware/auth.js
+export default defineNuxtRouteMiddleware((to, from) => {
+  if (!isAuthenticated()) {
+    return navigateTo('/login')
+  }
+})
+```
+
+**Answer EN:** Middleware are functions executed before rendering a page or component.
+
+```javascript
+// middleware/auth.js
+export default defineNuxtRouteMiddleware((to, from) => {
+  if (!isAuthenticated()) {
+    return navigateTo('/login')
+  }
+})
+```
+
 **Ответ Senior:**
 
 **Типы middleware:**
@@ -308,6 +350,24 @@ export default defineNuxtRouteMiddleware((to, from) => {
 ### 5. Auto-imports в Nuxt?
 **Ответ:** Nuxt автоматически импортирует компоненты, composables и утилиты без явного `import`.
 
+```javascript
+// Не нужно: import { ref } from 'vue'
+const count = ref(0)
+
+// Не нужно: import MyComponent from '@/components/MyComponent.vue'
+<MyComponent />
+```
+
+**Answer EN:** Nuxt automatically imports components, composables and utilities without explicit `import`.
+
+```javascript
+// No need: import { ref } from 'vue'
+const count = ref(0)
+
+// No need: import MyComponent from '@/components/MyComponent.vue'
+<MyComponent />
+```
+
 **Ответ Senior:**
 
 **Что импортируется автоматически:**
@@ -390,6 +450,26 @@ import { UserCard } from '@/components/UserCard.vue';
 
 ### 6. Что такое plugins в Nuxt?
 **Ответ:** Plugins — функции, выполняемые при инициализации приложения для расширения функциональности.
+
+```javascript
+// plugins/my-plugin.client.js
+export default defineNuxtPlugin((nuxtApp) => {
+  nuxtApp.provide('myPlugin', () => {
+    // plugin logic
+  })
+})
+```
+
+**Answer EN:** Plugins are functions executed during app initialization to extend functionality.
+
+```javascript
+// plugins/my-plugin.client.js
+export default defineNuxtPlugin((nuxtApp) => {
+  nuxtApp.provide('myPlugin', () => {
+    // plugin logic
+  })
+})
+```
 
 **Ответ Senior:**
 
@@ -479,6 +559,30 @@ const price = $formatCurrency(1000); // 1 000 ₽
 ### 7. Что такое layouts в Nuxt?
 **Ответ:** Layouts — обертки для страниц, позволяющие переиспользовать общую структуру.
 
+```vue
+<!-- layouts/default.vue -->
+<template>
+  <div>
+    <Header />
+    <slot />
+    <Footer />
+  </div>
+</template>
+```
+
+**Answer EN:** Layouts are wrappers for pages that allow reusing common structure.
+
+```vue
+<!-- layouts/default.vue -->
+<template>
+  <div>
+    <Header />
+    <slot />
+    <Footer />
+  </div>
+</template>
+```
+
 **Ответ Senior:**
 
 **Использование layouts:**
@@ -535,6 +639,22 @@ const layout = computed(() => route.meta.layout || 'default');
 
 ### 8. Что такое server routes (API routes) в Nuxt?
 **Ответ:** Server routes — API endpoints, выполняющиеся на сервере Nuxt.
+
+```javascript
+// server/api/users/index.get.ts
+export default defineEventHandler(async (event) => {
+  return await fetchUsers()
+})
+```
+
+**Answer EN:** Server routes are API endpoints that run on the Nuxt server.
+
+```javascript
+// server/api/users/index.get.ts
+export default defineEventHandler(async (event) => {
+  return await fetchUsers()
+})
+```
 
 **Ответ Senior:**
 
@@ -598,6 +718,24 @@ export default defineEventHandler(async (event) => {
 ### 9. Что такое composables в Nuxt?
 **Ответ:** Composables — переиспользуемые функции с состоянием, автоматически импортируемые.
 
+```javascript
+// composables/useAuth.ts
+export const useAuth = () => {
+  const user = useState('user', () => null)
+  return { user }
+}
+```
+
+**Answer EN:** Composables are reusable functions with state, automatically imported.
+
+```javascript
+// composables/useAuth.ts
+export const useAuth = () => {
+  const user = useState('user', () => null)
+  return { user }
+}
+```
+
 **Ответ Senior:**
 
 **Создание composable:**
@@ -638,7 +776,19 @@ const { user, isAuthenticated, login, logout } = useAuth();
 ```
 
 ### 10. Что такое useState и useCookie?
-**Ответ:** Reactivity утилиты для управления состоянием в Nuxt.
+**Ответ:** Reactivity утилиты для управления состоянием в Nuxt. `useState` — для реактивного состояния, `useCookie` — для работы с cookies.
+
+```javascript
+const count = useState('count', () => 0)
+const token = useCookie('token')
+```
+
+**Answer EN:** Reactivity utilities for state management in Nuxt. `useState` — for reactive state, `useCookie` — for working with cookies.
+
+```javascript
+const count = useState('count', () => 0)
+const token = useCookie('token')
+```
 
 **Ответ Senior:**
 
@@ -674,7 +824,17 @@ console.log(token.value);
 ```
 
 ### 11. Что такое error handling в Nuxt?
-**Ответ:** Обработка ошибок в Nuxt осуществляется через специальные страницы ошибок (error.vue) и встроенные composables. Страница error.vue автоматически отображается при возникновении ошибок и получает объект error с информацией о проблеме. Composable `createError` позволяет создавать структурированные ошибки с кодами статуса, а `clearError` — очищать ошибки и перенаправлять пользователя. Также можно использовать try-catch блоки в composables для локальной обработки ошибок.
+**Ответ:** Обработка ошибок в Nuxt осуществляется через специальные страницы ошибок (error.vue) и встроенные composables. `createError` позволяет создавать структурированные ошибки, `clearError` — очищать ошибки.
+
+```javascript
+throw createError({ statusCode: 404, message: 'Not found' })
+```
+
+**Answer EN:** Error handling in Nuxt is done through special error pages (error.vue) and built-in composables. `createError` allows creating structured errors, `clearError` clears errors.
+
+```javascript
+throw createError({ statusCode: 404, message: 'Not found' })
+```
 
 **Ответ Senior:**
 
@@ -713,7 +873,19 @@ try {
 ```
 
 ### 12. Что такое hydration в Nuxt?
-**Ответ:** Hydration — процесс "оживления" статического HTML на клиенте.
+**Ответ:** Hydration — процесс "оживления" статического HTML на клиенте, когда Vue берет на себя управление статически отрендеренным HTML.
+
+```javascript
+// SSR рендерит HTML на сервере
+// Hydration "оживляет" его на клиенте
+```
+
+**Answer EN:** Hydration is the process of "bringing to life" static HTML on the client, when Vue takes over statically rendered HTML.
+
+```javascript
+// SSR renders HTML on server
+// Hydration "brings it to life" on client
+```
 
 **Ответ Senior:**
 
@@ -739,7 +911,29 @@ try {
 ```
 
 ### 13. Оптимизация производительности в Nuxt?
-**Ответ:** Оптимизация производительности в Nuxt включает несколько ключевых стратегий: автоматический code splitting по маршрутам уменьшает начальный размер бандла, lazy loading тяжелых компонентов загружает их только при необходимости. Использование `NuxtImg` и `NuxtLink` с prefetch обеспечивает оптимизацию изображений и предзагрузку страниц. Настройка routeRules позволяет кэшировать статические страницы и настраивать ISR для динамического контента.
+**Ответ:** Оптимизация производительности в Nuxt включает: автоматический code splitting, lazy loading компонентов, использование `NuxtImg` и `NuxtLink`, настройку routeRules для кэширования.
+
+```javascript
+// nuxt.config.ts
+export default defineNuxtConfig({
+  routeRules: {
+    '/': { prerender: true },
+    '/blog/**': { isr: 3600 }
+  }
+})
+```
+
+**Answer EN:** Performance optimization in Nuxt includes: automatic code splitting, lazy loading components, using `NuxtImg` and `NuxtLink`, configuring routeRules for caching.
+
+```javascript
+// nuxt.config.ts
+export default defineNuxtConfig({
+  routeRules: {
+    '/': { prerender: true },
+    '/blog/**': { isr: 3600 }
+  }
+})
+```
 
 **Ответ Senior:**
 

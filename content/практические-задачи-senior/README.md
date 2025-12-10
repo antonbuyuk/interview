@@ -5,14 +5,29 @@
 
 ```javascript
 function throttle(func, delay) {
-  let lastCall = 0;
+  let lastCall = 0
   return function(...args) {
-    const now = Date.now();
+    const now = Date.now()
     if (now - lastCall >= delay) {
-      lastCall = now;
-      return func.apply(this, args);
+      lastCall = now
+      return func.apply(this, args)
     }
-  };
+  }
+}
+```
+
+**Answer EN:** Throttle is a function that limits frequency of another function execution, guaranteeing its call no more often than specified time interval. Unlike debounce, throttle executes function periodically, not delays until activity ends. Used for handling events that should fire regularly but not too often (e.g., on scroll or resize).
+
+```javascript
+function throttle(func, delay) {
+  let lastCall = 0
+  return function(...args) {
+    const now = Date.now()
+    if (now - lastCall >= delay) {
+      lastCall = now
+      return func.apply(this, args)
+    }
+  }
 }
 ```
 
@@ -59,7 +74,47 @@ function throttle(func, delay, options = {}) {
 
 ```javascript
 function deepEqual(a, b) {
-  if (a === b) return true;
+  if (a === b) return true
+  if (a == null || b == null) return false
+  if (typeof a !== typeof b) return false
+  if (typeof a !== 'object') return false
+
+  const keysA = Object.keys(a)
+  const keysB = Object.keys(b)
+  if (keysA.length !== keysB.length) return false
+
+  for (const key of keysA) {
+    if (!keysB.includes(key) || !deepEqual(a[key], b[key])) {
+      return false
+    }
+  }
+  return true
+}
+```
+
+**Answer EN:** DeepEqual is a function for deep comparison of two values that recursively checks all object properties and array elements for equality. Used when need to compare complex data structures, not just references. Important to handle edge cases: null, different types, circular references, and special objects like Date or RegExp.
+
+```javascript
+function deepEqual(a, b) {
+  if (a === b) return true
+  if (a == null || b == null) return false
+  if (typeof a !== typeof b) return false
+  if (typeof a !== 'object') return false
+
+  const keysA = Object.keys(a)
+  const keysB = Object.keys(b)
+  if (keysA.length !== keysB.length) return false
+
+  for (const key of keysA) {
+    if (!keysB.includes(key) || !deepEqual(a[key], b[key])) {
+      return false
+    }
+  }
+  return true
+}
+```
+
+**Ответ Senior:**
   if (a == null || b == null) return false;
   if (typeof a !== 'object' || typeof b !== 'object') return false;
 
@@ -116,19 +171,41 @@ function deepEqual(a, b, visited = new WeakMap()) {
 ```javascript
 class EventEmitter {
   constructor() {
-    this.events = {};
+    this.events = {}
   }
 
   on(event, callback) {
     if (!this.events[event]) {
-      this.events[event] = [];
+      this.events[event] = []
     }
-    this.events[event].push(callback);
+    this.events[event].push(callback)
   }
 
   emit(event, ...args) {
-    if (!this.events[event]) return;
-    this.events[event].forEach(callback => callback(...args));
+    if (!this.events[event]) return
+    this.events[event].forEach(callback => callback(...args))
+  }
+}
+```
+
+**Answer EN:** EventEmitter is a pattern for implementing event system where objects can subscribe to events and react to them. Implementation requires storing collection of event handlers, methods for subscription (on), unsubscription (off) and event emission (emit). Additionally useful are once method for one-time subscription and handler priority management.
+
+```javascript
+class EventEmitter {
+  constructor() {
+    this.events = {}
+  }
+
+  on(event, callback) {
+    if (!this.events[event]) {
+      this.events[event] = []
+    }
+    this.events[event].push(callback)
+  }
+
+  emit(event, ...args) {
+    if (!this.events[event]) return
+    this.events[event].forEach(callback => callback(...args))
   }
 }
 ```
@@ -184,6 +261,40 @@ class EventEmitter {
 
 ### 4. Реализовать debounce с immediate опцией?
 **Ответ:** Debounce с опцией immediate позволяет выполнить функцию сразу при первом вызове, а затем игнорировать последующие вызовы до окончания периода задержки. Это полезно для таких случаев, как отправка формы или выполнение поиска, где нужно получить немедленный результат при первом действии, но избежать повторных вызовов при быстрых последовательных событиях. Опция immediate меняет поведение debounce с "выполнить после паузы" на "выполнить сразу, затем игнорировать".
+
+```javascript
+function debounce(func, delay, immediate = false) {
+  let timeoutId
+  return function(...args) {
+    const callNow = immediate && !timeoutId
+    clearTimeout(timeoutId)
+    timeoutId = setTimeout(() => {
+      timeoutId = null
+      if (!immediate) func.apply(this, args)
+    }, delay)
+    if (callNow) func.apply(this, args)
+  }
+}
+```
+
+**Answer EN:** Debounce with immediate option allows executing function immediately on first call, then ignoring subsequent calls until delay period ends. Useful for cases like form submission or search execution where need immediate result on first action but avoid repeated calls on fast sequential events. Immediate option changes debounce behavior from "execute after pause" to "execute immediately, then ignore".
+
+```javascript
+function debounce(func, delay, immediate = false) {
+  let timeoutId
+  return function(...args) {
+    const callNow = immediate && !timeoutId
+    clearTimeout(timeoutId)
+    timeoutId = setTimeout(() => {
+      timeoutId = null
+      if (!immediate) func.apply(this, args)
+    }, delay)
+    if (callNow) func.apply(this, args)
+  }
+}
+```
+
+**Ответ Senior:**
 
 ```javascript
 function debounce(func, delay, immediate = false) {

@@ -3,6 +3,40 @@
 ### 1. XSS (Cross-Site Scripting) и защита?
 **Ответ:** XSS — внедрение вредоносного JavaScript кода в приложение.
 
+**Типы XSS:**
+- **Reflected XSS** — скрипт в URL параметрах
+- **Stored XSS** — скрипт сохраняется на сервере
+- **DOM-based XSS** — манипуляция DOM на клиенте
+
+**Защита:**
+- Экранирование пользовательского ввода
+- Санитизация HTML (DOMPurify)
+- Content Security Policy (CSP)
+- HttpOnly cookies
+
+```vue
+<!-- Vue автоматически экранирует -->
+<div>{{ userInput }}</div> <!-- Безопасно -->
+```
+
+**Answer EN:** XSS is injection of malicious JavaScript code into application.
+
+**XSS types:**
+- **Reflected XSS** — script in URL parameters
+- **Stored XSS** — script stored on server
+- **DOM-based XSS** — DOM manipulation on client
+
+**Protection:**
+- Escaping user input
+- HTML sanitization (DOMPurify)
+- Content Security Policy (CSP)
+- HttpOnly cookies
+
+```vue
+<!-- Vue automatically escapes -->
+<div>{{ userInput }}</div> <!-- Safe -->
+```
+
 **Ответ Senior:**
 
 **Типы XSS:**
@@ -44,6 +78,34 @@ const sanitized = computed(() =>
 **Ответ:** CSRF — атака, заставляющая пользователя выполнить действия без его ведома.
 
 **Защита:**
+- CSRF токены
+- SameSite cookies
+- Проверка Referer/Origin
+
+```javascript
+// CSRF токены
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content
+fetch('/api/data', {
+  headers: { 'X-CSRF-Token': csrfToken }
+})
+```
+
+**Answer EN:** CSRF is an attack that forces a user to perform actions without their knowledge.
+
+**Protection:**
+- CSRF tokens
+- SameSite cookies
+- Referer/Origin validation
+
+```javascript
+// CSRF tokens
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content
+fetch('/api/data', {
+  headers: { 'X-CSRF-Token': csrfToken }
+})
+```
+
+**Ответ Senior:**
 ```javascript
 // CSRF токены
 const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
@@ -78,6 +140,43 @@ document.cookie = "session=abc123; SameSite=Strict; Secure";
 - Короткое время жизни токенов
 
 ### 3. CORS детально: preflight запросы?
+**Ответ:** CORS preflight запросы — это автоматические OPTIONS запросы, которые браузер отправляет перед сложными запросами для проверки разрешений. Preflight срабатывает для запросов с кастомными заголовками, методами кроме GET/POST/HEAD, или с Content-Type кроме application/x-www-form-urlencoded, multipart/form-data, text/plain.
+
+**Когда срабатывает preflight:**
+- Кастомные заголовки (например, Authorization)
+- Методы кроме GET/POST/HEAD
+- Content-Type: application/json
+
+```javascript
+// Простой запрос (без preflight)
+fetch('https://api.example.com/data')
+
+// Сложный запрос (с preflight)
+fetch('https://api.example.com/data', {
+  method: 'PUT',
+  headers: { 'Authorization': 'Bearer token' }
+})
+```
+
+**Answer EN:** CORS preflight requests are automatic OPTIONS requests that browser sends before complex requests to check permissions. Preflight triggers for requests with custom headers, methods other than GET/POST/HEAD, or Content-Type other than application/x-www-form-urlencoded, multipart/form-data, text/plain.
+
+**When preflight triggers:**
+- Custom headers (e.g., Authorization)
+- Methods other than GET/POST/HEAD
+- Content-Type: application/json
+
+```javascript
+// Simple request (no preflight)
+fetch('https://api.example.com/data')
+
+// Complex request (with preflight)
+fetch('https://api.example.com/data', {
+  method: 'PUT',
+  headers: { 'Authorization': 'Bearer token' }
+})
+```
+
+**Ответ Senior:**
 **Ответ:** CORS — механизм для запросов между разными доменами.
 
 **Preflight запросы:**

@@ -3,6 +3,34 @@
 ### 1. SOLID принципы во фронтенде?
 **Ответ:** SOLID — принципы объектно-ориентированного программирования, применимые и во фронтенде.
 
+**Принципы:**
+- **S** - Single Responsibility: один компонент — одна ответственность
+- **O** - Open/Closed: открыт для расширения, закрыт для модификации
+- **L** - Liskov Substitution: подклассы должны заменять базовые классы
+- **I** - Interface Segregation: много специфичных интерфейсов лучше одного общего
+- **D** - Dependency Inversion: зависеть от абстракций, а не от конкретных реализаций
+
+```typescript
+// Single Responsibility
+const UserCard = () => { /* отображение */ }
+const UserActions = () => { /* действия */ }
+```
+
+**Answer EN:** SOLID are object-oriented programming principles applicable to frontend development.
+
+**Principles:**
+- **S** - Single Responsibility: one component — one responsibility
+- **O** - Open/Closed: open for extension, closed for modification
+- **L** - Liskov Substitution: subclasses should replace base classes
+- **I** - Interface Segregation: many specific interfaces better than one general
+- **D** - Dependency Inversion: depend on abstractions, not concrete implementations
+
+```typescript
+// Single Responsibility
+const UserCard = () => { /* display */ }
+const UserActions = () => { /* actions */ }
+```
+
 **Ответ Senior:**
 
 **S - Single Responsibility (Единственная ответственность):**
@@ -53,6 +81,32 @@ class Component {
 
 ### 2. Design Patterns во фронтенде?
 **Ответ:** Design patterns — это проверенные решения типичных проблем в проектировании программного обеспечения, адаптированные для фронтенда. Наиболее полезные паттерны включают Observer (используется в реактивности Vue), Singleton для глобального состояния, Factory для создания компонентов, и Module для организации кода. Понимание паттернов помогает писать более структурированный и поддерживаемый код, а также лучше понимать архитектуру популярных фреймворков.
+
+**Основные паттерны:**
+- **Observer** — реактивность (Vue, React)
+- **Singleton** — глобальное состояние
+- **Factory** — создание компонентов
+- **Module** — организация кода
+
+```typescript
+// Observer pattern (Vue reactivity)
+const state = reactive({ count: 0 })
+watch(() => state.count, (newVal) => console.log(newVal))
+```
+
+**Answer EN:** Design patterns are proven solutions to common software design problems, adapted for frontend. Most useful patterns include Observer (used in Vue reactivity), Singleton for global state, Factory for component creation, and Module for code organization. Understanding patterns helps write more structured and maintainable code, and better understand popular framework architectures.
+
+**Main patterns:**
+- **Observer** — reactivity (Vue, React)
+- **Singleton** — global state
+- **Factory** — component creation
+- **Module** — code organization
+
+```typescript
+// Observer pattern (Vue reactivity)
+const state = reactive({ count: 0 })
+watch(() => state.count, (newVal) => console.log(newVal))
+```
 
 **Ответ Senior:**
 
@@ -119,6 +173,34 @@ class Validator {
 
 ### 3. Что такое DRY, KISS, YAGNI принципы?
 **Ответ:** DRY, KISS и YAGNI — это три фундаментальных принципа программирования, которые помогают писать чистый и поддерживаемый код. DRY (Don't Repeat Yourself) призывает избегать дублирования кода, вынося повторяющуюся логику в функции или модули. KISS (Keep It Simple, Stupid) напоминает, что простое решение часто лучше сложного. YAGNI (You Aren't Gonna Need It) предостерегает от добавления функциональности, которая может понадобиться в будущем, но не нужна сейчас.
+
+**Принципы:**
+- **DRY** — не повторяйся, выноси общую логику
+- **KISS** — делай проще, простое решение лучше
+- **YAGNI** — не добавляй то, что не нужно сейчас
+
+```typescript
+// DRY - выносим общую логику
+const useAuth = () => {
+  const user = useState('user')
+  return { user }
+}
+```
+
+**Answer EN:** DRY, KISS and YAGNI are three fundamental programming principles that help write clean and maintainable code. DRY (Don't Repeat Yourself) encourages avoiding code duplication by extracting repeated logic into functions or modules. KISS (Keep It Simple, Stupid) reminds that simple solution is often better than complex. YAGNI (You Aren't Gonna Need It) warns against adding functionality that might be needed in future but isn't needed now.
+
+**Principles:**
+- **DRY** — don't repeat yourself, extract common logic
+- **KISS** — keep it simple, simple solution is better
+- **YAGNI** — don't add what isn't needed now
+
+```typescript
+// DRY - extract common logic
+const useAuth = () => {
+  const user = useState('user')
+  return { user }
+}
+```
 
 **Ответ Senior:**
 
@@ -445,6 +527,40 @@ function CartService() {
 
 ### 4. Как масштабировать фронтенд приложение?
 **Ответ:** Масштабирование фронтенд приложения требует правильной организации кода и архитектурных решений. Ключевые подходы включают модульную структуру с четким разделением по фичам, использование паттернов проектирования для переиспользования кода, внедрение системы компонентов и композаблов. Важны также правильное управление состоянием (state management), lazy loading модулей, code splitting и оптимизация бандла для больших приложений.
+
+**Стратегии:**
+- Модульная структура по фичам
+- Паттерны проектирования
+- Компоненты и композаблы
+- State management
+- Code splitting и lazy loading
+
+```typescript
+// Feature-based structure
+src/
+  features/
+    auth/
+    dashboard/
+    profile/
+```
+
+**Answer EN:** Scaling frontend application requires proper code organization and architectural decisions. Key approaches include modular structure with clear feature separation, using design patterns for code reuse, implementing component and composable systems. Also important are proper state management, lazy loading modules, code splitting and bundle optimization for large applications.
+
+**Strategies:**
+- Modular feature-based structure
+- Design patterns
+- Components and composables
+- State management
+- Code splitting and lazy loading
+
+```typescript
+// Feature-based structure
+src/
+  features/
+    auth/
+    dashboard/
+    profile/
+```
 
 **Ответ Senior:**
 

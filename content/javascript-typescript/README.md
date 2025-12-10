@@ -13,6 +13,18 @@ const addFive = outerFunction(5);
 console.log(addFive(3)); // 8
 ```
 
+**Answer EN:** A closure is a function that has access to variables from its outer (enclosing) scope even after the outer function has finished executing.
+
+```javascript
+function outerFunction(x) {
+  return function innerFunction(y) {
+    return x + y;
+  };
+}
+const addFive = outerFunction(5);
+console.log(addFive(3)); // 8
+```
+
 **Ответ Senior:**
 
 Замыкание — это фундаментальная концепция JavaScript, где внутренняя функция сохраняет ссылку на лексическое окружение (Lexical Environment) внешней функции даже после её завершения. Это позволяет создавать мощные паттерны программирования.
@@ -371,9 +383,53 @@ function useCounter(initial = 0) {
 7. ❌ Не храните большие объекты в замыканиях, если они не нужны
 
 ### 2. Разница между `let`, `const` и `var`?
+**Ответ:**
 - **var**: функциональная область видимости, поднимается (hoisting), можно переопределять
 - **let**: блочная область видимости, можно переназначать, не поднимается
 - **const**: блочная область видимости, нельзя переназначать, но можно изменять содержимое объектов/массивов
+
+```javascript
+// var - функциональная область видимости
+function testVar() {
+  if (true) {
+    var x = 10;
+  }
+  console.log(x); // 10 (доступно вне блока)
+}
+
+// let/const - блочная область видимости
+function testLet() {
+  if (true) {
+    let y = 20;
+    const z = 30;
+  }
+  console.log(y); // ReferenceError: y is not defined
+}
+```
+
+**Answer EN:**
+- **var**: function scope, hoisted, can be redeclared
+- **let**: block scope, can be reassigned, not hoisted
+- **const**: block scope, cannot be reassigned, but can modify object/array contents
+
+```javascript
+// var - function scope
+function testVar() {
+  if (true) {
+    var x = 10;
+  }
+  console.log(x); // 10 (accessible outside block)
+}
+
+// let/const - block scope
+function testLet() {
+  if (true) {
+    let y = 20;
+    const z = 30;
+  }
+  console.log(y); // ReferenceError: y is not defined
+}
+```
 
 **Ответ Senior:**
 
@@ -554,6 +610,62 @@ let letVar;
 - Понимайте TDZ и как она влияет на hoisting
 
 ### 3. Что такое Promise и async/await?
+**Ответ:** Promise — объект, представляющий результат асинхронной операции (pending, fulfilled, rejected). async/await — синтаксический сахар для работы с Promise, делает асинхронный код похожим на синхронный.
+
+```javascript
+// Создание Promise
+const fetchData = new Promise((resolve, reject) => {
+  setTimeout(() => {
+    const data = { id: 1, name: 'John' };
+    resolve(data);
+  }, 1000);
+});
+
+// Обработка Promise
+fetchData
+  .then(data => console.log('Данные:', data))
+  .catch(error => console.error('Ошибка:', error));
+
+// async/await
+async function loadData() {
+  try {
+    const data = await fetchData;
+    console.log('Данные:', data);
+  } catch (error) {
+    console.error('Ошибка:', error);
+  }
+}
+```
+
+**Answer EN:** Promise is an object representing the result of an asynchronous operation (pending, fulfilled, rejected). async/await is syntactic sugar for working with Promises, making asynchronous code look like synchronous code.
+
+```javascript
+// Creating Promise
+const fetchData = new Promise((resolve, reject) => {
+  setTimeout(() => {
+    const data = { id: 1, name: 'John' };
+    resolve(data);
+  }, 1000);
+});
+
+// Handling Promise
+fetchData
+  .then(data => console.log('Data:', data))
+  .catch(error => console.error('Error:', error));
+
+// async/await
+async function loadData() {
+  try {
+    const data = await fetchData;
+    console.log('Data:', data);
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+```
+
+**Ответ Senior:**
+
 **Promise** — объект, представляющий результат асинхронной операции (pending, fulfilled, rejected).
 
 **Состояния Promise:**
@@ -914,8 +1026,33 @@ for await (const page of fetchPages('/api/posts')) {
 ```
 
 ### 4. Разница между `==` и `===`?
+**Ответ:**
 - `==` — нестрогое сравнение (с приведением типов)
 - `===` — строгое сравнение (без приведения типов)
+
+```javascript
+// == - нестрогое сравнение
+'5' == 5; // true (приведение типов)
+null == undefined; // true
+
+// === - строгое сравнение
+'5' === 5; // false (разные типы)
+null === undefined; // false
+```
+
+**Answer EN:**
+- `==` — loose equality (with type coercion)
+- `===` — strict equality (without type coercion)
+
+```javascript
+// == - loose equality
+'5' == 5; // true (type coercion)
+null == undefined; // true
+
+// === - strict equality
+'5' === 5; // false (different types)
+null === undefined; // false
+```
 
 **Ответ Senior:**
 
@@ -989,6 +1126,45 @@ Object.is(value1, value2); // Самый строгий способ сравн�
 
 **Логические операторы:**
 - `&&` (И) — возвращает первое falsy значение или последнее значение, если все truthy
+- `||` (ИЛИ) — возвращает первое truthy значение или последнее значение, если все falsy
+- `!` (НЕ) — инвертирует булево значение
+
+```javascript
+// && - логическое И
+const result1 = true && false; // false
+const result2 = 'hello' && 'world'; // 'world' (последнее truthy)
+
+// || - логическое ИЛИ
+const result3 = true || false; // true
+const result4 = '' || 'default'; // 'default' (первое truthy)
+
+// ! - логическое НЕ
+const result5 = !true; // false
+const result6 = !0; // true
+```
+
+**Answer EN:** Boolean operators are used for logical operations and comparisons.
+
+**Logical operators:**
+- `&&` (AND) — returns first falsy value or last value if all truthy
+- `||` (OR) — returns first truthy value or last value if all falsy
+- `!` (NOT) — inverts boolean value
+
+```javascript
+// && - logical AND
+const result1 = true && false; // false
+const result2 = 'hello' && 'world'; // 'world' (last truthy)
+
+// || - logical OR
+const result3 = true || false; // true
+const result4 = '' || 'default'; // 'default' (first truthy)
+
+// ! - logical NOT
+const result5 = !true; // false
+const result6 = !0; // true
+```
+
+**Ответ Senior:**
 - `||` (ИЛИ) — возвращает первое truthy значение или последнее значение, если все falsy
 - `!` (НЕ) — инвертирует булево значение
 - `??` (Nullish coalescing) — возвращает правый операнд, если левый `null` или `undefined`
@@ -1115,11 +1291,28 @@ const options2 = {
 ```
 
 ### 6. Что такое деструктуризация?
-Извлечение значений из массивов или объектов в отдельные переменные.
+**Ответ:** Деструктуризация — извлечение значений из массивов или объектов в отдельные переменные.
 
 ```javascript
+// Деструктуризация объекта
 const { name, age } = user;
+const { name: userName, age: userAge } = user; // с переименованием
+
+// Деструктуризация массива
 const [first, second] = array;
+const [first, , third] = array; // пропуск элементов
+```
+
+**Answer EN:** Destructuring is extracting values from arrays or objects into separate variables.
+
+```javascript
+// Object destructuring
+const { name, age } = user;
+const { name: userName, age: userAge } = user; // with renaming
+
+// Array destructuring
+const [first, second] = array;
+const [first, , third] = array; // skipping elements
 ```
 
 **Ответ Senior:**
@@ -1176,9 +1369,41 @@ const {
 ```
 
 ### 7. Разница между `map`, `filter`, `reduce`?
+**Ответ:**
 - **map**: преобразует каждый элемент массива
 - **filter**: возвращает новый массив с элементами, прошедшими проверку
 - **reduce**: сводит массив к одному значению
+
+```javascript
+const numbers = [1, 2, 3, 4, 5];
+
+// map - преобразование
+const doubled = numbers.map(n => n * 2); // [2, 4, 6, 8, 10]
+
+// filter - фильтрация
+const evens = numbers.filter(n => n % 2 === 0); // [2, 4]
+
+// reduce - сводит к одному значению
+const sum = numbers.reduce((acc, n) => acc + n, 0); // 15
+```
+
+**Answer EN:**
+- **map**: transforms each array element
+- **filter**: returns new array with elements passing the test
+- **reduce**: reduces array to a single value
+
+```javascript
+const numbers = [1, 2, 3, 4, 5];
+
+// map - transformation
+const doubled = numbers.map(n => n * 2); // [2, 4, 6, 8, 10]
+
+// filter - filtering
+const evens = numbers.filter(n => n % 2 === 0); // [2, 4]
+
+// reduce - reducing to single value
+const sum = numbers.reduce((acc, n) => acc + n, 0); // 15
+```
 
 **Ответ Senior:**
 
@@ -1239,7 +1464,43 @@ const indexed = array.reduce((acc, item, index) => {
 ```
 
 ### 8. Что такое hoisting?
-Поднятие объявлений переменных и функций в начало области видимости перед выполнением кода.
+**Ответ:** Hoisting — поднятие объявлений переменных и функций в начало области видимости перед выполнением кода.
+
+```javascript
+// Функции поднимаются полностью
+console.log(foo()); // 'bar' (работает!)
+
+function foo() {
+  return 'bar';
+}
+
+// var поднимается, но инициализируется как undefined
+console.log(x); // undefined
+var x = 5;
+
+// let/const поднимаются, но в TDZ
+console.log(y); // ReferenceError
+let y = 10;
+```
+
+**Answer EN:** Hoisting is the behavior of moving variable and function declarations to the top of their scope before code execution.
+
+```javascript
+// Functions are hoisted completely
+console.log(foo()); // 'bar' (works!)
+
+function foo() {
+  return 'bar';
+}
+
+// var is hoisted but initialized as undefined
+console.log(x); // undefined
+var x = 5;
+
+// let/const are hoisted but in TDZ
+console.log(y); // ReferenceError
+let y = 10;
+```
 
 **Ответ Senior:**
 
@@ -1286,8 +1547,37 @@ for (let i = 0; i < 3; i++) {
 ```
 
 ### 9. Типы данных в JavaScript?
-Примитивы: `string`, `number`, `boolean`, `null`, `undefined`, `symbol`, `bigint`
-Объекты: `object`, `array`, `function`, `date`, и т.д.
+**Ответ:** В JavaScript есть примитивы и объекты. Примитивы: `string`, `number`, `boolean`, `null`, `undefined`, `symbol`, `bigint`. Объекты: `object`, `array`, `function`, `date`, и т.д.
+
+```javascript
+// Примитивы передаются по значению
+let a = 5;
+let b = a;
+b = 10;
+console.log(a); // 5 (не изменилось)
+
+// Объекты передаются по ссылке
+let obj1 = { name: 'John' };
+let obj2 = obj1;
+obj2.name = 'Jane';
+console.log(obj1.name); // 'Jane' (изменилось)
+```
+
+**Answer EN:** JavaScript has primitives and objects. Primitives: `string`, `number`, `boolean`, `null`, `undefined`, `symbol`, `bigint`. Objects: `object`, `array`, `function`, `date`, etc.
+
+```javascript
+// Primitives are passed by value
+let a = 5;
+let b = a;
+b = 10;
+console.log(a); // 5 (unchanged)
+
+// Objects are passed by reference
+let obj1 = { name: 'John' };
+let obj2 = obj1;
+obj2.name = 'Jane';
+console.log(obj1.name); // 'Jane' (changed)
+```
 
 **Ответ Senior:**
 
@@ -1337,6 +1627,34 @@ typeof big; // 'bigint'
 **Ответ:** Event Loop — механизм, который управляет выполнением асинхронного кода в JavaScript. JavaScript однопоточный, но Event Loop позволяет выполнять неблокирующие операции.
 
 **Как работает:**
+1. **Call Stack** — стек вызовов синхронного кода
+2. **Web APIs** — браузерные API (setTimeout, fetch, DOM события)
+3. **Callback Queue** — очередь колбэков
+4. **Event Loop** — переносит колбэки из очереди в стек, когда стек пуст
+
+```javascript
+console.log('1')
+setTimeout(() => console.log('2'), 0)
+console.log('3')
+// Вывод: 1, 3, 2
+```
+
+**Answer EN:** Event Loop is a mechanism that manages execution of asynchronous code in JavaScript. JavaScript is single-threaded, but Event Loop allows non-blocking operations.
+
+**How it works:**
+1. **Call Stack** — stack of synchronous code calls
+2. **Web APIs** — browser APIs (setTimeout, fetch, DOM events)
+3. **Callback Queue** — queue of callbacks
+4. **Event Loop** — moves callbacks from queue to stack when stack is empty
+
+```javascript
+console.log('1')
+setTimeout(() => console.log('2'), 0)
+console.log('3')
+// Output: 1, 3, 2
+```
+
+**Ответ Senior:**
 1. **Call Stack** — стек вызовов синхронного кода
 2. **Web APIs** — браузерные API (setTimeout, fetch, DOM события)
 3. **Callback Queue** — очередь колбэков (макрозадачи)
@@ -1409,6 +1727,40 @@ requestAnimationFrame(() => {
 **Ответ:** `this` — контекст выполнения функции, который определяется способом вызова функции.
 
 **Правила определения `this`:**
+1. **Глобальный контекст** — `this` указывает на `window` (в браузере) или `global` (в Node.js)
+2. **Метод объекта** — `this` указывает на объект, к которому принадлежит метод
+3. **Стрелочные функции** — `this` берется из внешней области видимости
+4. **call/apply/bind** — явно задают контекст
+
+```javascript
+const obj = {
+  name: 'John',
+  greet() {
+    console.log(this.name) // 'John'
+  }
+}
+obj.greet()
+```
+
+**Answer EN:** `this` is the execution context of a function, determined by how the function is called.
+
+**Rules for determining `this`:**
+1. **Global context** — `this` points to `window` (in browser) or `global` (in Node.js)
+2. **Object method** — `this` points to the object the method belongs to
+3. **Arrow functions** — `this` is taken from outer scope
+4. **call/apply/bind** — explicitly set context
+
+```javascript
+const obj = {
+  name: 'John',
+  greet() {
+    console.log(this.name) // 'John'
+  }
+}
+obj.greet()
+```
+
+**Ответ Senior:**
 1. **Глобальный контекст** — `this` указывает на `window` (в браузере) или `global` (в Node.js)
 2. **Метод объекта** — `this` указывает на объект, к которому принадлежит метод
 3. **Стрелочные функции** — `this` берется из лексической области видимости (не имеет собственного `this`)
@@ -1681,6 +2033,40 @@ log('Тест'); // "[APP] Тест" (контекст сохранен)
 **Ключевые концепции:**
 - Каждый объект имеет скрытое свойство `[[Prototype]]` (доступно через `__proto__`)
 - Функции имеют свойство `prototype`, которое используется при создании объектов через `new`
+- При обращении к свойству, если его нет в объекте, поиск идет по цепочке прототипов
+
+```javascript
+function Person(name) {
+  this.name = name
+}
+Person.prototype.greet = function() {
+  return `Hello, I'm ${this.name}`
+}
+const person = new Person('John')
+console.log(person.greet()) // "Hello, I'm John"
+```
+
+**Answer EN:** Prototypal inheritance is a mechanism where objects can inherit properties and methods from other objects through the prototype chain.
+
+**Key concepts:**
+- Each object has a hidden `[[Prototype]]` property (accessible via `__proto__`)
+- Functions have a `prototype` property used when creating objects via `new`
+- When accessing a property, if not found in object, search goes up the prototype chain
+
+```javascript
+function Person(name) {
+  this.name = name
+}
+Person.prototype.greet = function() {
+  return `Hello, I'm ${this.name}`
+}
+const person = new Person('John')
+console.log(person.greet()) // "Hello, I'm John"
+```
+
+**Ответ Senior:**
+- Каждый объект имеет скрытое свойство `[[Prototype]]` (доступно через `__proto__`)
+- Функции имеют свойство `prototype`, которое используется при создании объектов через `new`
 - При обращении к свойству, JavaScript ищет его в объекте, затем в прототипе, и так по цепочке
 
 ```javascript
@@ -1747,9 +2133,51 @@ Person.prototype.method = function() {};
 ```
 
 ### 13. Что такое constructor, class и prototype? Как они связаны?
-**Ответ:** `constructor`, `class` и `prototype` — ключевые концепции JavaScript для создания объектов и наследования.
+**Ответ:** `constructor`, `class` и `prototype` — ключевые концепции JavaScript для создания объектов и наследования. Constructor — функция для создания объектов, class — синтаксический сахар над конструкторами, prototype — механизм наследования.
 
-**Constructor (конструктор):**
+```javascript
+// Constructor
+function Person(name) {
+  this.name = name
+}
+Person.prototype.greet = function() {
+  return `Hello, I'm ${this.name}`
+}
+
+// Class (синтаксический сахар)
+class Person {
+  constructor(name) {
+    this.name = name
+  }
+  greet() {
+    return `Hello, I'm ${this.name}`
+  }
+}
+```
+
+**Answer EN:** `constructor`, `class` and `prototype` are key JavaScript concepts for object creation and inheritance. Constructor is a function for creating objects, class is syntactic sugar over constructors, prototype is inheritance mechanism.
+
+```javascript
+// Constructor
+function Person(name) {
+  this.name = name
+}
+Person.prototype.greet = function() {
+  return `Hello, I'm ${this.name}`
+}
+
+// Class (syntactic sugar)
+class Person {
+  constructor(name) {
+    this.name = name
+  }
+  greet() {
+    return `Hello, I'm ${this.name}`
+  }
+}
+```
+
+**Ответ Senior:**
 
 **Что это:** Функция, используемая для создания и инициализации объектов. При вызове с `new` создает новый экземпляр.
 
@@ -2223,7 +2651,35 @@ class Temperature {
 ```
 
 ### 14. Разница между `WeakMap`/`WeakSet` и `Map`/`Set`?
-**Ответ:** `WeakMap` и `WeakSet` — коллекции с "слабыми" ссылками, которые не препятствуют сборке мусора.
+**Ответ:** `WeakMap` и `WeakSet` — коллекции с "слабыми" ссылками, которые не препятствуют сборке мусора. В отличие от `Map`/`Set`, они принимают только объекты в качестве ключей, не имеют итераторов и автоматически удаляют записи при удалении ключа.
+
+```javascript
+// WeakMap - только объекты как ключи
+const weakMap = new WeakMap()
+const obj = {}
+weakMap.set(obj, 'value')
+// obj удален → запись автоматически удалена из WeakMap
+
+// Map - любые типы ключей, есть итераторы
+const map = new Map()
+map.set('string', 'value')
+map.set(1, 'value')
+```
+
+**Answer EN:** `WeakMap` and `WeakSet` are collections with "weak" references that don't prevent garbage collection. Unlike `Map`/`Set`, they accept only objects as keys, don't have iterators and automatically remove entries when key is deleted.
+
+```javascript
+// WeakMap - only objects as keys
+const weakMap = new WeakMap()
+const obj = {}
+weakMap.set(obj, 'value')
+// obj deleted → entry automatically removed from WeakMap
+
+// Map - any key types, has iterators
+const map = new Map()
+map.set('string', 'value')
+map.set(1, 'value')
+```
 
 **Ответ Senior:**
 
@@ -2532,22 +2988,56 @@ wm.clear(); // TypeError: wm.clear is not a function
 const validator = {
   set(target, property, value) {
     if (property === 'age' && typeof value !== 'number') {
-      throw new TypeError('Age must be a number');
+      throw new TypeError('Age must be a number')
     }
-    target[property] = value;
-    return true;
+    target[property] = value
+    return true
   }
-};
+}
 
-const person = new Proxy({}, validator);
-person.age = 30; // OK
-person.age = 'thirty'; // TypeError
+const person = new Proxy({}, validator)
+person.age = 30 // OK
+person.age = 'thirty' // TypeError
 
 // Reflect для метапрограммирования
-const obj = { name: 'John' };
-Reflect.has(obj, 'name'); // true
-Reflect.get(obj, 'name'); // 'John'
-Reflect.set(obj, 'age', 30); // true
+const obj = { name: 'John' }
+Reflect.has(obj, 'name') // true
+Reflect.get(obj, 'name') // 'John'
+Reflect.set(obj, 'age', 30) // true
+```
+
+**Answer EN:** `Proxy` is a wrapper object for intercepting operations on target object. `Reflect` is a built-in object with methods for operations that can be intercepted via Proxy.
+
+**Proxy usage:**
+- Property validation
+- Access logging
+- Virtual properties
+- Reactivity (like in Vue 3)
+
+```javascript
+// Proxy for validation
+const validator = {
+  set(target, property, value) {
+    if (property === 'age' && typeof value !== 'number') {
+      throw new TypeError('Age must be a number')
+    }
+    target[property] = value
+    return true
+  }
+}
+
+const person = new Proxy({}, validator)
+person.age = 30 // OK
+person.age = 'thirty' // TypeError
+
+// Reflect for metaprogramming
+const obj = { name: 'John' }
+Reflect.has(obj, 'name') // true
+Reflect.get(obj, 'name') // 'John'
+Reflect.set(obj, 'age', 30) // true
+```
+
+**Ответ Senior:**
 ```
 
 **Ответ Senior:**
@@ -2612,29 +3102,69 @@ Reflect.ownKeys(obj); // Object.keys() + символы
 ```javascript
 const iterable = {
   [Symbol.iterator]() {
-    let count = 0;
+    let count = 0
     return {
       next() {
         if (count < 3) {
-          return { value: count++, done: false };
+          return { value: count++, done: false }
         }
-        return { done: true };
+        return { done: true }
       }
-    };
+    }
   }
-};
+}
 
 for (const value of iterable) {
-  console.log(value); // 0, 1, 2
+  console.log(value) // 0, 1, 2
 }
 ```
 
 **Генераторы:**
 ```javascript
 function* numberGenerator() {
-  yield 1;
-  yield 2;
-  yield 3;
+  yield 1
+  yield 2
+  yield 3
+}
+const gen = numberGenerator()
+console.log(gen.next().value) // 1
+```
+
+**Answer EN:** Iterators are objects with `next()` method returning `{value, done}`. Generators are functions that return iterators via `yield`.
+
+**Iterators:**
+```javascript
+const iterable = {
+  [Symbol.iterator]() {
+    let count = 0
+    return {
+      next() {
+        if (count < 3) {
+          return { value: count++, done: false }
+        }
+        return { done: true }
+      }
+    }
+  }
+}
+
+for (const value of iterable) {
+  console.log(value) // 0, 1, 2
+}
+```
+
+**Generators:**
+```javascript
+function* numberGenerator() {
+  yield 1
+  yield 2
+  yield 3
+}
+const gen = numberGenerator()
+console.log(gen.next().value) // 1
+```
+
+**Ответ Senior:**
 }
 
 const gen = numberGenerator();
@@ -2710,23 +3240,49 @@ console.log(fib.next().value); // 1
 **Решения:**
 ```javascript
 // 1. Очистка таймеров
-const timerId = setInterval(() => {}, 1000);
-clearInterval(timerId); // обязательно очистить
+const timerId = setInterval(() => {}, 1000)
+clearInterval(timerId) // обязательно очистить
 
 // 2. Удаление event listeners
-const handler = () => {};
-element.addEventListener('click', handler);
-element.removeEventListener('click', handler);
+const handler = () => {}
+element.addEventListener('click', handler)
+element.removeEventListener('click', handler)
 
 // 3. Очистка в Vue компонентах
 onUnmounted(() => {
-  clearInterval(timerId);
-  element.removeEventListener('click', handler);
-});
+  clearInterval(timerId)
+  element.removeEventListener('click', handler)
+})
+```
 
-// 4. Избегание глобальных переменных
-(function() {
-  const localVar = 'isolated';
+**Answer EN:** Memory leaks occur when objects remain in memory after they're no longer needed.
+
+**Main causes:**
+1. **Global variables** — variables in global scope
+2. **Forgotten timers** — `setInterval`, `setTimeout` without cleanup
+3. **Event listeners** — not removed event handlers
+4. **Closures** — references to large objects in closures
+5. **DOM references** — saved references to deleted DOM elements
+
+**Solutions:**
+```javascript
+// 1. Cleanup timers
+const timerId = setInterval(() => {}, 1000)
+clearInterval(timerId) // must cleanup
+
+// 2. Remove event listeners
+const handler = () => {}
+element.addEventListener('click', handler)
+element.removeEventListener('click', handler)
+
+// 3. Cleanup in Vue components
+onUnmounted(() => {
+  clearInterval(timerId)
+  element.removeEventListener('click', handler)
+})
+```
+
+**Ответ Senior:**
 })(); // переменная не доступна снаружи
 
 // 5. WeakMap для временных данных
@@ -2770,35 +3326,47 @@ registry.register(obj, 'metadata');
 ```
 
 ### 18. Продвинутые типы TypeScript: Conditional Types и Mapped Types?
-**Ответ:** Продвинутые типы для создания гибких и переиспользуемых типовых определений.
+**Ответ:** Продвинутые типы для создания гибких и переиспользуемых типовых определений. Conditional Types позволяют создавать типы на основе условий, Mapped Types — преобразовывать существующие типы.
 
 **Conditional Types:**
 ```typescript
-type NonNullable<T> = T extends null | undefined ? never : T;
+type NonNullable<T> = T extends null | undefined ? never : T
 
-type ApiResponse<T> = T extends string
-  ? { message: T }
-  : T extends number
-  ? { code: T }
-  : { data: T };
-
-// Infer в conditional types
-type ReturnType<T> = T extends (...args: any[]) => infer R ? R : any;
+type ReturnType<T> = T extends (...args: any[]) => infer R ? R : any
 ```
 
 **Mapped Types:**
 ```typescript
-// Создание типа с опциональными полями
 type Partial<T> = {
-  [P in keyof T]?: T[P];
-};
+  [P in keyof T]?: T[P]
+}
 
-// Создание типа с readonly полями
 type Readonly<T> = {
-  readonly [P in keyof T]: T[P];
-};
+  readonly [P in keyof T]: T[P]
+}
+```
 
-// Кастомный mapped type
+**Answer EN:** Advanced types for creating flexible and reusable type definitions. Conditional Types allow creating types based on conditions, Mapped Types transform existing types.
+
+**Conditional Types:**
+```typescript
+type NonNullable<T> = T extends null | undefined ? never : T
+
+type ReturnType<T> = T extends (...args: any[]) => infer R ? R : any
+```
+
+**Mapped Types:**
+```typescript
+type Partial<T> = {
+  [P in keyof T]?: T[P]
+}
+
+type Readonly<T> = {
+  readonly [P in keyof T]: T[P]
+}
+```
+
+**Ответ Senior:**
 type Getters<T> = {
   [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K];
 };
@@ -2846,7 +3414,6 @@ type Route = typeof routes[number]; // 'home' | 'about' | 'contact'
 ```
 
 ### 19. Что такое инкапсуляция в JavaScript?
-
 **Ответ:** Инкапсуляция — принцип объектно-ориентированного программирования, который позволяет скрывать внутреннюю реализацию объекта и предоставлять только необходимый публичный интерфейс. В JavaScript инкапсуляция достигается через замыкания, приватные поля классов (ES2022) и паттерны проектирования.
 
 **Основные способы реализации:**
@@ -2854,26 +3421,80 @@ type Route = typeof routes[number]; // 'home' | 'about' | 'contact'
 **1. Замыкания (Closures):**
 ```javascript
 function createCounter() {
-  let count = 0; // Приватная переменная
+  let count = 0 // Приватная переменная
 
   return {
     increment() {
-      count++;
-    },
-    decrement() {
-      count--;
+      count++
     },
     getValue() {
-      return count;
+      return count
     }
-  };
+  }
 }
 
-const counter = createCounter();
-counter.increment();
-console.log(counter.getValue()); // 1
-console.log(counter.count); // undefined (недоступно извне)
+const counter = createCounter()
+counter.increment()
+console.log(counter.getValue()) // 1
+console.log(counter.count) // undefined (недоступно извне)
 ```
+
+**2. Приватные поля классов (ES2022):**
+```javascript
+class Counter {
+  #count = 0 // Приватное поле
+
+  increment() {
+    this.#count++
+  }
+
+  getValue() {
+    return this.#count
+  }
+}
+```
+
+**Answer EN:** Encapsulation is an object-oriented programming principle that allows hiding internal object implementation and providing only necessary public interface. In JavaScript, encapsulation is achieved through closures, private class fields (ES2022) and design patterns.
+
+**Main implementation ways:**
+
+**1. Closures:**
+```javascript
+function createCounter() {
+  let count = 0 // Private variable
+
+  return {
+    increment() {
+      count++
+    },
+    getValue() {
+      return count
+    }
+  }
+}
+
+const counter = createCounter()
+counter.increment()
+console.log(counter.getValue()) // 1
+console.log(counter.count) // undefined (not accessible)
+```
+
+**2. Private class fields (ES2022):**
+```javascript
+class Counter {
+  #count = 0 // Private field
+
+  increment() {
+    this.#count++
+  }
+
+  getValue() {
+    return this.#count
+  }
+}
+```
+
+**Ответ Senior:**
 
 **2. Приватные поля классов (ES2022):**
 ```javascript
@@ -3129,5 +3750,222 @@ console.log(counter.getState()); // { count: 2, history: ['increment', 'incremen
 - Для реализации бизнес-логики с ограничениями доступа
 - При работе с чувствительными данными
 - Для создания переиспользуемых компонентов
+
+### 20. Что такое каррирование (currying)?
+**Ответ:** Каррирование — техника преобразования функции с несколькими аргументами в последовательность функций, каждая из которых принимает один аргумент. Позволяет создавать специализированные функции из более общих.
+
+```javascript
+// Обычная функция
+function add(a, b, c) {
+  return a + b + c
+}
+
+// Каррированная версия
+function curriedAdd(a) {
+  return function(b) {
+    return function(c) {
+      return a + b + c
+    }
+  }
+}
+
+// Использование
+const add5 = curriedAdd(5)
+const add5And10 = add5(10)
+console.log(add5And10(3)) // 18
+
+// Или сразу
+console.log(curriedAdd(5)(10)(3)) // 18
+```
+
+**Answer EN:** Currying is a technique of transforming a function with multiple arguments into a sequence of functions, each taking one argument. Allows creating specialized functions from more general ones.
+
+```javascript
+// Regular function
+function add(a, b, c) {
+  return a + b + c
+}
+
+// Curried version
+function curriedAdd(a) {
+  return function(b) {
+    return function(c) {
+      return a + b + c
+    }
+  }
+}
+
+// Usage
+const add5 = curriedAdd(5)
+const add5And10 = add5(10)
+console.log(add5And10(3)) // 18
+
+// Or immediately
+console.log(curriedAdd(5)(10)(3)) // 18
+```
+
+**Ответ Senior:**
+
+**Преимущества каррирования:**
+
+1. **Частичное применение (Partial Application)** — создание специализированных функций
+2. **Переиспользование кода** — одна функция для разных случаев
+3. **Композиция функций** — легко комбинировать функции
+4. **Ленивые вычисления** — функция выполняется только когда все аргументы переданы
+
+**Универсальная функция каррирования:**
+
+```javascript
+function curry(fn) {
+  return function curried(...args) {
+    if (args.length >= fn.length) {
+      return fn.apply(this, args)
+    } else {
+      return function(...nextArgs) {
+        return curried.apply(this, args.concat(nextArgs))
+      }
+    }
+  }
+}
+
+// Пример использования
+const multiply = (a, b, c) => a * b * c
+const curriedMultiply = curry(multiply)
+
+console.log(curriedMultiply(2)(3)(4)) // 24
+console.log(curriedMultiply(2, 3)(4)) // 24
+console.log(curriedMultiply(2)(3, 4)) // 24
+console.log(curriedMultiply(2, 3, 4)) // 24
+
+// Частичное применение
+const multiplyBy2 = curriedMultiply(2)
+const multiplyBy2And3 = multiplyBy2(3)
+console.log(multiplyBy2And3(4)) // 24
+```
+
+**Практические примеры:**
+
+**1. Создание специализированных функций:**
+```javascript
+// Общая функция логирования
+const log = (level, message, timestamp) => {
+  console.log(`[${level}] ${timestamp}: ${message}`)
+}
+
+// Каррированная версия
+const curriedLog = curry(log)
+const logError = curriedLog('ERROR')
+const logErrorNow = logError(new Date().toISOString())
+
+logErrorNow('Something went wrong')
+// [ERROR] 2024-01-01T12:00:00.000Z: Something went wrong
+```
+
+**2. Работа с массивами:**
+```javascript
+const map = curry((fn, array) => array.map(fn))
+const filter = curry((predicate, array) => array.filter(predicate))
+
+const double = map(x => x * 2)
+const getEvens = filter(x => x % 2 === 0)
+
+const numbers = [1, 2, 3, 4, 5]
+console.log(double(numbers)) // [2, 4, 6, 8, 10]
+console.log(getEvens(numbers)) // [2, 4]
+```
+
+**3. Композиция функций:**
+```javascript
+const pipe = (...fns) => (value) => fns.reduce((acc, fn) => fn(acc), value)
+
+const add = curry((a, b) => a + b)
+const multiply = curry((a, b) => a * b)
+
+const add5 = add(5)
+const multiplyBy2 = multiply(2)
+
+const transform = pipe(add5, multiplyBy2)
+console.log(transform(10)) // (10 + 5) * 2 = 30
+```
+
+**4. Работа с событиями:**
+```javascript
+const handleEvent = curry((eventType, handler, event) => {
+  if (event.type === eventType) {
+    handler(event)
+  }
+})
+
+const handleClick = handleEvent('click')
+const handleClickWithLog = handleClick(console.log)
+
+// Использование
+element.addEventListener('click', handleClickWithLog)
+```
+
+**TypeScript версия:**
+
+```typescript
+function curry<T extends (...args: any[]) => any>(
+  fn: T
+): T extends (...args: infer P) => infer R
+  ? P extends [infer First, ...infer Rest]
+    ? Rest extends []
+      ? T
+      : (arg: First) => ReturnType<typeof curry<(...args: Rest) => R>>
+    : T
+  : never {
+  return function curried(...args: any[]): any {
+    if (args.length >= fn.length) {
+      return fn.apply(this, args)
+    } else {
+      return (...nextArgs: any[]) => curried.apply(this, args.concat(nextArgs))
+    }
+  } as any
+}
+
+// Использование
+const add = (a: number, b: number, c: number) => a + b + c
+const curriedAdd = curry(add)
+
+const add5 = curriedAdd(5) // (b: number) => (c: number) => number
+const add5And10 = add5(10) // (c: number) => number
+const result = add5And10(3) // number (18)
+```
+
+**Когда использовать каррирование:**
+
+✅ **Используйте когда:**
+- Нужно создавать специализированные функции из общих
+- Работаете с функциональным программированием
+- Нужна композиция функций
+- Хотите улучшить переиспользование кода
+
+❌ **Не используйте когда:**
+- Функция принимает только один аргумент
+- Нужна максимальная производительность (небольшой overhead)
+- Код должен быть максимально простым и понятным для команды
+
+**Сравнение с частичным применением:**
+
+```javascript
+// Каррирование - всегда по одному аргументу
+const curried = (a) => (b) => (c) => a + b + c
+
+// Частичное применение - может принимать несколько аргументов
+const partial = (a, b) => (c) => a + b + c
+
+// bind для частичного применения
+const add = (a, b, c) => a + b + c
+const add5And10 = add.bind(null, 5, 10)
+console.log(add5And10(3)) // 18
+```
+
+**Итого:**
+- Каррирование — мощная техника функционального программирования
+- Позволяет создавать специализированные функции
+- Улучшает композицию и переиспользование кода
+- Использует замыкания для сохранения аргументов
+- Может быть реализовано универсальной функцией `curry`
 
 ---

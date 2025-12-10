@@ -1,8 +1,35 @@
 ## Vue.js
 
 ### 1. Разница между Options API и Composition API?
+**Ответ:**
 - **Options API**: структура с `data`, `methods`, `computed`, `watch` (более простая для новичков)
 - **Composition API**: использование `setup()` или `<script setup>`, более гибкая композиция логики, лучше для больших компонентов
+
+```javascript
+// Options API
+export default {
+  data() {
+    return { count: 0 }
+  },
+  methods: {
+    increment() { this.count++ }
+  }
+}
+
+// Composition API
+import { ref } from 'vue'
+export default {
+  setup() {
+    const count = ref(0)
+    const increment = () => { count.value++ }
+    return { count, increment }
+  }
+}
+```
+
+**Answer EN:**
+- **Options API**: structure with `data`, `methods`, `computed`, `watch` (simpler for beginners)
+- **Composition API**: uses `setup()` or `<script setup>`, more flexible logic composition, better for large components
 
 **Ответ Senior:**
 
@@ -19,6 +46,10 @@ Options API разделяет логику по типам (data, methods, comp
 
 ### 2. Что такое реактивность в Vue 3?
 **Ответ:** Реактивность — система автоматического отслеживания изменений данных и обновления DOM.
+
+**Answer EN:** Reactivity is a system that automatically tracks data changes and updates the DOM.
+
+**How it works in Vue 3:**
 
 **Как работает в Vue 3:**
 - Использует **Proxy API** (в отличие от Vue 2, где использовался Object.defineProperty)
@@ -163,6 +194,11 @@ console.log(count.value); // ✅ в JS
 
 // Деструктуризация reactive теряет реактивность
 const state = reactive({ x: 0, y: 0 });
+```
+
+**Ответ Senior:**
+
+Реактивность в Vue 3 построена на Proxy API, что является фундаментальным отличием от Vue 2. Proxy позволяет перехватывать все операции над объектами, включая доступ к свойствам, их изменение, добавление и удаление. Это обеспечивает более глубокую реактивность и лучшую производительность.
 const { x, y } = state; // ❌ не реактивно
 const { x, y } = toRefs(state); // ✅ реактивно через toRefs
 ```
@@ -180,9 +216,37 @@ const { x, y } = toRefs(state); // ✅ реактивно через toRefs
 | Переназначение | Можно через `.value` | Нельзя (теряется реактивность) |
 | Template | Автоматически разворачивается | Работает напрямую |
 
-**Рекомендации:**
-- **`ref`** — для примитивов и случаев, когда нужно переназначить значение
-- **`reactive`** — для сложных объектов, которые не будут переназначаться целиком
+```javascript
+// ref - для примитивов
+const count = ref(0)
+count.value++ // доступ через .value
+
+// reactive - для объектов
+const state = reactive({ name: 'John', age: 30 })
+state.name = 'Jane' // прямой доступ
+```
+
+**Answer EN:** Both create reactive data, but have different use cases and limitations.
+
+**Key differences:**
+
+| Characteristic | `ref` | `reactive` |
+|----------------|-------|------------|
+| Data types | Any (primitives, objects) | Objects only |
+| Value access | Via `.value` | Direct |
+| Destructuring | Preserves reactivity | Loses (needs `toRefs`) |
+| Reassignment | Possible via `.value` | Not possible (loses reactivity) |
+| Template | Auto-unwraps | Works directly |
+
+```javascript
+// ref - for primitives
+const count = ref(0)
+count.value++ // access via .value
+
+// reactive - for objects
+const state = reactive({ name: 'John', age: 30 })
+state.name = 'Jane' // direct access
+```
 
 **Ответ Senior:**
 
@@ -207,13 +271,41 @@ const count = reactive({ value: 0 });
 ```
 
 ### 4. Жизненный цикл компонента Vue 3?
-- `setup()` — создание компонента
-- `onBeforeMount` — перед монтированием
-- `onMounted` — после монтирования
-- `onBeforeUpdate` — перед обновлением
-- `onUpdated` — после обновления
-- `onBeforeUnmount` — перед размонтированием
-- `onUnmounted` — после размонтирования
+**Ответ:** Жизненный цикл компонента Vue 3 включает хуки: `setup()` — создание компонента, `onBeforeMount` — перед монтированием, `onMounted` — после монтирования, `onBeforeUpdate` — перед обновлением, `onUpdated` — после обновления, `onBeforeUnmount` — перед размонтированием, `onUnmounted` — после размонтирования.
+
+```javascript
+import { onMounted, onUnmounted } from 'vue'
+
+export default {
+  setup() {
+    onMounted(() => {
+      console.log('Component mounted')
+    })
+
+    onUnmounted(() => {
+      console.log('Component unmounted')
+    })
+  }
+}
+```
+
+**Answer EN:** Vue 3 component lifecycle includes hooks: `setup()` — component creation, `onBeforeMount` — before mounting, `onMounted` — after mounting, `onBeforeUpdate` — before update, `onUpdated` — after update, `onBeforeUnmount` — before unmounting, `onUnmounted` — after unmounting.
+
+```javascript
+import { onMounted, onUnmounted } from 'vue'
+
+export default {
+  setup() {
+    onMounted(() => {
+      console.log('Component mounted')
+    })
+
+    onUnmounted(() => {
+      console.log('Component unmounted')
+    })
+  }
+}
+```
 
 **Ответ Senior:**
 
@@ -244,8 +336,33 @@ onUpdated(() => {
 ```
 
 ### 5. Что такое computed и watch?
+**Ответ:**
 - **computed**: вычисляемое свойство, кэшируется, пересчитывается только при изменении зависимостей
 - **watch**: наблюдает за изменениями и выполняет побочные эффекты
+
+```javascript
+// computed - для производных данных
+const fullName = computed(() => `${firstName.value} ${lastName.value}`)
+
+// watch - для побочных эффектов
+watch(userId, async (newId) => {
+  const data = await fetchUser(newId)
+})
+```
+
+**Answer EN:**
+- **computed**: computed property, cached, recalculated only when dependencies change
+- **watch**: watches for changes and performs side effects
+
+```javascript
+// computed - for derived data
+const fullName = computed(() => `${firstName.value} ${lastName.value}`)
+
+// watch - for side effects
+watch(userId, async (newId) => {
+  const data = await fetchUser(newId)
+})
+```
 
 **Ответ Senior:**
 
@@ -272,7 +389,25 @@ watchEffect(() => {
 - `watchEffect` — когда нужна автоматическая реакция на изменения
 
 ### 6. Как работает v-model?
-Двустороннее связывание данных. Синтаксический сахар для `:value` + `@input`.
+**Ответ:** v-model — двустороннее связывание данных. Синтаксический сахар для `:value` + `@input`.
+
+```vue
+<!-- Это -->
+<input v-model="text" />
+
+<!-- Эквивалентно -->
+<input :value="text" @input="text = $event.target.value" />
+```
+
+**Answer EN:** v-model is two-way data binding. Syntactic sugar for `:value` + `@input`.
+
+```vue
+<!-- This -->
+<input v-model="text" />
+
+<!-- Equivalent to -->
+<input :value="text" @input="text = $event.target.value" />
+```
 
 **Ответ Senior:**
 
@@ -312,7 +447,33 @@ defineEmits(['update:modelValue']);
 ```
 
 ### 7. Что такое slots?
-Механизм для передачи контента в компонент, позволяющий создавать переиспользуемые компоненты с гибкой структурой.
+**Ответ:** Slots — механизм для передачи контента в компонент, позволяющий создавать переиспользуемые компоненты с гибкой структурой.
+
+```vue
+<!-- Компонент -->
+<slot name="header" />
+<slot />
+
+<!-- Использование -->
+<Component>
+  <template #header>Header</template>
+  <p>Default content</p>
+</Component>
+```
+
+**Answer EN:** Slots are a mechanism for passing content into components, allowing creation of reusable components with flexible structure.
+
+```vue
+<!-- Component -->
+<slot name="header" />
+<slot />
+
+<!-- Usage -->
+<Component>
+  <template #header>Header</template>
+  <p>Default content</p>
+</Component>
+```
 
 **Ответ Senior:**
 
@@ -344,6 +505,20 @@ defineEmits(['update:modelValue']);
 ### 8. Что такое Teleport в Vue 3?
 **Ответ:** `Teleport` — компонент для рендеринга содержимого в другом месте DOM дерева, вне текущего компонента.
 
+```vue
+<Teleport to="body">
+  <div class="modal">Modal content</div>
+</Teleport>
+```
+
+**Answer EN:** `Teleport` is a component for rendering content in a different place in the DOM tree, outside the current component.
+
+```vue
+<Teleport to="body">
+  <div class="modal">Modal content</div>
+</Teleport>
+```
+
 **Ответ Senior:**
 
 **Зачем использовать:**
@@ -371,6 +546,30 @@ defineEmits(['update:modelValue']);
 
 ### 9. Что такое Suspense в Vue 3?
 **Ответ:** `Suspense` — компонент для обработки асинхронных зависимостей в дереве компонентов.
+
+```vue
+<Suspense>
+  <template #default>
+    <AsyncComponent />
+  </template>
+  <template #fallback>
+    <div>Loading...</div>
+  </template>
+</Suspense>
+```
+
+**Answer EN:** `Suspense` is a component for handling asynchronous dependencies in the component tree.
+
+```vue
+<Suspense>
+  <template #default>
+    <AsyncComponent />
+  </template>
+  <template #fallback>
+    <div>Loading...</div>
+  </template>
+</Suspense>
+```
 
 **Ответ Senior:**
 
@@ -731,6 +930,20 @@ const AsyncComponent = defineAsyncComponent({
 ### 10. Что такое keep-alive и когда использовать?
 **Ответ:** `keep-alive` — встроенный компонент для кэширования неактивных компонентов, сохраняя их состояние.
 
+```vue
+<keep-alive>
+  <component :is="currentComponent" />
+</keep-alive>
+```
+
+**Answer EN:** `keep-alive` is a built-in component for caching inactive components, preserving their state.
+
+```vue
+<keep-alive>
+  <component :is="currentComponent" />
+</keep-alive>
+```
+
 **Ответ Senior:**
 
 **Когда использовать:**
@@ -760,6 +973,24 @@ const currentTab = ref('TabA');
 
 ### 11. Продвинутое использование Provide/Inject?
 **Ответ:** `provide`/`inject` — механизм для передачи данных через несколько уровней компонентов без prop drilling.
+
+```javascript
+// Родитель
+provide('theme', 'dark')
+
+// Потомок
+const theme = inject('theme')
+```
+
+**Answer EN:** `provide`/`inject` is a mechanism for passing data through multiple component levels without prop drilling.
+
+```javascript
+// Parent
+provide('theme', 'dark')
+
+// Child
+const theme = inject('theme')
+```
 
 **Ответ Senior:**
 
@@ -797,7 +1028,19 @@ const theme = inject(ThemeKey);
 ```
 
 ### 12. Оптимизация рендеринга в Vue 3?
-**Ответ:** Vue 3 предоставляет несколько директив и API для оптимизации производительности рендеринга.
+**Ответ:** Vue 3 предоставляет несколько директив и API для оптимизации производительности рендеринга: `v-once`, `v-memo`, `shallowRef`, `shallowReactive`.
+
+```vue
+<div v-once>{{ expensiveComputation() }}</div>
+<div v-memo="[dependency]">{{ expensiveRender() }}</div>
+```
+
+**Answer EN:** Vue 3 provides several directives and APIs for optimizing rendering performance: `v-once`, `v-memo`, `shallowRef`, `shallowReactive`.
+
+```vue
+<div v-once>{{ expensiveComputation() }}</div>
+<div v-memo="[dependency]">{{ expensiveRender() }}</div>
+```
 
 **Ответ Senior:**
 
@@ -827,7 +1070,25 @@ obj.nested.data = 'new'; // НЕ реактивно!
 ```
 
 ### 13. State Management: Pinia vs Vuex?
-**Ответ:** Оба решения для управления состоянием, но Pinia — рекомендуемый подход для Vue 3.
+**Ответ:** Оба решения для управления состоянием, но Pinia — рекомендуемый подход для Vue 3. Pinia проще, имеет лучшую поддержку TypeScript и не требует модулей.
+
+```javascript
+// Pinia
+export const useStore = defineStore('main', {
+  state: () => ({ count: 0 }),
+  actions: { increment() { this.count++ } }
+})
+```
+
+**Answer EN:** Both are state management solutions, but Pinia is the recommended approach for Vue 3. Pinia is simpler, has better TypeScript support and doesn't require modules.
+
+```javascript
+// Pinia
+export const useStore = defineStore('main', {
+  state: () => ({ count: 0 }),
+  actions: { increment() { this.count++ } }
+})
+```
 
 **Ответ Senior:**
 
@@ -867,7 +1128,25 @@ userStore.fetchUser();
 ```
 
 ### 14. Лучшие практики создания Composables?
-**Ответ:** Composables — переиспользуемые функции для композиции логики в Vue 3.
+**Ответ:** Composables — переиспользуемые функции для композиции логики в Vue 3. Начинайте с `use`, возвращайте объект с реактивными свойствами, используйте TypeScript.
+
+```javascript
+export function useCounter() {
+  const count = ref(0)
+  const increment = () => count.value++
+  return { count, increment }
+}
+```
+
+**Answer EN:** Composables are reusable functions for composing logic in Vue 3. Start with `use`, return object with reactive properties, use TypeScript.
+
+```javascript
+export function useCounter() {
+  const count = ref(0)
+  const increment = () => count.value++
+  return { count, increment }
+}
+```
 
 **Ответ Senior:**
 

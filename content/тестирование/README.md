@@ -5,6 +5,40 @@
 
 **Примеры:**
 ```typescript
+import { describe, it, expect } from 'vitest'
+import { debounce } from './utils'
+
+describe('debounce', () => {
+  it('should delay function execution', async () => {
+    let callCount = 0
+    const fn = debounce(() => callCount++, 100)
+    fn()
+    await new Promise(resolve => setTimeout(resolve, 150))
+    expect(callCount).toBe(1)
+  })
+})
+```
+
+**Answer EN:** Unit tests check individual functions and components in isolation.
+
+**Examples:**
+```typescript
+import { describe, it, expect } from 'vitest'
+import { debounce } from './utils'
+
+describe('debounce', () => {
+  it('should delay function execution', async () => {
+    let callCount = 0
+    const fn = debounce(() => callCount++, 100)
+    fn()
+    await new Promise(resolve => setTimeout(resolve, 150))
+    expect(callCount).toBe(1)
+  })
+})
+```
+
+**Ответ Senior:**
+```typescript
 // utils.test.ts
 import { describe, it, expect } from 'vitest';
 import { debounce } from './utils';
@@ -39,9 +73,35 @@ describe('Counter', () => {
 ```
 
 ### 2. E2E тестирование: Playwright/Cypress?
-**Ответ:** End-to-end тесты проверяют полный пользовательский сценарий.
+**Ответ:** End-to-end тесты проверяют полный пользовательский сценарий от начала до конца, имитируя действия реального пользователя.
 
 **Playwright пример:**
+```typescript
+import { test, expect } from '@playwright/test'
+
+test('user can login', async ({ page }) => {
+  await page.goto('/login')
+  await page.fill('#email', 'user@example.com')
+  await page.click('button[type="submit"]')
+  await expect(page).toHaveURL('/dashboard')
+})
+```
+
+**Answer EN:** End-to-end tests check full user scenario from start to finish, simulating real user actions.
+
+**Playwright example:**
+```typescript
+import { test, expect } from '@playwright/test'
+
+test('user can login', async ({ page }) => {
+  await page.goto('/login')
+  await page.fill('#email', 'user@example.com')
+  await page.click('button[type="submit"]')
+  await expect(page).toHaveURL('/dashboard')
+})
+```
+
+**Ответ Senior:**
 ```typescript
 import { test, expect } from '@playwright/test';
 
