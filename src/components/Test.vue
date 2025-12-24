@@ -127,7 +127,9 @@ const currentQuestion = computed(() => {
 const loadTestQuestions = async () => {
   loadingQuestions.value = true
   try {
-    const response = await fetch(`./${props.sectionDir}/README.md?t=${Date.now()}`)
+    // Используем base URL для корректной работы на GitHub Pages
+    const baseUrl = import.meta.env.BASE_URL || '/'
+    const response = await fetch(`${baseUrl}${props.sectionDir}/README.md?t=${Date.now()}`)
     if (!response.ok) {
       console.error('Ошибка загрузки файла:', response.statusText)
       loadingQuestions.value = false

@@ -191,7 +191,9 @@ const loadCurrentSectionQuestions = async () => {
   }
 
   try {
-    const response = await fetch(`./${props.currentSection.dir}/README.md`)
+    // Используем base URL для корректной работы на GitHub Pages
+    const baseUrl = import.meta.env.BASE_URL || '/'
+    const response = await fetch(`${baseUrl}${props.currentSection.dir}/README.md`)
     if (!response.ok) return
 
     const markdown = await response.text()
@@ -300,8 +302,9 @@ const searchInAllSections = async (keywords) => {
         continue
       }
 
-      // Загружаем и ищем
-      const response = await fetch(`./${section.dir}/README.md`)
+      // Загружаем и ищем (используем base URL для GitHub Pages)
+      const baseUrl = import.meta.env.BASE_URL || '/'
+      const response = await fetch(`${baseUrl}${section.dir}/README.md`)
       if (!response.ok) continue
 
       const markdown = await response.text()

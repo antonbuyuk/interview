@@ -167,7 +167,9 @@ const loadQuestions = async () => {
 
   isLoading.value = true
   try {
-    const response = await fetch(`./${props.section.dir}/README.md`)
+    // Используем base URL для корректной работы на GitHub Pages
+    const baseUrl = import.meta.env.BASE_URL || '/'
+    const response = await fetch(`${baseUrl}${props.section.dir}/README.md`)
     if (response.ok) {
       const markdown = await response.text()
       const extractedQuestions = extractQuestionsFromMarkdown(markdown)

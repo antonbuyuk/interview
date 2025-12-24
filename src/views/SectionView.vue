@@ -123,8 +123,9 @@ const loadContent = async () => {
   error.value = null
 
   try {
-    // Путь к файлу в public директории
-    const response = await fetch(`/${props.section.dir}/README.md?t=${Date.now()}`)
+    // Путь к файлу в public директории (с учетом base URL для GitHub Pages)
+    const baseUrl = import.meta.env.BASE_URL || '/'
+    const response = await fetch(`${baseUrl}${props.section.dir}/README.md?t=${Date.now()}`)
 
     if (!response.ok) {
       throw new Error(`Не удалось загрузить файл: ${response.statusText}`)
