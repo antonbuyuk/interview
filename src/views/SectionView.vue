@@ -505,6 +505,36 @@ const isAnswerEnMarker = (element) => {
   return false
 }
 
+// Проверка, содержит ли элемент русский текст в жирном формате (новый русский раздел)
+const isRussianSectionMarker = (element) => {
+  // Проверяем жирный текст (strong/b) на наличие кириллицы
+  const strongElements = element.querySelectorAll('strong, b')
+  for (const strong of strongElements) {
+    const text = strong.textContent || ''
+    // Проверяем наличие кириллицы
+    if (/[а-яё]/i.test(text)) {
+      // Исключаем маркеры "Ответ", "Ответ Senior"
+      const lowerText = text.toLowerCase()
+      if (!lowerText.includes('ответ') && !lowerText.includes('answer en')) {
+        return true
+      }
+    }
+  }
+
+  // Также проверяем сам элемент, если это strong/b
+  if (element.tagName === 'STRONG' || element.tagName === 'B') {
+    const text = element.textContent || ''
+    if (/[а-яё]/i.test(text)) {
+      const lowerText = text.toLowerCase()
+      if (!lowerText.includes('ответ') && !lowerText.includes('answer en')) {
+        return true
+      }
+    }
+  }
+
+  return false
+}
+
 // Оборачивание ответов в аккордеоны
 const wrapAnswersInAccordions = (html) => {
   // Создаем временный контейнер для работы с DOM
@@ -620,14 +650,14 @@ const wrapAnswersInAccordions = (html) => {
     // Находим элементы для блока Answer EN
     let answerEnElements = []
     if (answerEnMarkerIndex >= 0) {
-      // Блок Answer EN начинается с маркера и заканчивается перед "Ответ Senior:" или перед следующим вопросом
+      // Блок Answer EN начинается с маркера и заканчивается перед русским разделом, "Ответ Senior:" или перед следующим вопросом
       let answerEnEndIndex = allElements.length
 
       // Если есть senior маркер после Answer EN, блок Answer EN заканчивается перед ним
       if (seniorMarkerIndex >= 0 && seniorMarkerIndex > answerEnMarkerIndex) {
         answerEnEndIndex = seniorMarkerIndex
       } else {
-        // Иначе ищем, где заканчивается блок Answer EN
+        // Ищем, где заканчивается блок Answer EN
         for (let i = answerEnMarkerIndex + 1; i < allElements.length; i++) {
           const el = allElements[i]
           const text = (el.textContent || '').toLowerCase().trim()
@@ -643,10 +673,29 @@ const wrapAnswersInAccordions = (html) => {
             answerEnEndIndex = i
             break
           }
+
+          // Если это русский раздел (например, "Преимущества:"), останавливаемся
+          if (isRussianSectionMarker(el)) {
+            answerEnEndIndex = i
+            break
+          }
         }
       }
 
       answerEnElements = allElements.slice(answerEnMarkerIndex, answerEnEndIndex)
+
+      // Добавляем русские разделы после Answer EN в обычный ответ
+      // (элементы от конца Answer EN до начала Senior ответа)
+      if (answerEnEndIndex < allElements.length) {
+        let russianSectionsEndIndex = allElements.length
+        if (seniorMarkerIndex >= 0 && seniorMarkerIndex > answerEnEndIndex) {
+          russianSectionsEndIndex = seniorMarkerIndex
+        }
+
+        // Добавляем русские разделы к обычному ответу
+        const russianSections = allElements.slice(answerEnEndIndex, russianSectionsEndIndex)
+        regularAnswerElements.push(...russianSections)
+      }
     }
 
     // Для senior ответа: начинаем с маркера senior

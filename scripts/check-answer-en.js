@@ -43,12 +43,63 @@ sections.forEach(section => {
       const hasAnswerEn = /\*\*Answer EN:\*\*\s+/.test(questionSection)
       const hasSenior = seniorRegex.test(questionSection)
 
-      // Извлекаем короткие версии для проверки
+      // Извлекаем текст Answer EN для проверки
       let answerEnText = null
+      let answerEnFullText = null
       if (hasAnswerEn) {
-        const answerEnMatch = questionSection.match(/\*\*Answer EN:\*\*\s+([^\n]+(?:\n(?!\*\*|###)[^\n]+)*)/)
-        if (answerEnMatch) {
-          answerEnText = answerEnMatch[1].trim().substring(0, 200)
+        // Ищем блок Answer EN до следующего маркера (Ответ Senior, следующий вопрос или русский раздел)
+        // Останавливаемся на **Преимущества:** или других русских разделах (жирный текст с кириллицей)
+        // Ищем до первого русского раздела (жирный текст с кириллицей, но не "Ответ" или "Answer EN")
+        const answerEnStart = questionSection.indexOf('**Answer EN:**')
+        if (answerEnStart !== -1) {
+          let answerEnEnd = questionSection.length
+
+          // Ищем маркер "Ответ Senior:"
+          const seniorIndex = questionSection.indexOf('**Ответ Senior:**', answerEnStart)
+          if (seniorIndex !== -1 && seniorIndex < answerEnEnd) {
+            answerEnEnd = seniorIndex
+          }
+
+          // Ищем русские разделы (жирный текст с кириллицей, но не "Ответ" или "Answer EN")
+          // Также проверяем разделы, после которых идет русский текст
+          const sectionRegex = /\*\*[^\*]+:\*\*/g
+          sectionRegex.lastIndex = answerEnStart
+          let sectionMatch
+          while ((sectionMatch = sectionRegex.exec(questionSection)) !== null) {
+            const matchText = sectionMatch[0].toLowerCase()
+            // Пропускаем маркеры "Ответ", "Ответ Senior", "Answer EN"
+            if (!matchText.includes('ответ') && !matchText.includes('answer en')) {
+              if (sectionMatch.index < answerEnEnd && sectionMatch.index > answerEnStart) {
+                // Проверяем, есть ли кириллица в заголовке или в содержимом после него
+                const hasCyrillicInHeader = /[А-Яа-яЁё]/.test(sectionMatch[0])
+
+                // Проверяем содержимое после раздела (следующие 200 символов)
+                const contentAfter = questionSection.substring(
+                  sectionMatch.index + sectionMatch[0].length,
+                  Math.min(sectionMatch.index + sectionMatch[0].length + 200, questionSection.length)
+                )
+                const hasCyrillicInContent = /[А-Яа-яЁё]/.test(contentAfter)
+
+                // Если есть кириллица в заголовке или в содержимом, это конец блока Answer EN
+                if (hasCyrillicInHeader || hasCyrillicInContent) {
+                  answerEnEnd = sectionMatch.index
+                  break
+                }
+              }
+            }
+          }
+
+          // Ищем следующий вопрос
+          const nextQuestionIndex = questionSection.indexOf('###', answerEnStart + 1)
+          if (nextQuestionIndex !== -1 && nextQuestionIndex < answerEnEnd) {
+            answerEnEnd = nextQuestionIndex
+          }
+
+          const answerEnBlock = questionSection.substring(answerEnStart + 13, answerEnEnd).trim()
+          if (answerEnBlock) {
+            answerEnFullText = answerEnBlock
+            answerEnText = answerEnFullText.substring(0, 200)
+          }
         }
       }
 
@@ -58,6 +109,7 @@ sections.forEach(section => {
         hasAnswerEn,
         hasSenior,
         answerEnText,
+        answerEnFullText,
         section
       })
     })
@@ -99,6 +151,34 @@ sections.forEach(section => {
           question: `${index + 1}. ${q.text}`,
           message: 'Answer EN пустой'
         })
+      }
+
+      // Проверяем наличие русского текста (кириллицы) в Answer EN
+      if (q.hasAnswerEn && q.answerEnFullText) {
+        // Проверяем наличие кириллицы в тексте
+        const hasCyrillic = /[а-яёА-ЯЁ]/.test(q.answerEnFullText)
+
+        if (hasCyrillic) {
+          // Находим строки с кириллицей для примера
+          const lines = q.answerEnFullText.split('\n')
+          const russianLines = lines
+            .map((line, idx) => ({ line: line.trim(), idx }))
+            .filter(({ line }) => line && /[а-яёА-ЯЁ]/.test(line))
+            .slice(0, 3) // Берем первые 3 строки с русским текстом
+
+          const examples = russianLines.map(({ line }) => {
+            const preview = line.length > 60 ? line.substring(0, 60) + '...' : line
+            return preview
+          }).join('; ')
+
+          issues.push({
+            type: 'russian-in-answer-en',
+            section,
+            question: `${index + 1}. ${q.text}`,
+            message: `В Answer EN найден русский текст: ${examples}`,
+            russianLines: russianLines.map(({ line, idx }) => ({ line, lineNumber: idx + 1 }))
+          })
+        }
       }
     })
 

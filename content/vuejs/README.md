@@ -50,6 +50,15 @@ Options API разделяет логику по типам (data, methods, comp
 **Answer EN:** Reactivity is a system that automatically tracks data changes and updates the DOM.
 
 **How it works in Vue 3:**
+- Uses **Proxy API** (unlike Vue 2, which used Object.defineProperty)
+- Proxy allows intercepting read/write operations on object properties
+- When data changes, all dependent components and computed properties are automatically updated
+
+**Advantages of Proxy over Object.defineProperty:**
+- Works with arrays (indices, push/pop methods, etc.)
+- Works with dynamically added properties
+- Supports nested objects without recursive traversal
+- More performant
 
 **Как работает в Vue 3:**
 - Использует **Proxy API** (в отличие от Vue 2, где использовался Object.defineProperty)

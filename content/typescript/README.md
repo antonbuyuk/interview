@@ -5,11 +5,11 @@
 
 **Answer EN:** TypeScript is a superset of JavaScript that adds static typing. It compiles to JavaScript and helps catch errors during development.
 
-**Преимущества:**
-- Статическая типизация для раннего обнаружения ошибок
-- Улучшенная поддержка IDE (автодополнение, рефакторинг)
-- Лучшая документация кода через типы
-- Поддержка современных возможностей ES6+
+**Advantages:**
+- Static typing for early error detection
+- Improved IDE support (autocompletion, refactoring)
+- Better code documentation through types
+- Support for modern ES6+ features
 
 **Ответ Senior:**
 
@@ -33,8 +33,6 @@ TypeScript компилируется в JavaScript и может использ
 ### 2. Разница между `type` и `interface`?
 **Ответ:** Оба используются для определения типов объектов, но есть различия:
 
-**Answer EN:** Both are used to define object types, but there are differences:
-
 **interface:**
 - Может быть расширена (`extends`)
 - Может быть объявлена повторно (объединение)
@@ -46,13 +44,26 @@ TypeScript компилируется в JavaScript и может использ
 - Не поддерживает declaration merging
 - Может использовать mapped types и условные типы
 
+**Answer EN:** Both are used to define object types, but there are differences:
+
+**interface:**
+- Can be extended (`extends`)
+- Can be redeclared (merged)
+- Works only with object types
+- Supports declaration merging
+
+**type:**
+- More flexible (can describe primitives, union, intersection)
+- Does not support declaration merging
+- Can use mapped types and conditional types
+
 ```typescript
 // interface
 interface User {
   name: string;
 }
 interface User {
-  age: number; // объединяется с предыдущим
+  age: number; // merged with previous
 }
 
 // type
@@ -61,7 +72,7 @@ type User = {
   age: number;
 }
 
-// type может создавать union types
+// type can create union types
 type Status = 'active' | 'inactive' | 'pending';
 ```
 
@@ -78,6 +89,7 @@ type Status = 'active' | 'inactive' | 'pending';
 - Для более сложных типовых конструкций
 
 **Рекомендация:** Для объектов предпочитайте `interface`, для всего остального — `type`.
+
 
 ### 3. Что такое generics (обобщенные типы)?
 **Ответ:** Generics позволяют создавать переиспользуемые компоненты, работающие с разными типами данных. Позволяют параметризовать типы, делая код более гибким и типобезопасным.
