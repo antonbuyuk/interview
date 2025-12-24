@@ -75,19 +75,20 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   height: 56px;
-  background: #1e1e1e;
-  color: #e0e0e0;
+  background: #ffffff;
+  color: #1e1e1e;
   z-index: 102;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   align-items: center;
   padding: 0 1rem;
   gap: 1rem;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .menu-toggle-btn {
   background: transparent;
   border: none;
-  color: #e0e0e0;
+  color: #1e1e1e;
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0.5rem;
@@ -101,8 +102,8 @@ onUnmounted(() => {
 }
 
 .menu-toggle-btn:hover {
-  background: #2a2a2a;
-  color: #fff;
+  background: #f5f5f5;
+  color: #1e1e1e;
 }
 
 .menu-toggle-btn:active {
@@ -113,7 +114,7 @@ onUnmounted(() => {
   font-size: 1.125rem;
   font-weight: 700;
   margin: 0;
-  color: #fff;
+  color: #1e1e1e;
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -123,7 +124,7 @@ onUnmounted(() => {
 .filter-toggle-btn {
   background: transparent;
   border: none;
-  color: #e0e0e0;
+  color: #1e1e1e;
   font-size: 1.25rem;
   cursor: pointer;
   padding: 0.5rem;
@@ -138,8 +139,8 @@ onUnmounted(() => {
 }
 
 .filter-toggle-btn:hover {
-  background: #2a2a2a;
-  color: #fff;
+  background: #f5f5f5;
+  color: #1e1e1e;
 }
 
 .filter-toggle-btn:active {

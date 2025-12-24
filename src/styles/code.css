@@ -10,8 +10,17 @@ code, pre code {
 
 /* Убеждаемся, что блоки кода имеют правильный стиль */
 pre {
-  background: #1e1e1e !important;
-  color: #d4d4d4 !important;
+  background: #f8f9fa !important;
+  background-color: #f8f9fa !important;
+  color: #1e1e1e !important;
+}
+
+/* Дополнительная гарантия для всех блоков кода */
+.content pre,
+.content :deep(pre),
+pre[class*="language-"] {
+  background: #f8f9fa !important;
+  background-color: #f8f9fa !important;
 }
 
 pre code {

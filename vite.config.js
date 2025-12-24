@@ -2,7 +2,12 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 
+// Base URL для GitHub Pages (имя репозитория)
+// В production используем /interview/, в dev - /
+const base = process.env.NODE_ENV === 'production' || process.env.CI ? '/interview/' : '/'
+
 export default defineConfig({
+  base,
   plugins: [vue()],
   resolve: {
     alias: {
@@ -14,5 +19,10 @@ export default defineConfig({
     port: 3000,
     open: true
   },
-  publicDir: 'public'
+  publicDir: 'public',
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets'
+  }
 })
+

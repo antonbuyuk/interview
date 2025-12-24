@@ -1,97 +1,97 @@
 /* Кастомная тема VS Code для highlight.js */
 
-/* Базовые цвета VS Code - применяем только внутри pre */
+/* Базовые цвета для светлого фона - применяем только внутри pre */
 pre .hljs,
 pre code,
 pre code.hljs {
   background: transparent !important;
-  color: #d4d4d4 !important;
+  color: #1e1e1e !important;
   padding: 0 !important;
   border-radius: 0 !important;
 }
 
-/* Ключевые слова - синий */
+/* Ключевые слова */
 .hljs-keyword,
 .hljs-selector-tag,
 .hljs-built_in,
 pre code .hljs-keyword,
 pre code .hljs-selector-tag {
-  color: #569cd6 !important;
+  color: #d73a49 !important;
 }
 
-/* Строки - оранжевый */
+/* Строки */
 .hljs-string,
 pre code .hljs-string {
-  color: #ce9178 !important;
+  color: #032f62 !important;
 }
 
-/* Комментарии - зеленый */
+/* Комментарии */
 .hljs-comment,
 .hljs-quote,
 pre code .hljs-comment,
 pre code .hljs-quote {
-  color: #6a9955 !important;
+  color: #6a737d !important;
   font-style: italic !important;
 }
 
-/* Числа - светло-зеленый */
+/* Числа */
 .hljs-number,
 .hljs-literal,
 pre code .hljs-number,
 pre code .hljs-literal {
-  color: #b5cea8 !important;
+  color: #005cc5 !important;
 }
 
-/* Функции - желтый */
+/* Функции */
 .hljs-function,
 .hljs-title,
 .hljs-title.function_,
 pre code .hljs-function,
 pre code .hljs-title:not(.hljs-class):not(.hljs-type) {
-  color: #dcdcaa !important;
+  color: #6f42c1 !important;
 }
 
-/* Типы - бирюзовый */
+/* Типы */
 .hljs-type,
 .hljs-class,
 .hljs-title.hljs-class,
 pre code .hljs-type,
 pre code .hljs-class {
-  color: #4ec9b0 !important;
+  color: #e36209 !important;
 }
 
-/* Переменные - светло-голубой */
+/* Переменные */
 .hljs-variable,
 .hljs-params,
 pre code .hljs-variable,
 pre code .hljs-params {
-  color: #9cdcfe !important;
+  color: #e36209 !important;
 }
 
-/* Свойства - голубой */
+/* Свойства */
 .hljs-property,
 .hljs-attr,
 pre code .hljs-property,
 pre code .hljs-attr {
-  color: #92c5f7 !important;
+  color: #005cc5 !important;
 }
 
 /* Операторы */
 .hljs-operator,
 pre code .hljs-operator {
-  color: #d4d4d4 !important;
+  color: #1e1e1e !important;
 }
 
-/* Регулярные выражения - красный */
+/* Регулярные выражения */
 .hljs-regexp,
 pre code .hljs-regexp {
-  color: #d16969 !important;
+  color: #032f62 !important;
 }
 
 /* Метаданные */
 .hljs-meta,
 pre code .hljs-meta {
-  color: #569cd6 !important;
+  color: #d73a49 !important;
 }
 
 /* Важные - жирный */

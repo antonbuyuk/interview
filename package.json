@@ -5,17 +5,17 @@
     "copy": "node scripts/copy-markdown.js",
     "dev": "npm run copy && vite",
     "build": "npm run copy && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build && echo 'Build completed. Push to main branch to deploy via GitHub Actions.'"
   },
   "dependencies": {
-    "vue": "^3.4.21",
-    "vue-router": "^4.3.0",
+    "highlight.js": "^11.10.0",
     "marked": "^11.2.0",
-    "highlight.js": "^11.10.0"
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",
     "vite": "^5.2.0"
   }
 }
-

@@ -127,7 +127,7 @@ const currentQuestion = computed(() => {
 const loadTestQuestions = async () => {
   loadingQuestions.value = true
   try {
-    const response = await fetch(`/${props.sectionDir}/README.md?t=${Date.now()}`)
+    const response = await fetch(`./${props.sectionDir}/README.md?t=${Date.now()}`)
     if (!response.ok) {
       console.error('Ошибка загрузки файла:', response.statusText)
       loadingQuestions.value = false

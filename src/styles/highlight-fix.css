@@ -7,7 +7,7 @@
   overflow-x: auto;
   padding: 0;
   background: transparent;
-  color: #d4d4d4;
+  color: #1e1e1e;
 }
 
 /* Убеждаемся, что все классы highlight.js работают */
@@ -18,7 +18,7 @@
 /* Комментарии */
 .content pre code.hljs .hljs-comment,
 .content pre code.hljs .hljs-quote {
-  color: #6a9955 !important;
+  color: #6a737d !important;
   font-style: italic !important;
 }
 
@@ -27,59 +27,59 @@
 .content pre code.hljs .hljs-selector-tag,
 .content pre code.hljs .hljs-built_in,
 .content pre code.hljs .hljs-type {
-  color: #569cd6 !important;
+  color: #d73a49 !important;
 }
 
 /* Строки */
 .content pre code.hljs .hljs-string,
 .content pre code.hljs .hljs-meta .hljs-meta-string {
-  color: #ce9178 !important;
+  color: #032f62 !important;
 }
 
 /* Числа */
 .content pre code.hljs .hljs-number,
 .content pre code.hljs .hljs-literal {
-  color: #b5cea8 !important;
+  color: #005cc5 !important;
 }
 
 /* Функции */
 .content pre code.hljs .hljs-function,
 .content pre code.hljs .hljs-title:not(.hljs-class):not(.hljs-type) {
-  color: #dcdcaa !important;
+  color: #6f42c1 !important;
 }
 
 /* Типы и классы */
 .content pre code.hljs .hljs-type,
 .content pre code.hljs .hljs-class,
 .content pre code.hljs .hljs-title.hljs-class {
-  color: #4ec9b0 !important;
+  color: #e36209 !important;
 }
 
 /* Переменные */
 .content pre code.hljs .hljs-variable,
 .content pre code.hljs .hljs-params {
-  color: #9cdcfe !important;
+  color: #e36209 !important;
 }
 
 /* Свойства */
 .content pre code.hljs .hljs-property,
 .content pre code.hljs .hljs-attr {
-  color: #92c5f7 !important;
+  color: #005cc5 !important;
 }
 
 /* Регулярные выражения */
 .content pre code.hljs .hljs-regexp {
-  color: #d16969 !important;
+  color: #032f62 !important;
 }
 
 /* Метаданные */
 .content pre code.hljs .hljs-meta {
-  color: #569cd6 !important;
+  color: #d73a49 !important;
 }
 
 /* Операторы */
 .content pre code.hljs .hljs-operator {
-  color: #d4d4d4 !important;
+  color: #1e1e1e !important;
 }
 
 /* Код внутри аккордеонов */
@@ -89,57 +89,57 @@
   overflow-x: auto;
   padding: 0;
   background: transparent;
-  color: #d4d4d4;
+  color: #1e1e1e;
 }
 
 /* Все классы highlight.js внутри аккордеонов */
 .content .answer-accordion pre code.hljs .hljs-keyword,
 .content .answer-accordion pre code.hljs .hljs-selector-tag,
 .content .answer-accordion pre code.hljs .hljs-built_in {
-  color: #569cd6 !important;
+  color: #d73a49 !important;
 }
 
 .content .answer-accordion pre code.hljs .hljs-string,
 .content .answer-accordion pre code.hljs .hljs-meta .hljs-meta-string {
-  color: #ce9178 !important;
+  color: #032f62 !important;
 }
 
 .content .answer-accordion pre code.hljs .hljs-comment,
 .content .answer-accordion pre code.hljs .hljs-quote {
-  color: #6a9955 !important;
+  color: #6a737d !important;
   font-style: italic !important;
 }
 
 .content .answer-accordion pre code.hljs .hljs-number,
 .content .answer-accordion pre code.hljs .hljs-literal {
-  color: #b5cea8 !important;
+  color: #005cc5 !important;
 }
 
 .content .answer-accordion pre code.hljs .hljs-function,
 .content .answer-accordion pre code.hljs .hljs-title:not(.hljs-class):not(.hljs-type) {
-  color: #dcdcaa !important;
+  color: #6f42c1 !important;
 }
 
 .content .answer-accordion pre code.hljs .hljs-type,
 .content .answer-accordion pre code.hljs .hljs-class {
-  color: #4ec9b0 !important;
+  color: #e36209 !important;
 }
 
 .content .answer-accordion pre code.hljs .hljs-variable,
 .content .answer-accordion pre code.hljs .hljs-params {
-  color: #9cdcfe !important;
+  color: #e36209 !important;
 }
 
 .content .answer-accordion pre code.hljs .hljs-property,
 .content .answer-accordion pre code.hljs .hljs-attr {
-  color: #92c5f7 !important;
+  color: #005cc5 !important;
 }
 
 .content .answer-accordion pre code.hljs .hljs-regexp {
-  color: #d16969 !important;
+  color: #032f62 !important;
 }
 
 .content .answer-accordion pre {
-  background: #1e1e1e !important;
+  background: #f8f9fa !important;
 }
 

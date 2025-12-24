@@ -12,7 +12,7 @@
     >
       <span class="nav-text">{{ section.title }}</span>
       <span class="dropdown-arrow" :class="{ open: showDropdown }">▼</span>
-    </router-link>
+      </router-link>
 
     <transition name="dropdown">
       <div
@@ -167,7 +167,7 @@ const loadQuestions = async () => {
 
   isLoading.value = true
   try {
-    const response = await fetch(`/${props.section.dir}/README.md`)
+    const response = await fetch(`./${props.section.dir}/README.md`)
     if (response.ok) {
       const markdown = await response.text()
       const extractedQuestions = extractQuestionsFromMarkdown(markdown)
@@ -251,7 +251,7 @@ watch(() => route.path, (newPath) => {
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1.5rem;
-  color: #e0e0e0;
+  color: #1e1e1e;
   text-decoration: none;
   transition: all 0.2s;
   border-left: 3px solid transparent;
@@ -259,12 +259,12 @@ watch(() => route.path, (newPath) => {
 }
 
 .nav-item:hover {
-  background: #2a2a2a;
-  color: #fff;
+  background: #f5f5f5;
+  color: #1e1e1e;
 }
 
 .nav-item.active {
-  background: #2a2a2a;
+  background: #f0f7ff;
   border-left-color: #42b883;
   color: #42b883;
   font-weight: 500;
@@ -290,10 +290,10 @@ watch(() => route.path, (newPath) => {
   position: fixed;
   width: 320px;
   max-height: 500px;
-  background: #252525;
-  border: 1px solid #444;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 1000;
   overflow: hidden;
   display: flex;
@@ -307,20 +307,20 @@ watch(() => route.path, (newPath) => {
   align-items: center;
   justify-content: space-between;
   padding: 1rem;
-  border-bottom: 1px solid #444;
-  background: #2a2a2a;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f8f9fa;
 }
 
 .dropdown-title {
   font-weight: 600;
-  color: #fff;
+  color: #1e1e1e;
   font-size: 0.9375rem;
 }
 
 .question-count {
   font-size: 0.75rem;
-  color: #999;
-  background: #1e1e1e;
+  color: #666;
+  background: #e9ecef;
   padding: 0.25rem 0.5rem;
   border-radius: 12px;
 }
@@ -335,13 +335,13 @@ watch(() => route.path, (newPath) => {
   align-items: flex-start;
   padding: 0.75rem 1rem;
   text-decoration: none;
-  color: #e0e0e0;
+  color: #1e1e1e;
   transition: all 0.2s;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .dropdown-item:hover {
-  background: #2a2a2a;
+  background: #f5f5f5;
   color: #42b883;
 }
 
@@ -383,23 +383,23 @@ watch(() => route.path, (newPath) => {
 }
 
 .dropdown-list::-webkit-scrollbar-track {
-  background: #1e1e1e;
+  background: #f5f5f5;
 }
 
 .dropdown-list::-webkit-scrollbar-thumb {
-  background: #444;
+  background: #ccc;
   border-radius: 3px;
 }
 
 .dropdown-list::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #999;
 }
 
 .dropdown-loading,
 .dropdown-empty {
   padding: 2rem 1rem;
   text-align: center;
-  color: #999;
+  color: #666;
   font-size: 0.875rem;
 }
 

@@ -59,7 +59,7 @@ body {
     margin-left: 0;
     max-width: 100vw;
     padding: 0;
-    padding-top: 56px; /* Отступ для шапки */
+    padding-top: 56px;
   }
 }
 </style>

@@ -191,7 +191,7 @@ const loadCurrentSectionQuestions = async () => {
   }
 
   try {
-    const response = await fetch(`/${props.currentSection.dir}/README.md`)
+    const response = await fetch(`./${props.currentSection.dir}/README.md`)
     if (!response.ok) return
 
     const markdown = await response.text()
@@ -301,7 +301,7 @@ const searchInAllSections = async (keywords) => {
       }
 
       // Загружаем и ищем
-      const response = await fetch(`/${section.dir}/README.md`)
+      const response = await fetch(`./${section.dir}/README.md`)
       if (!response.ok) continue
 
       const markdown = await response.text()

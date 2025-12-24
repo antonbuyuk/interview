@@ -483,54 +483,6 @@ const isSeniorMarker = (element) => {
   return false
 }
 
-// Проверка, является ли элемент маркером английского ответа
-const isEnglishMarker = (element) => {
-  const text = (element.textContent || '').toLowerCase().trim()
-  const html = (element.innerHTML || '').toLowerCase()
-
-  // Проверяем различные варианты маркеров для английского ответа
-  const englishPatterns = [
-    /answer\s+en:/i,
-    /answer\s+english:/i,
-    /english\s+answer:/i,
-    /ответ\s+en:/i,
-    /ответ\s+english:/i,
-    /english:/i,
-    /^\*\*answer\s+en:/i,
-    /^\*\*answer\s+english:/i,
-    /^\*\*english:/i,
-    /^\*\*ответ\s+en:/i,
-    /^\*\*ответ\s+english:/i
-  ]
-
-  // Проверяем текст элемента
-  for (const pattern of englishPatterns) {
-    if (pattern.test(text) || pattern.test(html)) {
-      return true
-    }
-  }
-
-  // Проверяем жирный текст (strong)
-  if (element.tagName === 'STRONG' || element.tagName === 'B') {
-    for (const pattern of englishPatterns) {
-      if (pattern.test(text)) {
-        return true
-      }
-    }
-  }
-
-  // Проверяем заголовки
-  if (['H3', 'H4', 'H5', 'H6'].includes(element.tagName)) {
-    for (const pattern of englishPatterns) {
-      if (pattern.test(text)) {
-        return true
-      }
-    }
-  }
-
-  return false
-}
-
 // Оборачивание ответов в аккордеоны
 const wrapAnswersInAccordions = (html) => {
   // Создаем временный контейнер для работы с DOM
@@ -562,86 +514,46 @@ const wrapAnswersInAccordions = (html) => {
 
     if (allElements.length === 0) return
 
-    // Ищем маркеры ответов (senior и английский)
+    // Ищем маркер senior ответа
     let seniorMarkerIndex = -1
-    let englishMarkerIndex = -1
-
     for (let i = 0; i < allElements.length; i++) {
       const el = allElements[i]
 
-      // Проверяем маркер senior ответа
-      if (seniorMarkerIndex === -1) {
-        if (isSeniorMarker(el)) {
+      // Проверяем сам элемент
+      if (isSeniorMarker(el)) {
+        seniorMarkerIndex = i
+        break
+      }
+
+      // Проверяем содержимое элемента (для параграфов и других контейнеров)
+      const innerElements = el.querySelectorAll('strong, b, h3, h4, h5, h6, p')
+      for (const innerEl of innerElements) {
+        if (isSeniorMarker(innerEl)) {
           seniorMarkerIndex = i
-        } else {
-          const innerElements = el.querySelectorAll('strong, b, h3, h4, h5, h6, p')
-          for (const innerEl of innerElements) {
-            if (isSeniorMarker(innerEl)) {
-              seniorMarkerIndex = i
-              break
-            }
-          }
-
-          const text = (el.textContent || '').toLowerCase().trim()
-          if (text.includes('ответ senior') || text.includes('senior ответ') ||
-              text.includes('ответ сеньор') || text.includes('сеньор ответ') ||
-              /^\*\*ответ\s+senior/i.test(text) || /^\*\*senior/i.test(text)) {
-            seniorMarkerIndex = i
-          }
+          break
         }
       }
 
-      // Проверяем маркер английского ответа
-      if (englishMarkerIndex === -1) {
-        if (isEnglishMarker(el)) {
-          englishMarkerIndex = i
-        } else {
-          const innerElements = el.querySelectorAll('strong, b, h3, h4, h5, h6, p')
-          for (const innerEl of innerElements) {
-            if (isEnglishMarker(innerEl)) {
-              englishMarkerIndex = i
-              break
-            }
-          }
-
-          const text = (el.textContent || '').toLowerCase().trim()
-          if (text.includes('answer en:') || text.includes('answer english:') ||
-              text.includes('english answer:') || text.includes('ответ en:') ||
-              text.includes('ответ english:') || text.includes('english:') ||
-              /^\*\*answer\s+en:/i.test(text) || /^\*\*answer\s+english:/i.test(text) ||
-              /^\*\*english:/i.test(text) || /^\*\*ответ\s+en:/i.test(text) ||
-              /^\*\*ответ\s+english:/i.test(text)) {
-            englishMarkerIndex = i
-          }
-        }
+      // Проверяем текст элемента напрямую (для случаев, когда маркер в начале параграфа)
+      const text = (el.textContent || '').toLowerCase().trim()
+      if (text.includes('ответ senior') || text.includes('senior ответ') ||
+          text.includes('ответ сеньор') || text.includes('сеньор ответ') ||
+          /^\*\*ответ\s+senior/i.test(text) || /^\*\*senior/i.test(text)) {
+        seniorMarkerIndex = i
+        break
       }
 
-      // Если нашли оба маркера, можно прекратить поиск
-      if (seniorMarkerIndex >= 0 && englishMarkerIndex >= 0) break
+      if (seniorMarkerIndex >= 0) break
     }
 
-    // Определяем порядок маркеров и разделяем элементы
-    const markers = [
-      { type: 'senior', index: seniorMarkerIndex },
-      { type: 'english', index: englishMarkerIndex }
-    ].filter(m => m.index >= 0).sort((a, b) => a.index - b.index)
+    // Разделяем элементы на обычный ответ и senior ответ
+    const regularAnswerElements = seniorMarkerIndex >= 0
+      ? allElements.slice(0, seniorMarkerIndex)
+      : allElements
 
-    // Разделяем элементы на части
-    let regularAnswerEnd = markers.length > 0 ? markers[0].index : allElements.length
-    const regularAnswerElements = allElements.slice(0, regularAnswerEnd)
-
-    let seniorAnswerElements = []
-    let englishAnswerElements = []
-
-    if (seniorMarkerIndex >= 0) {
-      const nextMarkerIndex = markers.find(m => m.index > seniorMarkerIndex)?.index || allElements.length
-      seniorAnswerElements = allElements.slice(seniorMarkerIndex, nextMarkerIndex)
-    }
-
-    if (englishMarkerIndex >= 0) {
-      const nextMarkerIndex = markers.find(m => m.index > englishMarkerIndex)?.index || allElements.length
-      englishAnswerElements = allElements.slice(englishMarkerIndex, nextMarkerIndex)
-    }
+    const seniorAnswerElements = seniorMarkerIndex >= 0
+      ? allElements.slice(seniorMarkerIndex)
+      : []
 
     // Создаем аккордеон для обычного ответа
     if (regularAnswerElements.length > 0) {
@@ -649,100 +561,15 @@ const wrapAnswersInAccordions = (html) => {
       h3.insertAdjacentElement('afterend', regularAccordion)
     }
 
-    // Создаем аккордеон для английского ответа (если есть, вставляем после обычного)
-    if (englishAnswerElements.length > 0) {
-      // Извлекаем контент английского ответа, правильно обрабатывая маркер
-      const englishContentElements = []
-
-      for (let i = 0; i < englishAnswerElements.length; i++) {
-        const el = englishAnswerElements[i]
-        const cloned = el.cloneNode(true)
-
-        // Проверяем, содержит ли элемент маркер
-        const text = (el.textContent || '').toLowerCase()
-        const html = (el.innerHTML || '').toLowerCase()
-        const hasMarker = text.includes('answer en:') || text.includes('answer english:') ||
-            text.includes('english answer:') || text.includes('ответ en:') ||
-            text.includes('ответ english:') || html.includes('answer en:') ||
-            html.includes('answer english:') || html.includes('english answer:') ||
-            html.includes('ответ en:') || html.includes('ответ english:')
-
-        if (hasMarker) {
-          // Маркер и текст в одном элементе - извлекаем текст после маркера
-          const markerPatterns = [
-            /answer\s+en:/i,
-            /answer\s+english:/i,
-            /english\s+answer:/i,
-            /ответ\s+en:/i,
-            /ответ\s+english:/i
-          ]
-
-          // Получаем весь текст элемента для поиска маркера
-          const fullText = el.textContent
-          const fullLower = fullText.toLowerCase()
-          let markerIndex = -1
-
-          // Ищем позицию маркера в тексте
-          for (const pattern of markerPatterns) {
-            const match = fullLower.match(pattern)
-            if (match) {
-              markerIndex = match.index + match[0].length
-              break
-            }
-          }
-
-          if (markerIndex > 0) {
-            // Получаем текст после маркера
-            const textAfterMarker = fullText.substring(markerIndex).trim()
-
-            // Если это параграф, создаем новый параграф с текстом после маркера
-            if (el.tagName === 'P') {
-              // Создаем новый параграф
-              const newP = document.createElement('p')
-
-              // Добавляем текст после маркера
-              if (textAfterMarker) {
-                newP.appendChild(document.createTextNode(textAfterMarker))
-              }
-
-              // Сохраняем все не-текстовые элементы из оригинала (pre, code, ul, ol и т.д.)
-              // Но они обычно находятся в отдельных элементах после параграфа, не внутри
-              // Поэтому просто добавляем текст
-
-              // Если есть контент, добавляем новый параграф
-              if (textAfterMarker) {
-                englishContentElements.push(newP)
-              }
-            } else {
-              // Для других элементов просто заменяем текст
-              cloned.textContent = textAfterMarker
-              const remainingText = cloned.textContent.trim()
-              const hasCode = cloned.querySelector('pre, code, ul, ol, img, table')
-              if (remainingText || hasCode) {
-                englishContentElements.push(cloned)
-              }
-            }
-          }
-        } else {
-          // Если маркер уже был обработан, добавляем все последующие элементы
-          englishContentElements.push(cloned)
-        }
-      }
-
-      if (englishContentElements.length > 0) {
-        const englishAccordion = createAccordion('Answer (EN)', englishContentElements, false, 'english')
-        const insertAfter = regularAnswerElements.length > 0
-          ? h3.nextElementSibling
-          : h3
-        insertAfter.insertAdjacentElement('afterend', englishAccordion)
-      }
-    }
-
     // Создаем аккордеон для senior ответа
     if (seniorAnswerElements.length > 0) {
-      const seniorContentElements = seniorAnswerElements.slice(1) // Пропускаем маркер
+      // Исключаем маркер из содержимого
+      const seniorContentElements = seniorAnswerElements.slice(1) // Пропускаем первый элемент (маркер)
       const seniorAccordion = createAccordion('Ответ senior', seniorContentElements, true)
-      const insertAfter = h3.nextElementSibling || h3
+      // Вставляем после обычного аккордеона или после вопроса
+      const insertAfter = regularAnswerElements.length > 0
+        ? h3.nextElementSibling
+        : h3
       insertAfter.insertAdjacentElement('afterend', seniorAccordion)
     }
 
@@ -758,13 +585,11 @@ const wrapAnswersInAccordions = (html) => {
 }
 
 // Создание аккордеона с заданным заголовком и элементами
-const createAccordion = (label, elements, isSenior = false, type = 'regular') => {
+const createAccordion = (label, elements, isSenior = false) => {
   const accordionWrapper = document.createElement('div')
   accordionWrapper.className = 'answer-accordion'
   if (isSenior) {
     accordionWrapper.setAttribute('data-type', 'senior')
-  } else if (type === 'english') {
-    accordionWrapper.setAttribute('data-type', 'english')
   }
 
   const accordionToggle = document.createElement('button')
@@ -1716,31 +1541,6 @@ const initAccordions = () => {
 
 .content :deep(.answer-accordion[data-type="senior"] .answer-accordion-inner) {
   border-top-color: #ffd700;
-}
-
-/* Стили для английского аккордеона */
-.content :deep(.answer-accordion[data-type="english"]) {
-  margin-top: 1rem;
-}
-
-.content :deep(.answer-accordion[data-type="english"] .answer-accordion-toggle) {
-  background: #e6f3ff;
-  border-color: #4da6ff;
-  color: #0066cc;
-}
-
-.content :deep(.answer-accordion[data-type="english"] .answer-accordion-toggle:hover) {
-  background: #cce7ff;
-  border-color: #3399ff;
-  color: #0052a3;
-}
-
-.content :deep(.answer-accordion[data-type="english"] .answer-accordion-toggle .answer-accordion-icon) {
-  color: #0066cc;
-}
-
-.content :deep(.answer-accordion[data-type="english"] .answer-accordion-inner) {
-  border-top-color: #4da6ff;
 }
 
 /* Подсветка кода внутри аккордеонов */

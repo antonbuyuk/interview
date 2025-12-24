@@ -6,3 +6,5 @@ dist
 .vscode
 public/*/
 !.gitkeep
+.output
+.nuxt

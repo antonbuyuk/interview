@@ -11,7 +11,7 @@
       <router-link
         to="/"
         class="nav-item"
-        :class="{ active: $route.path === '/' }"
+        :class="{ active: route.path === '/' }"
       >
         <span class="nav-icon">🏠</span>
         <span class="nav-text">Главная</span>
@@ -48,12 +48,10 @@ const toggleSidebar = () => {
 
 const closeSidebar = () => {
   isOpen.value = false
-  // Эмитим событие для синхронизации с Header
   const event = new CustomEvent('sidebar-closed')
   window.dispatchEvent(event)
 }
 
-// Слушаем события от Header
 const handleToggleSidebar = (event) => {
   isOpen.value = event.detail.open
 }
@@ -66,9 +64,8 @@ onUnmounted(() => {
   window.removeEventListener('toggle-sidebar', handleToggleSidebar)
 })
 
-// Закрываем меню при изменении маршрута на мобильных
 watch(() => route.path, () => {
-  if (window.innerWidth <= 768) {
+  if (typeof window !== 'undefined' && window.innerWidth <= 768) {
     closeSidebar()
   }
 })
@@ -81,21 +78,22 @@ watch(() => route.path, () => {
   top: 0;
   width: 280px;
   height: 100vh;
-  background: #1e1e1e;
-  color: #e0e0e0;
+  background: #ffffff;
+  color: #1e1e1e;
   overflow-y: auto;
   overflow-x: hidden;
   z-index: 100;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
+  border-right: 1px solid #e0e0e0;
 }
 
 .sidebar-header {
   padding: 1.5rem;
   padding-right: 3rem;
-  border-bottom: 1px solid #333;
-  background: #252525;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f8f9fa;
   flex-shrink: 0;
   position: relative;
 }
@@ -104,12 +102,12 @@ watch(() => route.path, () => {
   font-size: 1.25rem;
   font-weight: 700;
   margin-bottom: 0.25rem;
-  color: #fff;
+  color: #1e1e1e;
 }
 
 .subtitle {
   font-size: 0.875rem;
-  color: #999;
+  color: #666;
   margin: 0;
 }
 
@@ -124,7 +122,7 @@ watch(() => route.path, () => {
   display: flex;
   align-items: center;
   padding: 0.75rem 1.5rem;
-  color: #e0e0e0;
+  color: #1e1e1e;
   text-decoration: none;
   transition: all 0.2s;
   border-left: 3px solid transparent;
@@ -134,12 +132,12 @@ watch(() => route.path, () => {
 }
 
 .nav-item:hover {
-  background: #2a2a2a;
-  color: #fff;
+  background: #f5f5f5;
+  color: #1e1e1e;
 }
 
 .nav-item.active {
-  background: #2a2a2a;
+  background: #f0f7ff;
   border-left-color: #42b883;
   color: #42b883;
   font-weight: 500;
@@ -173,8 +171,8 @@ watch(() => route.path, () => {
 
 .sidebar-footer {
   padding: 1rem 1.5rem;
-  border-top: 1px solid #333;
-  background: #252525;
+  border-top: 1px solid #e0e0e0;
+  background: #f8f9fa;
   flex-shrink: 0;
 }
 
@@ -184,7 +182,6 @@ watch(() => route.path, () => {
   margin: 0;
   text-align: center;
 }
-
 
 .sidebar-overlay {
   display: none;
@@ -204,7 +201,7 @@ watch(() => route.path, () => {
   right: 1rem;
   background: transparent;
   border: none;
-  color: #e0e0e0;
+  color: #1e1e1e;
   font-size: 1.5rem;
   cursor: pointer;
   width: 32px;
@@ -214,14 +211,14 @@ watch(() => route.path, () => {
 }
 
 .close-sidebar:hover {
-  background: #2a2a2a;
-  color: #fff;
+  background: #f5f5f5;
+  color: #1e1e1e;
 }
 
 @media (max-width: 768px) {
   .sidebar-overlay {
     display: block;
-    top: 56px; /* Отступ под шапку */
+    top: 56px;
   }
 
   .close-sidebar {
@@ -234,7 +231,7 @@ watch(() => route.path, () => {
     transform: translateX(-100%);
     transition: transform 0.3s ease;
     z-index: 101;
-    top: 56px; /* Отступ под шапку */
+    top: 56px;
     height: calc(100vh - 56px);
   }
 
@@ -243,7 +240,6 @@ watch(() => route.path, () => {
   }
 }
 
-/* Scrollbar стилизация */
 .sidebar::-webkit-scrollbar,
 .nav::-webkit-scrollbar {
   width: 6px;
@@ -251,17 +247,17 @@ watch(() => route.path, () => {
 
 .sidebar::-webkit-scrollbar-track,
 .nav::-webkit-scrollbar-track {
-  background: #1e1e1e;
+  background: #f5f5f5;
 }
 
 .sidebar::-webkit-scrollbar-thumb,
 .nav::-webkit-scrollbar-thumb {
-  background: #444;
+  background: #ccc;
   border-radius: 3px;
 }
 
 .sidebar::-webkit-scrollbar-thumb:hover,
 .nav::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #999;
 }
 </style>
