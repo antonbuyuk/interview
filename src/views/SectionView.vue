@@ -17,11 +17,6 @@
       </div>
       <article class="content" ref="contentRef" v-html="htmlContent" @click="handleCodeBlockClick"></article>
       <div class="right-sidebar">
-        <div class="test-section">
-          <button @click="showTest = true" class="test-btn" v-if="questions.length > 0">
-            🧪 Начать тест
-          </button>
-        </div>
         <Search :current-section="section" :questions="questions" />
         <QuestionNav :questions="questions" class="desktop-nav" />
       </div>
@@ -35,22 +30,10 @@
           <button @click="closeFilter" class="filter-close-btn" aria-label="Закрыть">×</button>
         </div>
         <div class="filter-modal-content">
-          <div class="test-section-modal">
-            <button @click="showTest = true; closeFilter()" class="test-btn" v-if="questions.length > 0">
-              🧪 Начать тест
-            </button>
-          </div>
           <QuestionNav :questions="questions" class="mobile-filter" />
         </div>
       </div>
     </div>
-
-    <Test
-      v-if="showTest"
-      :questions="questions"
-      :section-dir="section.dir"
-      @close="showTest = false"
-    />
   </div>
 </template>
 
@@ -61,7 +44,6 @@ import { marked } from 'marked'
 import hljs from 'highlight.js'
 import QuestionNav from '../components/QuestionNav.vue'
 import Search from '../components/Search.vue'
-import Test from '../components/Test.vue'
 // Используем темную тему и переопределим цвета для VS Code стиля
 import 'highlight.js/styles/github-dark.css'
 import '../styles/code.css'
@@ -81,7 +63,6 @@ const error = ref(null)
 const htmlContent = ref('')
 const contentRef = ref(null)
 const questions = ref([])
-const showTest = ref(false)
 const filterOpen = ref(false)
 
 // Закрытие фильтра
@@ -484,6 +465,46 @@ const isSeniorMarker = (element) => {
   return false
 }
 
+// Проверка, является ли элемент маркером английского ответа
+const isAnswerEnMarker = (element) => {
+  const text = (element.textContent || '').toLowerCase().trim()
+  const html = (element.innerHTML || '').toLowerCase()
+
+  // Проверяем различные варианты маркеров
+  const answerEnPatterns = [
+    /answer\s+en/i,
+    /^\*\*answer\s+en:\*\*/i,
+    /answer\s+en:/i
+  ]
+
+  // Проверяем текст элемента
+  for (const pattern of answerEnPatterns) {
+    if (pattern.test(text) || pattern.test(html)) {
+      return true
+    }
+  }
+
+  // Проверяем жирный текст (strong)
+  if (element.tagName === 'STRONG' || element.tagName === 'B') {
+    for (const pattern of answerEnPatterns) {
+      if (pattern.test(text)) {
+        return true
+      }
+    }
+  }
+
+  // Проверяем заголовки
+  if (['H3', 'H4', 'H5', 'H6'].includes(element.tagName)) {
+    for (const pattern of answerEnPatterns) {
+      if (pattern.test(text)) {
+        return true
+      }
+    }
+  }
+
+  return false
+}
+
 // Оборачивание ответов в аккордеоны
 const wrapAnswersInAccordions = (html) => {
   // Создаем временный контейнер для работы с DOM
@@ -515,46 +536,124 @@ const wrapAnswersInAccordions = (html) => {
 
     if (allElements.length === 0) return
 
-    // Ищем маркер senior ответа
+    // Ищем маркеры Answer EN и senior ответа
+    let answerEnMarkerIndex = -1
     let seniorMarkerIndex = -1
+
     for (let i = 0; i < allElements.length; i++) {
       const el = allElements[i]
 
-      // Проверяем сам элемент
-      if (isSeniorMarker(el)) {
-        seniorMarkerIndex = i
-        break
-      }
+      // Проверяем маркер Answer EN
+      if (answerEnMarkerIndex === -1) {
+        // Проверяем сам элемент
+        if (isAnswerEnMarker(el)) {
+          answerEnMarkerIndex = i
+        } else {
+          // Проверяем содержимое элемента (для параграфов)
+          const innerElements = el.querySelectorAll('strong, b, h3, h4, h5, h6, p')
+          for (const innerEl of innerElements) {
+            if (isAnswerEnMarker(innerEl)) {
+              answerEnMarkerIndex = i
+              break
+            }
+          }
 
-      // Проверяем содержимое элемента (для параграфов и других контейнеров)
-      const innerElements = el.querySelectorAll('strong, b, h3, h4, h5, h6, p')
-      for (const innerEl of innerElements) {
-        if (isSeniorMarker(innerEl)) {
-          seniorMarkerIndex = i
-          break
+          // Проверяем текст элемента напрямую (для случаев, когда маркер в начале параграфа)
+          if (answerEnMarkerIndex === -1) {
+            const text = (el.textContent || '').toLowerCase().trim()
+            const html = (el.innerHTML || '').toLowerCase()
+
+            // Проверяем различные варианты
+            if (text.includes('answer en:') ||
+                text.startsWith('answer en:') ||
+                /answer\s+en:/i.test(text) ||
+                html.includes('answer en:') ||
+                /<strong>answer\s+en:<\/strong>/i.test(html)) {
+              answerEnMarkerIndex = i
+            }
+          }
         }
       }
 
-      // Проверяем текст элемента напрямую (для случаев, когда маркер в начале параграфа)
-      const text = (el.textContent || '').toLowerCase().trim()
-      if (text.includes('ответ senior') || text.includes('senior ответ') ||
-          text.includes('ответ сеньор') || text.includes('сеньор ответ') ||
-          /^\*\*ответ\s+senior/i.test(text) || /^\*\*senior/i.test(text)) {
-        seniorMarkerIndex = i
-        break
+      // Проверяем маркер senior ответа
+      if (seniorMarkerIndex === -1) {
+        if (isSeniorMarker(el)) {
+          seniorMarkerIndex = i
+        } else {
+          // Проверяем содержимое элемента
+          const innerElements = el.querySelectorAll('strong, b, h3, h4, h5, h6, p')
+          for (const innerEl of innerElements) {
+            if (isSeniorMarker(innerEl)) {
+              seniorMarkerIndex = i
+              break
+            }
+          }
+
+          // Проверяем текст элемента напрямую
+          if (seniorMarkerIndex === -1) {
+            const text = (el.textContent || '').toLowerCase().trim()
+            if (text.includes('ответ senior') || text.includes('senior ответ') ||
+                text.includes('ответ сеньор') || text.includes('сеньор ответ') ||
+                /^\*\*ответ\s+senior/i.test(text) || /^\*\*senior/i.test(text)) {
+              seniorMarkerIndex = i
+            }
+          }
+        }
       }
 
-      if (seniorMarkerIndex >= 0) break
+      // Если нашли оба маркера, можно прервать поиск
+      if (answerEnMarkerIndex >= 0 && seniorMarkerIndex >= 0) break
     }
 
-    // Разделяем элементы на обычный ответ и senior ответ
-    const regularAnswerElements = seniorMarkerIndex >= 0
-      ? allElements.slice(0, seniorMarkerIndex)
-      : allElements
+    // Определяем конец обычного ответа (минимум из двух маркеров, если они найдены)
+    let regularAnswerEndIndex = allElements.length
+    if (answerEnMarkerIndex >= 0) {
+      regularAnswerEndIndex = Math.min(regularAnswerEndIndex, answerEnMarkerIndex)
+    }
+    if (seniorMarkerIndex >= 0) {
+      regularAnswerEndIndex = Math.min(regularAnswerEndIndex, seniorMarkerIndex)
+    }
 
-    const seniorAnswerElements = seniorMarkerIndex >= 0
-      ? allElements.slice(seniorMarkerIndex)
-      : []
+    // Разделяем элементы на обычный ответ, Answer EN и senior ответ
+    const regularAnswerElements = allElements.slice(0, regularAnswerEndIndex)
+
+    // Находим элементы для блока Answer EN
+    let answerEnElements = []
+    if (answerEnMarkerIndex >= 0) {
+      // Блок Answer EN начинается с маркера и заканчивается перед "Ответ Senior:" или перед следующим вопросом
+      let answerEnEndIndex = allElements.length
+
+      // Если есть senior маркер после Answer EN, блок Answer EN заканчивается перед ним
+      if (seniorMarkerIndex >= 0 && seniorMarkerIndex > answerEnMarkerIndex) {
+        answerEnEndIndex = seniorMarkerIndex
+      } else {
+        // Иначе ищем, где заканчивается блок Answer EN
+        for (let i = answerEnMarkerIndex + 1; i < allElements.length; i++) {
+          const el = allElements[i]
+          const text = (el.textContent || '').toLowerCase().trim()
+
+          // Если это следующий вопрос, останавливаемся
+          if (el.tagName === 'H3' && /^\d+\.\s+/.test(text)) {
+            answerEnEndIndex = i
+            break
+          }
+
+          // Если это маркер senior (на случай, если он не был найден ранее)
+          if (isSeniorMarker(el)) {
+            answerEnEndIndex = i
+            break
+          }
+        }
+      }
+
+      answerEnElements = allElements.slice(answerEnMarkerIndex, answerEnEndIndex)
+    }
+
+    // Для senior ответа: начинаем с маркера senior
+    let seniorAnswerElements = []
+    if (seniorMarkerIndex >= 0) {
+      seniorAnswerElements = allElements.slice(seniorMarkerIndex)
+    }
 
     // Создаем аккордеон для обычного ответа
     if (regularAnswerElements.length > 0) {
@@ -562,16 +661,82 @@ const wrapAnswersInAccordions = (html) => {
       h3.insertAdjacentElement('afterend', regularAccordion)
     }
 
+    // Создаем аккордеон для Answer EN (если есть)
+    if (answerEnElements.length > 0) {
+      const answerEnContentElements = []
+      const firstElement = answerEnElements[0]
+
+      // Проверяем, содержит ли первый элемент только маркер или еще и текст
+      if (firstElement) {
+        const fullText = firstElement.textContent || ''
+        const markerMatch = fullText.match(/answer\s+en:\s*(.+)/i)
+
+        if (markerMatch && markerMatch[1] && markerMatch[1].trim()) {
+          // Есть текст после маркера - создаем новый элемент с этим текстом
+          const textAfterMarker = markerMatch[1].trim()
+          const newP = document.createElement('p')
+          newP.textContent = textAfterMarker
+          answerEnContentElements.push(newP)
+        } else {
+          // Нет текста после маркера в первом элементе - проверяем, есть ли другие элементы
+          // Если первый элемент содержит только маркер, пропускаем его
+          const hasOnlyMarker = isAnswerEnMarker(firstElement) ||
+                                (firstElement.querySelector('strong, b') &&
+                                 !fullText.replace(/answer\s+en:\s*/i, '').trim())
+
+          if (!hasOnlyMarker) {
+            // В элементе есть другой контент, добавляем его (без маркера)
+            const cloned = firstElement.cloneNode(true)
+            const strongElements = cloned.querySelectorAll('strong, b')
+            strongElements.forEach(strong => {
+              const text = (strong.textContent || '').toLowerCase().trim()
+              if (text.includes('answer en')) {
+                strong.remove()
+              }
+            })
+            if (cloned.textContent && cloned.textContent.trim()) {
+              answerEnContentElements.push(cloned)
+            }
+          }
+        }
+      }
+
+      // Добавляем остальные элементы (начиная со второго, если первый был только маркером)
+      const startIndex = (firstElement && (firstElement.textContent || '').match(/answer\s+en:\s*$/i)) ? 1 : 1
+      for (let i = startIndex; i < answerEnElements.length; i++) {
+        answerEnContentElements.push(answerEnElements[i].cloneNode(true))
+      }
+
+      if (answerEnContentElements.length > 0) {
+        const answerEnAccordion = createAccordion('Answer EN', answerEnContentElements, false)
+        // Вставляем после обычного аккордеона или после вопроса
+        const insertAfter = regularAnswerElements.length > 0
+          ? h3.nextElementSibling
+          : h3
+        answerEnAccordion.setAttribute('data-type', 'answer-en')
+        insertAfter.insertAdjacentElement('afterend', answerEnAccordion)
+      }
+    }
+
     // Создаем аккордеон для senior ответа
     if (seniorAnswerElements.length > 0) {
       // Исключаем маркер из содержимого
       const seniorContentElements = seniorAnswerElements.slice(1) // Пропускаем первый элемент (маркер)
-      const seniorAccordion = createAccordion('Ответ senior', seniorContentElements, true)
-      // Вставляем после обычного аккордеона или после вопроса
-      const insertAfter = regularAnswerElements.length > 0
-        ? h3.nextElementSibling
-        : h3
-      insertAfter.insertAdjacentElement('afterend', seniorAccordion)
+      if (seniorContentElements.length > 0) {
+        const seniorAccordion = createAccordion('Ответ senior', seniorContentElements, true)
+        // Вставляем после Answer EN аккордеона, обычного аккордеона или после вопроса
+        let insertAfter = h3
+        if (answerEnElements.length > 0) {
+          // Ищем последний аккордеон (Answer EN)
+          const lastAccordion = h3.nextElementSibling
+          if (lastAccordion) {
+            insertAfter = lastAccordion
+          }
+        } else if (regularAnswerElements.length > 0) {
+          insertAfter = h3.nextElementSibling
+        }
+        insertAfter.insertAdjacentElement('afterend', seniorAccordion)
+      }
     }
 
     // Удаляем оригинальные элементы (в обратном порядке)
@@ -780,34 +945,6 @@ const initAccordions = () => {
   position: sticky;
   top: 2rem;
   align-self: start;
-}
-
-.test-section {
-  margin-bottom: 0.5rem;
-}
-
-.test-btn {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: linear-gradient(135deg, #42b883 0%, #369461 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(66, 184, 131, 0.3);
-}
-
-.test-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(66, 184, 131, 0.4);
-  background: linear-gradient(135deg, #369461 0%, #2d7a4f 100%);
-}
-
-.test-btn:active {
-  transform: translateY(0);
 }
 
 @media (max-width: 1200px) {
@@ -1393,28 +1530,6 @@ const initAccordions = () => {
   padding: 1rem;
 }
 
-.test-section-modal {
-  margin-bottom: 1rem;
-}
-
-.test-section-modal .test-btn {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: linear-gradient(135deg, #42b883 0%, #369461 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(66, 184, 131, 0.3);
-}
-
-.test-section-modal .test-btn:active {
-  transform: translateY(0);
-}
-
 .question-nav.mobile-filter {
   position: relative !important;
   top: 0 !important;
@@ -1517,6 +1632,31 @@ const initAccordions = () => {
   padding: 1rem 0;
   border-top: 1px solid #f0f0f0;
   margin-top: 0.5rem;
+}
+
+/* Стили для Answer EN аккордеона */
+.content :deep(.answer-accordion[data-type="answer-en"]) {
+  margin-top: 1rem;
+}
+
+.content :deep(.answer-accordion[data-type="answer-en"] .answer-accordion-toggle) {
+  background: #e6f3ff;
+  border-color: #4da6ff;
+  color: #0066cc;
+}
+
+.content :deep(.answer-accordion[data-type="answer-en"] .answer-accordion-toggle:hover) {
+  background: #cce6ff;
+  border-color: #3399ff;
+  color: #0052a3;
+}
+
+.content :deep(.answer-accordion[data-type="answer-en"] .answer-accordion-toggle .answer-accordion-icon) {
+  color: #0066cc;
+}
+
+.content :deep(.answer-accordion[data-type="answer-en"] .answer-accordion-inner) {
+  border-top-color: #4da6ff;
 }
 
 /* Стили для senior аккордеона */

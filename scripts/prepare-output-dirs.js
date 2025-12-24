@@ -6,18 +6,18 @@ const sections = [
   'vuejs',
   'nuxtjs',
   'typescript',
-  'микрофронтенды',
+  'microfrontends',
   'css-styling',
   'web-performance',
   'http-api',
-  'общие-вопросы',
-  'практические-задачи',
-  'архитектура-и-паттерны',
-  'производительность',
-  'безопасность',
-  'тестирование',
+  'general-questions',
+  'practical-tasks',
+  'architecture-patterns',
+  'performance',
+  'security',
+  'testing',
   'accessibility-a11y',
-  'практические-задачи-senior'
+  'practical-tasks-senior'
 ]
 
 const rootDir = process.cwd()

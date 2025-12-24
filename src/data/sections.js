@@ -27,7 +27,7 @@ export const sections = [
     id: 'microfrontends',
     title: 'Микрофронтенды',
     path: '/microfrontends',
-    dir: 'микрофронтенды'
+    dir: 'microfrontends'
   },
   {
     id: 'css-styling',
@@ -51,37 +51,37 @@ export const sections = [
     id: 'general',
     title: 'Общие вопросы',
     path: '/general',
-    dir: 'общие-вопросы'
+    dir: 'general-questions'
   },
   {
     id: 'practical',
     title: 'Практические задачи',
     path: '/practical',
-    dir: 'практические-задачи'
+    dir: 'practical-tasks'
   },
   {
     id: 'architecture',
     title: 'Архитектура и паттерны',
     path: '/architecture',
-    dir: 'архитектура-и-паттерны'
+    dir: 'architecture-patterns'
   },
   {
     id: 'performance',
     title: 'Производительность',
     path: '/performance',
-    dir: 'производительность'
+    dir: 'performance'
   },
   {
     id: 'security',
     title: 'Безопасность',
     path: '/security',
-    dir: 'безопасность'
+    dir: 'security'
   },
   {
     id: 'testing',
     title: 'Тестирование',
     path: '/testing',
-    dir: 'тестирование'
+    dir: 'testing'
   },
   {
     id: 'accessibility',
@@ -93,7 +93,7 @@ export const sections = [
     id: 'practical-senior',
     title: 'Практические задачи (Senior)',
     path: '/practical-senior',
-    dir: 'практические-задачи-senior'
+    dir: 'practical-tasks-senior'
   }
 ]
 
