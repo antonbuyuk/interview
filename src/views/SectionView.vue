@@ -15,9 +15,37 @@
       <div class="mobile-nav-wrapper">
         <Search :current-section="section" :questions="questions" />
       </div>
-      <article class="content" ref="contentRef" v-html="htmlContent" @click="handleCodeBlockClick"></article>
+      <article class="content" ref="contentRef" :class="{ 'english-only': englishOnly }" v-html="htmlContent" @click="handleCodeBlockClick"></article>
       <div class="right-sidebar">
         <Search :current-section="section" :questions="questions" />
+        <div class="training-controls">
+          <label class="toggle-label">
+            <input
+              type="checkbox"
+              v-model="englishOnly"
+              class="toggle-input"
+            />
+            <span class="toggle-slider"></span>
+            <span class="toggle-text">English Only</span>
+          </label>
+          <label class="toggle-label">
+            <input
+              type="checkbox"
+              v-model="ttsEnabled"
+              class="toggle-input"
+            />
+            <span class="toggle-slider"></span>
+            <span class="toggle-text">Text-to-Speech</span>
+          </label>
+          <div class="training-links">
+            <router-link to="/training/flash-cards" class="training-link">
+              🎴 Флэш-карточки
+            </router-link>
+            <router-link to="/training/practice" class="training-link">
+              ⏱️ Тренировка
+            </router-link>
+          </div>
+        </div>
         <QuestionNav :questions="questions" class="desktop-nav" />
       </div>
     </div>
@@ -44,6 +72,7 @@ import { marked } from 'marked'
 import hljs from 'highlight.js'
 import QuestionNav from '../components/QuestionNav.vue'
 import Search from '../components/Search.vue'
+import { useTrainingMode } from '../composables/useTrainingMode'
 // Используем темную тему и переопределим цвета для VS Code стиля
 import 'highlight.js/styles/github-dark.css'
 import '../styles/code.css'
@@ -64,6 +93,9 @@ const htmlContent = ref('')
 const contentRef = ref(null)
 const questions = ref([])
 const filterOpen = ref(false)
+
+// Training mode
+const { englishOnly, ttsEnabled } = useTrainingMode()
 
 // Закрытие фильтра
 const closeFilter = () => {
@@ -1095,6 +1127,98 @@ $breakpoint-mobile: 768px;
   }
 }
 
+.training-controls {
+  background: $bg-white;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid $border-color;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: $breakpoint-mobile) {
+    display: none;
+  }
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 0.75rem;
+}
+
+.toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: #ccc;
+  border-radius: 24px;
+  transition: background 0.3s ease;
+  flex-shrink: 0;
+
+  &::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: white;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.toggle-input:checked + .toggle-slider {
+  background: $primary-color;
+
+  &::before {
+    transform: translateX(20px);
+  }
+}
+
+.toggle-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: $text-gray;
+}
+
+.training-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid $border-color;
+}
+
+.training-link {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: $bg-light;
+  border: 1px solid $border-color;
+  border-radius: 6px;
+  color: $text-gray;
+  text-decoration: none;
+  font-size: 0.8125rem;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #e9ecef;
+    border-color: $primary-color;
+    color: $primary-color;
+  }
+}
+
 .loading {
   display: flex;
   flex-direction: column;
@@ -1533,6 +1657,13 @@ $breakpoint-mobile: 768px;
 
     &:hover {
       text-decoration: underline;
+    }
+  }
+
+  // Скрытие русских ответов в режиме English Only
+  &.english-only {
+    :deep(.answer-accordion:not([data-type="answer-en"])) {
+      display: none !important;
     }
   }
 

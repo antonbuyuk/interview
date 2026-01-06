@@ -18,6 +18,26 @@
       </router-link>
 
       <div class="nav-section">
+        <h3 class="nav-section-title">Тренировка</h3>
+        <router-link
+          to="/training/flash-cards"
+          class="nav-item"
+          :class="{ active: route.path === '/training/flash-cards' }"
+        >
+          <span class="nav-icon">🎴</span>
+          <span class="nav-text">Флэш-карточки</span>
+        </router-link>
+        <router-link
+          to="/training/practice"
+          class="nav-item"
+          :class="{ active: route.path === '/training/practice' }"
+        >
+          <span class="nav-icon">⏱️</span>
+          <span class="nav-text">Режим самопроверки</span>
+        </router-link>
+      </div>
+
+      <div class="nav-section">
         <h3 class="nav-section-title">Разделы</h3>
         <SectionDropdown
           v-for="section in sections"

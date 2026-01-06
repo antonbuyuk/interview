@@ -1,12 +1,24 @@
 import { sections } from './data/sections.js'
 import SectionView from './views/SectionView.vue'
 import HomeView from './views/HomeView.vue'
+import FlashCardsView from './views/FlashCardsView.vue'
+import PracticeModeView from './views/PracticeModeView.vue'
 
 const routes = [
   {
     path: '/',
     name: 'home',
     component: HomeView
+  },
+  {
+    path: '/training/flash-cards',
+    name: 'flash-cards',
+    component: FlashCardsView
+  },
+  {
+    path: '/training/practice',
+    name: 'practice',
+    component: PracticeModeView
   },
   ...sections.map(section => ({
     path: section.path,
