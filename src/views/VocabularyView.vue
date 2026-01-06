@@ -1,8 +1,13 @@
 <template>
   <div class="vocabulary-view">
     <div class="vocabulary-header">
-      <h1>📖 Словарь технических терминов</h1>
-      <p class="subtitle">Английские термины с переводом и примерами использования</p>
+      <div class="header-content">
+        <div>
+          <h1>📖 Словарь технических терминов</h1>
+          <p class="subtitle">Английские термины с переводом и примерами использования</p>
+        </div>
+        <button @click="openAddModal" class="add-btn">+ Добавить термин</button>
+      </div>
     </div>
 
     <!-- Поиск и фильтры -->
@@ -60,9 +65,13 @@
     <div v-else class="vocabulary-grid">
       <div
         v-for="term in filteredTerms"
-        :key="term.term"
+        :key="term.id || term.term"
         class="vocabulary-card"
       >
+        <div class="card-actions-top">
+          <button @click="editTerm(term)" class="edit-btn" title="Редактировать">✏️</button>
+          <button @click="deleteTerm(term)" class="delete-btn" title="Удалить">🗑️</button>
+        </div>
         <div class="card-header">
           <h3 class="term-title">{{ term.term }}</h3>
           <span class="term-category">{{ getCategoryTitle(term.category) }}</span>
@@ -102,33 +111,66 @@
         </div>
       </div>
     </div>
+
+    <!-- Модальное окно для добавления/редактирования термина -->
+    <AddTermModal
+      :is-open="showAddModal"
+      :term="editingTerm"
+      @close="closeAddModal"
+      @saved="handleTermSaved"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import vocabularyData from '../data/vocabulary.json'
+import { getTerms, deleteTerm as deleteTermApi } from '../api/terms'
 import { sections } from '../data/sections.js'
+import AddTermModal from '../components/AddTermModal.vue'
 
 const vocabulary = ref([])
 const loading = ref(true)
 const searchQuery = ref('')
 const selectedCategory = ref('all')
 const sortBy = ref('term')
+const showAddModal = ref(false)
+const editingTerm = ref(null)
 
-// Загружаем словарь
-onMounted(async () => {
+// Загружаем словарь через API
+const loadTerms = async () => {
+  loading.value = true
   try {
-    // Можно также попробовать загрузить извлеченные термины
-    // const extracted = await extractVocabularyFromMarkdown()
-    // vocabulary.value = [...vocabularyData, ...extracted]
-    vocabulary.value = vocabularyData
+    const filters = {
+      category: selectedCategory.value !== 'all' ? selectedCategory.value : undefined,
+      search: searchQuery.value.trim() || undefined,
+      sortBy: sortBy.value
+    }
+    const termsData = await getTerms(filters)
+    // Преобразуем данные из API в формат, совместимый с компонентом
+    vocabulary.value = termsData.map(term => ({
+      id: term.id,
+      term: term.term,
+      translation: term.translation,
+      category: term.category,
+      categoryTitle: term.categoryTitle,
+      examples: term.examples?.map(e => ({ example: e.example })) || [],
+      phrases: term.phrases?.map(p => ({ phrase: p.phrase })) || []
+    }))
   } catch (error) {
     console.error('Ошибка загрузки словаря:', error)
-    vocabulary.value = vocabularyData
+    vocabulary.value = []
   } finally {
     loading.value = false
   }
+}
+
+onMounted(() => {
+  loadTerms()
+})
+
+// Перезагружаем при изменении фильтров
+watch([searchQuery, selectedCategory, sortBy], () => {
+  loadTerms()
 })
 
 // Уникальные категории
@@ -154,52 +196,43 @@ const getCategoryTitle = (categoryId) => {
   return section ? section.title : categoryId
 }
 
-// Фильтрация и сортировка
+// Фильтрация и сортировка (теперь выполняется на сервере, но оставляем для совместимости)
 const filteredTerms = computed(() => {
-  let filtered = vocabulary.value
-
-  // Фильтр по поисковому запросу
-  if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase().trim()
-    filtered = filtered.filter(term => {
-      const termLower = term.term.toLowerCase()
-      const translationLower = (term.translation || '').toLowerCase()
-      const phrasesLower = (term.phrases || []).join(' ').toLowerCase()
-      return (
-        termLower.includes(query) ||
-        translationLower.includes(query) ||
-        phrasesLower.includes(query)
-      )
-    })
-  }
-
-  // Фильтр по категории
-  if (selectedCategory.value !== 'all') {
-    filtered = filtered.filter(term => term.category === selectedCategory.value)
-  }
-
-  // Сортировка
-  const sorted = [...filtered]
-  sorted.sort((a, b) => {
-    switch (sortBy.value) {
-      case 'term':
-        return a.term.localeCompare(b.term)
-      case 'translation':
-        return (a.translation || '').localeCompare(b.translation || '')
-      case 'category':
-        const categoryA = getCategoryTitle(a.category)
-        const categoryB = getCategoryTitle(b.category)
-        if (categoryA !== categoryB) {
-          return categoryA.localeCompare(categoryB)
-        }
-        return a.term.localeCompare(b.term)
-      default:
-        return 0
-    }
-  })
-
-  return sorted
+  return vocabulary.value
 })
+
+const openAddModal = () => {
+  editingTerm.value = null
+  showAddModal.value = true
+}
+
+const editTerm = (term) => {
+  editingTerm.value = term
+  showAddModal.value = true
+}
+
+const closeAddModal = () => {
+  showAddModal.value = false
+  editingTerm.value = null
+}
+
+const handleTermSaved = () => {
+  loadTerms()
+}
+
+const deleteTerm = async (term) => {
+  if (!confirm(`Удалить термин "${term.term}"?`)) {
+    return
+  }
+
+  try {
+    await deleteTermApi(term.id)
+    loadTerms()
+  } catch (error) {
+    console.error('Ошибка удаления термина:', error)
+    alert('Ошибка удаления: ' + (error.message || 'Неизвестная ошибка'))
+  }
+}
 </script>
 
 <style scoped>
@@ -211,7 +244,36 @@ const filteredTerms = computed(() => {
 
 .vocabulary-header {
   margin-bottom: 2rem;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header-content > div {
   text-align: center;
+  flex: 1;
+  min-width: 200px;
+}
+
+.add-btn {
+  padding: 0.75rem 1.5rem;
+  background: #42b883;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.add-btn:hover {
+  background: #35a372;
 }
 
 .vocabulary-header h1 {
@@ -333,8 +395,8 @@ const filteredTerms = computed(() => {
 }
 
 .vocabulary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 1.5rem;
 }
 
@@ -347,6 +409,36 @@ const filteredTerms = computed(() => {
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+.card-actions-top {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-btn,
+.delete-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 0.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.edit-btn:hover {
+  background: #f0f7ff;
+  border-color: #42b883;
+}
+
+.delete-btn:hover {
+  background: #fff5f5;
+  border-color: #ff4444;
 }
 
 .vocabulary-card:hover {
@@ -477,7 +569,7 @@ const filteredTerms = computed(() => {
   }
 
   .vocabulary-grid {
-    grid-template-columns: 1fr;
+    /* Already column layout */
   }
 
   .filters-container {

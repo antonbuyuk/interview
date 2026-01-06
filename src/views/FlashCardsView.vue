@@ -169,7 +169,8 @@ import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { marked } from 'marked'
 import { useTrainingMode } from '../composables/useTrainingMode'
 import { useTextToSpeech } from '../composables/useTextToSpeech'
-import { parseQuestionsForTraining } from '../utils/questionParser'
+import { getQuestions } from '../api/questions'
+import { getSectionById } from '../api/sections'
 import { sections } from '../data/sections.js'
 
 const { flashCardDuration, extractQuestionData, ttsEnabled } = useTrainingMode()
@@ -321,20 +322,39 @@ const loadQuestions = async () => {
         ? sections
         : sections.filter((s) => s.id === selectedSection.value)
 
-    const baseUrl = import.meta.env.BASE_URL || '/'
-
     for (const section of sectionsToLoad) {
       try {
-        const response = await fetch(
-          `${baseUrl}${section.dir}/README.md?t=${Date.now()}`
-        )
-        if (!response.ok) continue
+        // Получаем раздел из БД по sectionId
+        const dbSection = await getSectionById(section.id)
 
-        const markdown = await response.text()
-        const questions = parseQuestionsForTraining(markdown, section.id)
-        // Фильтруем только вопросы с Answer EN
-        const questionsWithEn = questions.filter((q) => q.hasAnswerEn)
-        allQuestions.value.push(...questionsWithEn)
+        // Загружаем вопросы через API
+        const questions = await getQuestions(dbSection.id)
+
+        // Преобразуем данные из API в формат для тренировки
+        const questionsForTraining = questions
+          .filter((q) => {
+            // Фильтруем только вопросы с Answer EN
+            return q.answers && q.answers.some(a => a.type === 'en')
+          })
+          .map((q) => {
+            const answerEn = q.answers.find(a => a.type === 'en')
+            return {
+              id: q.id,
+              number: q.number,
+              question: q.question,
+              questionRaw: q.questionRaw,
+              answerEn: answerEn ? answerEn.content : null,
+              answerRu: q.answers.find(a => a.type === 'ru')?.content || null,
+              answerSenior: q.answers.find(a => a.type === 'senior')?.content || null,
+              sectionId: section.id,
+              hasAnswerEn: !!answerEn,
+              hasAnswerRu: !!q.answers.find(a => a.type === 'ru'),
+              hasAnswerSenior: !!q.answers.find(a => a.type === 'senior'),
+              codeBlocks: q.codeBlocks || []
+            }
+          })
+
+        allQuestions.value.push(...questionsForTraining)
       } catch (err) {
         console.warn(`Ошибка загрузки раздела ${section.title}:`, err)
       }

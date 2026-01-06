@@ -8,3 +8,4 @@ public/*/
 !.gitkeep
 .output
 .nuxt
+.env
