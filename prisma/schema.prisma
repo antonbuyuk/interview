@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Section {
+  id          String     @id @default(uuid())
+  sectionId   String     @unique // javascript-typescript, vuejs, etc.
+  title       String
+  path        String
+  dir         String
+  questions   Question[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Question {
+  id          String     @id @default(uuid())
+  sectionId   String
+  section     Section    @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  number      Int
+  question    String     @db.Text
+  questionRaw String     @db.Text
+  answers     Answer[]
+  codeBlocks  Json?      // массив блоков кода
+  rawMarkdown String     @db.Text
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@unique([sectionId, number])
+  @@index([sectionId])
+}
+
+model Answer {
+  id         String   @id @default(uuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  type       String   // 'ru' | 'en' | 'senior'
+  content    String   @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([questionId, type])
+  @@index([questionId])
+}
+
+model Term {
+  id           String        @id @default(uuid())
+  term         String        @unique
+  translation  String
+  category     String        // sectionId
+  categoryTitle String
+  examples     TermExample[]
+  phrases      TermPhrase[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([category])
+}
+
+model TermExample {
+  id        String   @id @default(uuid())
+  termId    String
+  term      Term     @relation(fields: [termId], references: [id], onDelete: Cascade)
+  example   String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([termId])
+}
+
+model TermPhrase {
+  id        String   @id @default(uuid())
+  termId    String
+  term      Term     @relation(fields: [termId], references: [id], onDelete: Cascade)
+  phrase    String
+  createdAt DateTime @default(now())
+
+  @@index([termId])
+}

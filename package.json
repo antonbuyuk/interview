@@ -4,11 +4,25 @@
   "scripts": {
     "copy": "node scripts/copy-markdown.js",
     "dev": "npm run copy && vite",
+    "dev:server": "node server/index.js",
+    "dev:client": "npm run copy && vite",
+    "dev:all": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "build": "npm run copy && vite build",
     "preview": "vite preview",
-    "deploy": "npm run build && echo 'Build completed. Push to main branch to deploy via GitHub Actions.'"
+    "deploy": "npm run build && echo 'Build completed. Push to main branch to deploy via GitHub Actions.'",
+    "start": "node server/index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:studio": "prisma studio",
+    "migrate:data": "node scripts/migrate-to-db.js",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@prisma/client": "^5.19.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
     "highlight.js": "^11.10.0",
     "marked": "^11.2.0",
     "vue": "^3.4.21",
@@ -16,6 +30,8 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.0",
+    "concurrently": "^9.1.0",
+    "prisma": "^5.19.1",
     "sass": "^1.97.2",
     "vite": "^5.4.0"
   }

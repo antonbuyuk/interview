@@ -73,6 +73,8 @@ import hljs from 'highlight.js'
 import QuestionNav from '../components/QuestionNav.vue'
 import Search from '../components/Search.vue'
 import { useTrainingMode } from '../composables/useTrainingMode'
+import { getQuestions } from '../api/questions'
+import { getSectionById } from '../api/sections'
 // Используем темную тему и переопределим цвета для VS Code стиля
 import 'highlight.js/styles/github-dark.css'
 import '../styles/code.css'
@@ -131,26 +133,73 @@ marked.setOptions({
   gfm: true
 })
 
+// Генерация HTML из вопросов
+const generateHtmlFromQuestions = (questionsData) => {
+  let html = ''
+
+  questionsData.forEach((q) => {
+    // Заголовок вопроса
+    html += `<h3 id="question-${q.number}">${q.number}. ${q.questionRaw || q.question}</h3>\n\n`
+
+    // Блоки кода из вопроса (если есть)
+    if (q.codeBlocks && Array.isArray(q.codeBlocks) && q.codeBlocks.length > 0) {
+      q.codeBlocks.forEach((codeBlock) => {
+        const lang = codeBlock.language || ''
+        html += `\`\`\`${lang}\n${codeBlock.code}\n\`\`\`\n\n`
+      })
+    }
+
+    // Ответы
+    const answers = q.answers || []
+    const answerRu = answers.find(a => a.type === 'ru')
+    const answerEn = answers.find(a => a.type === 'en')
+    const answerSenior = answers.find(a => a.type === 'senior')
+
+    if (answerRu) {
+      html += `**Ответ:**\n\n${answerRu.content}\n\n`
+    }
+
+    if (answerEn) {
+      html += `**Answer EN:**\n\n${answerEn.content}\n\n`
+    }
+
+    if (answerSenior) {
+      html += `**Ответ Senior:**\n\n${answerSenior.content}\n\n`
+    }
+
+    html += '\n'
+  })
+
+  return html
+}
+
 const loadContent = async () => {
   loading.value = true
   error.value = null
 
   try {
-    // Путь к файлу в public директории (с учетом base URL для GitHub Pages)
-    const baseUrl = import.meta.env.BASE_URL || '/'
-    const response = await fetch(`${baseUrl}${props.section.dir}/README.md?t=${Date.now()}`)
+    // Получаем раздел по sectionId для получения UUID
+    const section = await getSectionById(props.section.id)
 
-    if (!response.ok) {
-      throw new Error(`Не удалось загрузить файл: ${response.statusText}`)
-    }
+    // Загружаем вопросы через API
+    const questionsData = await getQuestions(section.id)
 
-    const markdown = await response.text()
-    // Извлекаем вопросы перед парсингом
-    extractQuestions(markdown)
+    // Извлекаем вопросы для навигации
+    questions.value = questionsData.map(q => ({
+      id: `question-${q.number}`,
+      text: q.question
+    }))
+
+    // Генерируем Markdown из вопросов
+    const markdown = generateHtmlFromQuestions(questionsData)
+
+    // Парсим Markdown в HTML
     let parsedHtml = marked.parse(markdown)
+
     // Оборачиваем ответы в аккордеоны
     parsedHtml = wrapAnswersInAccordions(parsedHtml)
     htmlContent.value = parsedHtml
+
     // Добавляем кнопки копирования и якоря после рендеринга DOM
     await nextTick()
     setTimeout(() => {
@@ -165,7 +214,7 @@ const loadContent = async () => {
       }, 100)
     }, 150)
   } catch (err) {
-    error.value = err.message
+    error.value = err.message || 'Ошибка загрузки контента'
     console.error('Ошибка загрузки контента:', err)
   } finally {
     loading.value = false
@@ -312,36 +361,7 @@ const addCopyButtons = () => {
 }
 
 // Извлечение вопросов из markdown
-const extractQuestions = (markdown) => {
-  const questionRegex = /^###\s+\d+\.\s+(.+)$/gm
-  const extractedQuestions = []
-  let match
-
-  console.log('markdown', markdown)
-  console.log('questionRegex', questionRegex)
-
-  while ((match = questionRegex.exec(markdown)) !== null) {
-    const questionText = match[1].trim()
-    // Убираем markdown разметку из текста вопроса
-    const cleanText = questionText
-      .replace(/\*\*/g, '') // Убираем жирный текст
-      .replace(/`/g, '') // Убираем код
-      .trim()
-
-      console.log('cleanText', cleanText)
-
-
-    extractedQuestions.push({
-      id: `question-${extractedQuestions.length + 1}`,
-      text: cleanText
-    })
-
-    console.log('extractedQuestions', extractedQuestions)
-  }
-
-  questions.value = extractedQuestions
-  console.log('Извлечено вопросов:', extractedQuestions.length, extractedQuestions)
-}
+// Функция extractQuestions больше не нужна, так как вопросы загружаются через API
 
 // Добавление ID к вопросам (h3) для навигации
 const addQuestionAnchors = () => {
