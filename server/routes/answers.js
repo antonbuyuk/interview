@@ -1,11 +1,12 @@
-const express = require('express')
-const router = express.Router()
-const answersController = require('../controllers/answersController')
-const errorHandler = require('../middleware/errorHandler')
+const express = require('express');
+const router = express.Router();
+const answersController = require('../controllers/answersController');
+const errorHandler = require('../middleware/errorHandler');
+const authAdmin = require('../middleware/authAdmin');
 
-router.put('/:id', answersController.updateAnswer)
-router.delete('/:id', answersController.deleteAnswer)
+router.put('/:id', authAdmin, answersController.updateAnswer);
+router.delete('/:id', authAdmin, answersController.deleteAnswer);
 
-router.use(errorHandler)
+router.use(errorHandler);
 
-module.exports = router
+module.exports = router;

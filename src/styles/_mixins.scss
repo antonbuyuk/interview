@@ -1,0 +1,240 @@
+@use './variables' as *;
+
+// ============================================
+// Медиа-запросы
+// ============================================
+
+@mixin mobile {
+  @media (max-width: $breakpoint-mobile) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (max-width: $breakpoint-tablet) {
+    @content;
+  }
+}
+
+// ============================================
+// Модальные окна
+// ============================================
+
+@mixin modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+@mixin modal-content {
+  background: $bg-white;
+  border-radius: 8px;
+  padding: 2rem;
+  max-width: 75rem;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+
+  @include mobile {
+    padding: 1.5rem;
+    max-width: 95%;
+  }
+}
+
+@mixin modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+}
+
+@mixin close-button {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: $text-lighter-gray;
+  line-height: 1;
+  transition: color 0.2s;
+
+  &:hover {
+    color: $text-dark;
+  }
+}
+
+// ============================================
+// Кнопки
+// ============================================
+
+@mixin button-base {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+@mixin button-primary {
+  @include button-base;
+  background: $primary-color;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: $primary-hover;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+@mixin button-secondary {
+  @include button-base;
+  background: $bg-light;
+  color: $text-dark;
+  border: 1px solid $border-color;
+
+  &:hover {
+    background: #e9ecef;
+    border-color: $primary-color;
+  }
+}
+
+@mixin button-cancel {
+  @include button-base;
+  background: #f0f0f0;
+  color: $text-gray;
+
+  &:hover {
+    background: #e0e0e0;
+  }
+}
+
+@mixin button-submit {
+  @include button-primary;
+}
+
+// ============================================
+// Формы
+// ============================================
+
+@mixin form-group {
+  margin-bottom: 1.5rem;
+
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: $text-dark;
+  }
+}
+
+@mixin form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.1);
+  }
+}
+
+@mixin form-textarea {
+  @include form-input;
+  resize: vertical;
+  min-height: 100px;
+}
+
+@mixin form-select {
+  @include form-input;
+  cursor: pointer;
+  background: $bg-white;
+}
+
+// ============================================
+// Скроллбар
+// ============================================
+
+@mixin custom-scrollbar(
+  $width: 6px,
+  $track-color: $bg-light,
+  $thumb-color: #ccc,
+  $thumb-hover: #999
+) {
+  &::-webkit-scrollbar {
+    width: $width;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $track-color;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $thumb-color;
+    border-radius: 3px;
+
+    &:hover {
+      background: $thumb-hover;
+    }
+  }
+}
+
+// ============================================
+// Карточки
+// ============================================
+
+@mixin card {
+  background: $bg-white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid $border-color;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    border-color: $primary-color;
+  }
+}
+
+// ============================================
+// Утилиты
+// ============================================
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin transition($property: all, $duration: 0.2s, $easing: ease) {
+  transition: $property $duration $easing;
+}

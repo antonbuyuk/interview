@@ -5,35 +5,35 @@
         v-model="searchQuery"
         type="text"
         class="search-input"
-        :class="{ 'recording': isRecording }"
+        :class="{ recording: isRecording }"
         :placeholder="isRecording ? 'Говорите...' : 'Поиск по вопросам...'"
+        :disabled="isRecording"
         @input="handleSearch"
         @focus="isFocused = true"
         @blur="handleBlur"
-        :disabled="isRecording"
       />
       <span class="search-icon">🔍</span>
       <button
         v-if="!isRecording && !searchQuery"
-        @click="startVoiceSearch"
         class="voice-btn"
         title="Голосовой поиск"
+        @click="startVoiceSearch"
       >
         🎤
       </button>
       <button
         v-if="isRecording"
-        @click="stopVoiceSearch"
         class="voice-btn recording"
         title="Остановить запись"
+        @click="stopVoiceSearch"
       >
         ⏹
       </button>
       <button
         v-if="searchQuery && !isRecording"
-        @click="clearSearch"
         class="clear-btn"
         title="Очистить поиск"
+        @click="clearSearch"
       >
         ✕
       </button>
@@ -44,19 +44,20 @@
     </div>
 
     <!-- Результаты поиска -->
-    <div v-if="searchQuery && (localResults.length > 0 || globalResults.length > 0)" class="search-results">
+    <div
+      v-if="searchQuery && (localResults.length > 0 || globalResults.length > 0)"
+      class="search-results"
+    >
       <!-- Локальные результаты (текущая секция) -->
       <div v-if="localResults.length > 0" class="results-section">
-        <h4 class="results-title">
-          В текущем разделе ({{ localResults.length }})
-        </h4>
+        <h4 class="results-title">В текущем разделе ({{ localResults.length }})</h4>
         <div class="results-list">
           <a
             v-for="result in localResults"
             :key="result.id"
             :href="`#${result.id}`"
-            @click.prevent="scrollToResult(result.id)"
             class="result-item"
+            @click.prevent="scrollToResult(result.id)"
           >
             <span class="result-number">{{ result.number }}.</span>
             <span class="result-text" v-html="highlightText(result.text, searchQuery)"></span>
@@ -66,9 +67,7 @@
 
       <!-- Глобальные результаты (другие разделы) -->
       <div v-if="globalResults.length > 0" class="results-section">
-        <h4 class="results-title">
-          В других разделах ({{ globalResults.length }})
-        </h4>
+        <h4 class="results-title">В других разделах ({{ globalResults.length }})</h4>
         <div class="results-list">
           <router-link
             v-for="result in globalResults"
@@ -78,455 +77,472 @@
             @click="handleGlobalResultClick(result.id)"
           >
             <span class="result-section">{{ result.sectionTitle }}</span>
-            <span class="result-text" v-html="highlightText(result.questionText, searchQuery)"></span>
+            <span
+              class="result-text"
+              v-html="highlightText(result.questionText, searchQuery)"
+            ></span>
           </router-link>
         </div>
       </div>
     </div>
 
     <!-- Нет результатов -->
-    <div v-else-if="searchQuery && localResults.length === 0 && globalResults.length === 0" class="no-results">
+    <div
+      v-else-if="searchQuery && localResults.length === 0 && globalResults.length === 0"
+      class="no-results"
+    >
       <p>Ничего не найдено</p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { sections } from '../data/sections.js'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import { useRoute } from 'vue-router';
+import { getSections } from '../api/sections.js';
+import { getQuestions } from '../api/questions.js';
 
 const props = defineProps({
   currentSection: {
     type: Object,
-    default: null
+    default: null,
   },
   questions: {
     type: Array,
-    default: () => []
-  }
-})
+    default: () => [],
+  },
+});
 
-const emit = defineEmits(['result-click'])
+const emit = defineEmits(['result-click']);
 
-const route = useRoute()
-const searchQuery = ref('')
-const isFocused = ref(false)
-const localResults = ref([])
-const globalResults = ref([])
-const searchCache = ref(new Map())
-const currentQuestions = ref([])
-const pendingQuestionId = ref(null)
-const isRecording = ref(false)
-const recognition = ref(null)
-const isSpeechSupported = ref(false)
+const route = useRoute();
+const searchQuery = ref('');
+const isFocused = ref(false);
+const localResults = ref([]);
+const globalResults = ref([]);
+const searchCache = ref(new Map());
+const currentQuestions = ref([]);
+const pendingQuestionId = ref(null);
+const isRecording = ref(false);
+const recognition = ref(null);
+const isSpeechSupported = ref(false);
+const allSections = ref([]);
 
 // Поиск с задержкой (debounce)
-let searchTimeout = null
+let searchTimeout = null;
 
 // Инициализация Speech Recognition API
 const initSpeechRecognition = () => {
-  if (typeof window === 'undefined') return
+  if (typeof window === 'undefined') return;
 
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    isSpeechSupported.value = false
-    return
+    isSpeechSupported.value = false;
+    return;
   }
 
-  isSpeechSupported.value = true
-  recognition.value = new SpeechRecognition()
-  recognition.value.continuous = false
-  recognition.value.interimResults = false
-  recognition.value.lang = 'ru-RU' // Русский язык
+  isSpeechSupported.value = true;
+  recognition.value = new SpeechRecognition();
+  recognition.value.continuous = false;
+  recognition.value.interimResults = false;
+  recognition.value.lang = 'ru-RU'; // Русский язык
 
-  recognition.value.onresult = (event) => {
-    const transcript = event.results[0][0].transcript
-    searchQuery.value = transcript.trim()
-    performSearch()
-    isRecording.value = false
-  }
+  recognition.value.onresult = event => {
+    const transcript = event.results[0][0].transcript;
+    searchQuery.value = transcript.trim();
+    performSearch();
+    isRecording.value = false;
+  };
 
-  recognition.value.onerror = (event) => {
-    console.error('Ошибка распознавания речи:', event.error)
-    isRecording.value = false
+  recognition.value.onerror = event => {
+    console.error('Ошибка распознавания речи:', event.error);
+    isRecording.value = false;
 
     if (event.error === 'no-speech') {
-      alert('Речь не распознана. Попробуйте еще раз.')
+      alert('Речь не распознана. Попробуйте еще раз.');
     } else if (event.error === 'not-allowed') {
-      alert('Доступ к микрофону запрещен. Разрешите доступ в настройках браузера.')
+      alert('Доступ к микрофону запрещен. Разрешите доступ в настройках браузера.');
     }
-  }
+  };
 
   recognition.value.onend = () => {
-    isRecording.value = false
-  }
-}
+    isRecording.value = false;
+  };
+};
 
 // Инициализация при монтировании
 onMounted(() => {
-  initSpeechRecognition()
-})
+  initSpeechRecognition();
+});
 
 onUnmounted(() => {
   if (recognition.value && isRecording.value) {
-    recognition.value.stop()
+    recognition.value.stop();
   }
-})
+});
 
 const handleSearch = () => {
   if (searchTimeout) {
-    clearTimeout(searchTimeout)
+    clearTimeout(searchTimeout);
   }
 
   searchTimeout = setTimeout(() => {
-    performSearch()
-  }, 300)
-}
+    performSearch();
+  }, 300);
+};
 
 const loadCurrentSectionQuestions = async () => {
   if (!props.currentSection) {
-    currentQuestions.value = []
-    return
+    currentQuestions.value = [];
+    return;
   }
 
   try {
-    // Используем base URL для корректной работы на GitHub Pages
-    const baseUrl = import.meta.env.BASE_URL || '/'
-    const response = await fetch(`${baseUrl}${props.currentSection.dir}/README.md`)
-    if (!response.ok) return
+    // Получаем раздел по ID для получения UUID
+    const section = await getSections().then(sections =>
+      sections.find(s => s.sectionId === props.currentSection.id)
+    );
 
-    const markdown = await response.text()
-    currentQuestions.value = extractQuestionsFromMarkdown(markdown)
+    if (!section) {
+      currentQuestions.value = [];
+      return;
+    }
+
+    // Загружаем вопросы через API
+    const questions = await getQuestions(section.id);
+    currentQuestions.value = questions.map(q => ({
+      id: `question-${q.number}`,
+      text: q.question,
+      number: q.number,
+    }));
   } catch (err) {
-    console.error('Ошибка загрузки вопросов текущей секции:', err)
-    currentQuestions.value = []
+    console.error('Ошибка загрузки вопросов текущей секции:', err);
+    currentQuestions.value = [];
   }
-}
+};
 
 // Функция для разбивки запроса на ключевые слова
-const extractKeywords = (query) => {
+const extractKeywords = query => {
   return query
     .toLowerCase()
     .trim()
     .split(/\s+/)
     .filter(word => word.length > 0)
-    .filter(word => !['и', 'или', 'или', 'the', 'a', 'an', 'и', 'в', 'на', 'с', 'по'].includes(word))
-}
+    .filter(
+      word => !['и', 'или', 'или', 'the', 'a', 'an', 'и', 'в', 'на', 'с', 'по'].includes(word)
+    );
+};
 
 // Поиск по ключевым словам
 const matchesKeywords = (text, keywords) => {
-  if (keywords.length === 0) return false
+  if (keywords.length === 0) return false;
 
-  const lowerText = text.toLowerCase()
+  const lowerText = text.toLowerCase();
 
   // Подсчитываем количество совпадений
-  let matchCount = 0
+  let matchCount = 0;
   for (const keyword of keywords) {
     if (lowerText.includes(keyword)) {
-      matchCount++
+      matchCount++;
     }
   }
 
   // Возвращаем объект с результатом и количеством совпадений
   return {
     matches: matchCount > 0,
-    score: matchCount
-  }
-}
+    score: matchCount,
+  };
+};
 
 const performSearch = async () => {
   if (!searchQuery.value.trim()) {
-    localResults.value = []
-    globalResults.value = []
-    return
+    localResults.value = [];
+    globalResults.value = [];
+    return;
   }
 
-  const query = searchQuery.value.trim()
-  const keywords = extractKeywords(query)
+  const query = searchQuery.value.trim();
+  const keywords = extractKeywords(query);
 
   if (keywords.length === 0) {
-    localResults.value = []
-    globalResults.value = []
-    return
+    localResults.value = [];
+    globalResults.value = [];
+    return;
   }
 
   // Загружаем вопросы текущей секции, если еще не загружены
   if (props.currentSection && currentQuestions.value.length === 0) {
-    await loadCurrentSectionQuestions()
+    await loadCurrentSectionQuestions();
   }
 
   // Поиск в текущей секции - используем переданные questions или загружаем
-  const questionsToSearch = props.questions.length > 0 ? props.questions : currentQuestions.value
+  const questionsToSearch = props.questions.length > 0 ? props.questions : currentQuestions.value;
 
   if (questionsToSearch.length > 0) {
     const results = questionsToSearch
       .map((q, index) => {
-        const matchResult = matchesKeywords(q.text, keywords)
+        const matchResult = matchesKeywords(q.text, keywords);
         return {
           id: q.id || `question-${index + 1}`,
           number: index + 1,
           text: q.text,
-          score: matchResult.score
-        }
+          score: matchResult.score,
+        };
       })
       .filter(q => q.score > 0)
       .sort((a, b) => b.score - a.score) // Сортируем по количеству совпадений
-      .slice(0, 10) // Ограничиваем до 10 результатов
+      .slice(0, 10); // Ограничиваем до 10 результатов
 
-    localResults.value = results
+    localResults.value = results;
   }
 
   // Поиск в других секциях
   if (query.length >= 2) {
-    await searchInAllSections(keywords)
+    await searchInAllSections(keywords);
   } else {
-    globalResults.value = []
+    globalResults.value = [];
   }
-}
+};
 
-const searchInAllSections = async (keywords) => {
-  const results = []
-  const currentSectionId = props.currentSection?.id
+const searchInAllSections = async keywords => {
+  const results = [];
+  const currentSectionId = props.currentSection?.id;
 
-  for (const section of sections) {
+  // Загружаем список всех секций, если еще не загружен
+  if (allSections.value.length === 0) {
+    try {
+      allSections.value = await getSections();
+    } catch (err) {
+      console.error('Ошибка загрузки секций:', err);
+      return;
+    }
+  }
+
+  for (const section of allSections.value) {
     // Пропускаем текущую секцию
-    if (section.id === currentSectionId) continue
+    if (section.sectionId === currentSectionId) continue;
 
     try {
       // Проверяем кеш (используем строку ключевых слов для ключа кеша)
-      const cacheKey = `${section.id}:${keywords.join(' ')}`
+      const cacheKey = `${section.sectionId}:${keywords.join(' ')}`;
       if (searchCache.value.has(cacheKey)) {
-        const cached = searchCache.value.get(cacheKey)
-        results.push(...cached)
-        continue
+        const cached = searchCache.value.get(cacheKey);
+        results.push(...cached);
+        continue;
       }
 
-      // Загружаем и ищем (используем base URL для GitHub Pages)
-      const baseUrl = import.meta.env.BASE_URL || '/'
-      const response = await fetch(`${baseUrl}${section.dir}/README.md`)
-      if (!response.ok) continue
-
-      const markdown = await response.text()
-      const questions = extractQuestionsFromMarkdown(markdown)
+      // Загружаем вопросы через API
+      const questions = await getQuestions(section.id);
 
       const sectionResults = questions
         .map(q => {
-          const matchResult = matchesKeywords(q.text, keywords)
+          const matchResult = matchesKeywords(q.question, keywords);
           return {
-            id: q.id,
+            id: `question-${q.number}`,
             sectionTitle: section.title,
-            questionText: q.text,
+            questionText: q.question,
             path: section.path,
-            score: matchResult.score
-          }
+            score: matchResult.score,
+          };
         })
         .filter(q => q.score > 0)
         .sort((a, b) => b.score - a.score) // Сортируем по количеству совпадений
-        .slice(0, 3) // По 3 результата из каждой секции
+        .slice(0, 3); // По 3 результата из каждой секции
 
       // Кешируем результаты
-      searchCache.value.set(cacheKey, sectionResults)
-      results.push(...sectionResults)
+      searchCache.value.set(cacheKey, sectionResults);
+      results.push(...sectionResults);
 
       // Ограничиваем общее количество
-      if (results.length >= 10) break
+      if (results.length >= 10) break;
     } catch (err) {
-      console.error(`Ошибка поиска в секции ${section.title}:`, err)
+      console.error(`Ошибка поиска в секции ${section.title}:`, err);
     }
   }
 
   // Сортируем все результаты по количеству совпадений
-  results.sort((a, b) => b.score - a.score)
-  globalResults.value = results.slice(0, 10)
-}
-
-const extractQuestionsFromMarkdown = (markdown) => {
-  const questionRegex = /^###\s+\d+\.\s+(.+)$/gm
-  const questions = []
-  let match
-
-  while ((match = questionRegex.exec(markdown)) !== null) {
-    const questionText = match[1].trim()
-      .replace(/\*\*/g, '')
-      .replace(/`/g, '')
-      .trim()
-
-    questions.push({
-      id: `question-${questions.length + 1}`,
-      text: questionText
-    })
-  }
-
-  return questions
-}
+  results.sort((a, b) => b.score - a.score);
+  globalResults.value = results.slice(0, 10);
+};
 
 const highlightText = (text, query) => {
-  if (!query) return text
+  if (!query) return text;
 
   // Разбиваем запрос на ключевые слова для подсветки
-  const keywords = extractKeywords(query)
+  const keywords = extractKeywords(query);
 
-  let highlightedText = text
+  let highlightedText = text;
   for (const keyword of keywords) {
-    const regex = new RegExp(`(${escapeRegExp(keyword)})`, 'gi')
-    highlightedText = highlightedText.replace(regex, '<mark>$1</mark>')
+    const regex = new RegExp(`(${escapeRegExp(keyword)})`, 'gi');
+    highlightedText = highlightedText.replace(regex, '<mark>$1</mark>');
   }
 
-  return highlightedText
-}
+  return highlightedText;
+};
 
-const escapeRegExp = (string) => {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
+const escapeRegExp = string => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
 
-const scrollToResult = (id) => {
-  const element = document.getElementById(id)
+const scrollToResult = id => {
+  const element = document.getElementById(id);
   if (element) {
-    const offset = 120
-    const elementPosition = element.getBoundingClientRect().top + window.pageYOffset
-    const offsetPosition = elementPosition - offset
+    const offset = 120;
+    const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+    const offsetPosition = elementPosition - offset;
 
     window.scrollTo({
       top: offsetPosition,
-      behavior: 'smooth'
-    })
+      behavior: 'smooth',
+    });
 
-    emit('result-click', id)
-    closeSearch()
+    emit('result-click', id);
+    closeSearch();
   }
-}
+};
 
 const clearSearch = () => {
-  searchQuery.value = ''
-  localResults.value = []
-  globalResults.value = []
-  isFocused.value = false
-}
+  searchQuery.value = '';
+  localResults.value = [];
+  globalResults.value = [];
+  isFocused.value = false;
+};
 
 const closeSearch = () => {
-  isFocused.value = false
-}
+  isFocused.value = false;
+};
 
-const handleGlobalResultClick = (questionId) => {
-  pendingQuestionId.value = questionId
-  closeSearch()
-}
+const handleGlobalResultClick = questionId => {
+  pendingQuestionId.value = questionId;
+  closeSearch();
+};
 
 // Голосовой поиск
 const startVoiceSearch = () => {
   if (!isSpeechSupported.value) {
-    alert('Голосовой поиск не поддерживается в вашем браузере. Используйте Chrome, Edge или Safari.')
-    return
+    alert(
+      'Голосовой поиск не поддерживается в вашем браузере. Используйте Chrome, Edge или Safari.'
+    );
+    return;
   }
 
   if (!recognition.value) {
-    initSpeechRecognition()
+    initSpeechRecognition();
   }
 
   try {
-    isRecording.value = true
-    recognition.value.start()
+    isRecording.value = true;
+    recognition.value.start();
   } catch (err) {
-    console.error('Ошибка запуска распознавания:', err)
-    isRecording.value = false
-    alert('Не удалось запустить распознавание речи. Проверьте доступ к микрофону.')
+    console.error('Ошибка запуска распознавания:', err);
+    isRecording.value = false;
+    alert('Не удалось запустить распознавание речи. Проверьте доступ к микрофону.');
   }
-}
+};
 
 const stopVoiceSearch = () => {
   if (recognition.value && isRecording.value) {
-    recognition.value.stop()
-    isRecording.value = false
+    recognition.value.stop();
+    isRecording.value = false;
   }
-}
+};
 
 // Функция для прокрутки к вопросу после загрузки раздела
 const scrollToPendingQuestion = () => {
-  if (!pendingQuestionId.value) return
+  if (!pendingQuestionId.value) return;
 
   // Ждем загрузки контента и рендеринга DOM
   const attemptScroll = () => {
-    const element = document.getElementById(pendingQuestionId.value)
+    const element = document.getElementById(pendingQuestionId.value);
     if (element) {
-      const offset = 120
-      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset
-      const offsetPosition = elementPosition - offset
+      const offset = 120;
+      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - offset;
 
       window.scrollTo({
         top: offsetPosition,
-        behavior: 'smooth'
-      })
+        behavior: 'smooth',
+      });
 
-      pendingQuestionId.value = null
-      return true
+      pendingQuestionId.value = null;
+      return true;
     }
-    return false
-  }
+    return false;
+  };
 
   // Пробуем сразу
-  if (attemptScroll()) return
+  if (attemptScroll()) return;
 
   // Если не получилось, пробуем через небольшие интервалы
-  let attempts = 0
-  const maxAttempts = 20
+  let attempts = 0;
+  const maxAttempts = 20;
   const interval = setInterval(() => {
-    attempts++
+    attempts++;
     if (attemptScroll() || attempts >= maxAttempts) {
-      clearInterval(interval)
+      clearInterval(interval);
       if (attempts >= maxAttempts) {
-        pendingQuestionId.value = null
+        pendingQuestionId.value = null;
       }
     }
-  }, 100)
-}
+  }, 100);
+};
 
 const handleBlur = () => {
   // Задержка, чтобы клики по результатам успели сработать
   setTimeout(() => {
-    isFocused.value = false
-  }, 200)
-}
+    isFocused.value = false;
+  }, 200);
+};
 
 // Следим за изменением секции
-watch(() => route.path, () => {
-  clearSearch()
-  searchCache.value.clear()
-  currentQuestions.value = []
+watch(
+  () => route.path,
+  () => {
+    clearSearch();
+    searchCache.value.clear();
+    currentQuestions.value = [];
 
-  // Если есть hash в URL, прокручиваем к вопросу
-  if (route.hash) {
-    const questionId = route.hash.substring(1)
-    if (questionId) {
-      pendingQuestionId.value = questionId
-      nextTick(() => {
-        scrollToPendingQuestion()
-      })
+    // Если есть hash в URL, прокручиваем к вопросу
+    if (route.hash) {
+      const questionId = route.hash.substring(1);
+      if (questionId) {
+        pendingQuestionId.value = questionId;
+        nextTick(() => {
+          scrollToPendingQuestion();
+        });
+      }
     }
   }
-})
+);
 
 // Следим за изменением hash в URL
-watch(() => route.hash, (newHash) => {
-  if (newHash) {
-    const questionId = newHash.substring(1)
-    if (questionId) {
-      pendingQuestionId.value = questionId
-      nextTick(() => {
-        scrollToPendingQuestion()
-      })
+watch(
+  () => route.hash,
+  newHash => {
+    if (newHash) {
+      const questionId = newHash.substring(1);
+      if (questionId) {
+        pendingQuestionId.value = questionId;
+        nextTick(() => {
+          scrollToPendingQuestion();
+        });
+      }
     }
   }
-})
+);
 
 // Загружаем вопросы при изменении секции
-watch(() => props.currentSection, async (newSection) => {
-  currentQuestions.value = []
-  if (newSection && searchQuery.value) {
-    await loadCurrentSectionQuestions()
-    performSearch()
-  }
-}, { immediate: true })
+watch(
+  () => props.currentSection,
+  async newSection => {
+    currentQuestions.value = [];
+    if (newSection && searchQuery.value) {
+      await loadCurrentSectionQuestions();
+      performSearch();
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>
@@ -619,7 +635,8 @@ watch(() => props.currentSection, async (newSection) => {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
@@ -678,7 +695,8 @@ watch(() => props.currentSection, async (newSection) => {
 }
 
 @keyframes blink {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -820,4 +838,3 @@ watch(() => props.currentSection, async (newSection) => {
   background: #bbb;
 }
 </style>
-

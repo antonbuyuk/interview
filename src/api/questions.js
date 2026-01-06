@@ -1,4 +1,4 @@
-import api from './client'
+import api from './client';
 
 /**
  * Получить вопросы по разделу
@@ -6,8 +6,8 @@ import api from './client'
  * @returns {Promise<Array>}
  */
 export async function getQuestions(sectionId = null) {
-  const params = sectionId ? `?sectionId=${sectionId}` : ''
-  return api.get(`/questions${params}`)
+  const params = sectionId ? `?sectionId=${sectionId}` : '';
+  return api.get(`/questions${params}`);
 }
 
 /**
@@ -16,7 +16,7 @@ export async function getQuestions(sectionId = null) {
  * @returns {Promise<Object>}
  */
 export async function getQuestionById(id) {
-  return api.get(`/questions/${id}`)
+  return api.get(`/questions/${id}`);
 }
 
 /**
@@ -25,7 +25,7 @@ export async function getQuestionById(id) {
  * @returns {Promise<Object>}
  */
 export async function createQuestion(questionData) {
-  return api.post('/questions', questionData)
+  return api.post('/questions', questionData);
 }
 
 /**
@@ -35,7 +35,7 @@ export async function createQuestion(questionData) {
  * @returns {Promise<Object>}
  */
 export async function updateQuestion(id, questionData) {
-  return api.put(`/questions/${id}`, questionData)
+  return api.put(`/questions/${id}`, questionData);
 }
 
 /**
@@ -44,7 +44,7 @@ export async function updateQuestion(id, questionData) {
  * @returns {Promise<void>}
  */
 export async function deleteQuestion(id) {
-  return api.delete(`/questions/${id}`)
+  return api.delete(`/questions/${id}`);
 }
 
 /**
@@ -53,7 +53,7 @@ export async function deleteQuestion(id) {
  * @returns {Promise<Array>}
  */
 export async function getAnswersByQuestion(questionId) {
-  return api.get(`/questions/${questionId}/answers`)
+  return api.get(`/questions/${questionId}/answers`);
 }
 
 /**
@@ -63,7 +63,7 @@ export async function getAnswersByQuestion(questionId) {
  * @returns {Promise<Object>}
  */
 export async function createAnswer(questionId, answerData) {
-  return api.post(`/questions/${questionId}/answers`, answerData)
+  return api.post(`/questions/${questionId}/answers`, answerData);
 }
 
 /**
@@ -73,7 +73,7 @@ export async function createAnswer(questionId, answerData) {
  * @returns {Promise<Object>}
  */
 export async function updateAnswer(id, answerData) {
-  return api.put(`/answers/${id}`, answerData)
+  return api.put(`/answers/${id}`, answerData);
 }
 
 /**
@@ -82,5 +82,5 @@ export async function updateAnswer(id, answerData) {
  * @returns {Promise<void>}
  */
 export async function deleteAnswer(id) {
-  return api.delete(`/answers/${id}`)
+  return api.delete(`/answers/${id}`);
 }

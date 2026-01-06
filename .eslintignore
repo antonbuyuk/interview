@@ -1,0 +1,10 @@
+node_modules/
+dist/
+prisma/generated/
+vite.config.js
+public/
+coverage/
+.vscode/
+.idea/
+*.log
+.DS_Store

@@ -1,4 +1,4 @@
-const prisma = require('../utils/prisma')
+const prisma = require('../utils/prisma');
 
 const getSections = async (req, res, next) => {
   try {
@@ -6,24 +6,24 @@ const getSections = async (req, res, next) => {
       include: {
         _count: {
           select: {
-            questions: true
-          }
-        }
+            questions: true,
+          },
+        },
       },
       orderBy: {
-        title: 'asc'
-      }
-    })
+        title: 'asc',
+      },
+    });
 
-    res.json(sections)
+    res.json(sections);
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 const getSectionById = async (req, res, next) => {
   try {
-    const { id } = req.params
+    const { id } = req.params;
 
     // Try to find by UUID first, then by sectionId
     let section = await prisma.section.findUnique({
@@ -31,14 +31,14 @@ const getSectionById = async (req, res, next) => {
       include: {
         questions: {
           include: {
-            answers: true
+            answers: true,
           },
           orderBy: {
-            number: 'asc'
-          }
-        }
-      }
-    })
+            number: 'asc',
+          },
+        },
+      },
+    });
 
     // If not found by UUID, try by sectionId
     if (!section) {
@@ -47,27 +47,144 @@ const getSectionById = async (req, res, next) => {
         include: {
           questions: {
             include: {
-              answers: true
+              answers: true,
             },
             orderBy: {
-              number: 'asc'
-            }
-          }
-        }
-      })
+              number: 'asc',
+            },
+          },
+        },
+      });
     }
 
     if (!section) {
-      return res.status(404).json({ error: 'Section not found' })
+      return res.status(404).json({ error: 'Section not found' });
     }
 
-    res.json(section)
+    res.json(section);
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
+
+const createSection = async (req, res, next) => {
+  try {
+    const { sectionId, title, path, dir } = req.body;
+
+    // Check if sectionId already exists
+    const existing = await prisma.section.findUnique({
+      where: { sectionId },
+    });
+
+    if (existing) {
+      return res.status(409).json({ error: 'Section with this sectionId already exists' });
+    }
+
+    const newSection = await prisma.section.create({
+      data: {
+        sectionId,
+        title,
+        path,
+        dir,
+      },
+      include: {
+        _count: {
+          select: {
+            questions: true,
+          },
+        },
+      },
+    });
+
+    res.status(201).json(newSection);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateSection = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { sectionId, title, path, dir } = req.body;
+
+    // If updating sectionId, check for conflicts
+    if (sectionId) {
+      const existing = await prisma.section.findFirst({
+        where: {
+          sectionId,
+          NOT: { id },
+        },
+      });
+
+      if (existing) {
+        return res.status(409).json({ error: 'Section with this sectionId already exists' });
+      }
+    }
+
+    const updatedSection = await prisma.section.update({
+      where: { id },
+      data: {
+        ...(sectionId !== undefined && { sectionId }),
+        ...(title !== undefined && { title }),
+        ...(path !== undefined && { path }),
+        ...(dir !== undefined && { dir }),
+      },
+      include: {
+        _count: {
+          select: {
+            questions: true,
+          },
+        },
+      },
+    });
+
+    res.json(updatedSection);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteSection = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // Check if section has questions
+    const section = await prisma.section.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            questions: true,
+          },
+        },
+      },
+    });
+
+    if (!section) {
+      return res.status(404).json({ error: 'Section not found' });
+    }
+
+    if (section._count.questions > 0) {
+      return res.status(409).json({
+        error:
+          'Cannot delete section with existing questions. Please delete or move questions first.',
+      });
+    }
+
+    await prisma.section.delete({
+      where: { id },
+    });
+
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+};
 
 module.exports = {
   getSections,
-  getSectionById
-}
+  getSectionById,
+  createSection,
+  updateSection,
+  deleteSection,
+};
