@@ -578,8 +578,10 @@ $breakpoint-mobile: 768px;
 
 .card-content {
   width: 100%;
-  text-align: center;
   color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .card-header {
@@ -627,13 +629,71 @@ $breakpoint-mobile: 768px;
   font-size: 1.25rem;
   line-height: 1.6;
   font-weight: 500;
+  text-align: left;
+  max-width: 100%;
 
   :deep(p) {
-    margin: 0.5rem 0;
+    margin: 0.75rem 0;
+    line-height: 1.7;
+
+    &:first-child {
+      margin-top: 0;
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
   }
 
   :deep(strong) {
     font-weight: 700;
+  }
+
+  :deep(em) {
+    font-style: italic;
+  }
+
+  :deep(h1),
+  :deep(h2),
+  :deep(h3),
+  :deep(h4),
+  :deep(h5),
+  :deep(h6) {
+    margin: 1rem 0 0.75rem 0;
+    font-weight: 600;
+    line-height: 1.4;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  :deep(h1) {
+    font-size: 1.5rem;
+  }
+
+  :deep(h2) {
+    font-size: 1.375rem;
+  }
+
+  :deep(h3) {
+    font-size: 1.25rem;
+  }
+
+  :deep(h4) {
+    font-size: 1.125rem;
+  }
+
+  :deep(ul),
+  :deep(ol) {
+    margin: 0.75rem 0;
+    padding-left: 1.5rem;
+    line-height: 1.7;
+  }
+
+  :deep(li) {
+    margin: 0.5rem 0;
+    line-height: 1.7;
   }
 
   :deep(code) {
@@ -641,10 +701,132 @@ $breakpoint-mobile: 768px;
     padding: 0.2rem 0.4rem;
     border-radius: 4px;
     font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+  }
+
+  :deep(pre) {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    overflow-x: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+
+    code {
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      display: block;
+      white-space: pre;
+      color: rgba(255, 255, 255, 0.95);
+      font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+    }
+
+    // Стили для подсветки синтаксиса
+    :deep(.hljs-keyword),
+    :deep(.hljs-selector-tag) {
+      color: #569cd6;
+    }
+
+    :deep(.hljs-string),
+    :deep(.hljs-meta .hljs-meta-string) {
+      color: #ce9178;
+    }
+
+    :deep(.hljs-comment),
+    :deep(.hljs-quote) {
+      color: #6a9955;
+      font-style: italic;
+    }
+
+    :deep(.hljs-number),
+    :deep(.hljs-literal) {
+      color: #b5cea8;
+    }
+
+    :deep(.hljs-function),
+    :deep(.hljs-title) {
+      color: #dcdcaa;
+    }
+
+    :deep(.hljs-type),
+    :deep(.hljs-class) {
+      color: #4ec9b0;
+    }
+
+    :deep(.hljs-variable),
+    :deep(.hljs-params) {
+      color: #9cdcfe;
+    }
+
+    :deep(.hljs-property),
+    :deep(.hljs-attr) {
+      color: #92c5f7;
+    }
+
+    :deep(.hljs-built_in) {
+      color: #569cd6;
+    }
+
+    :deep(.hljs-regexp) {
+      color: #d16969;
+    }
+  }
+
+  :deep(blockquote) {
+    border-left: 3px solid rgba(255, 255, 255, 0.5);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    font-style: italic;
+    opacity: 0.9;
+  }
+
+  :deep(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9em;
+
+    th,
+    td {
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 0.5rem;
+      text-align: left;
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.1);
+      font-weight: 600;
+    }
+  }
+
+  :deep(hr) {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    margin: 1.5rem 0;
   }
 
   @media (max-width: $breakpoint-mobile) {
     font-size: 1.125rem;
+
+    :deep(h1) {
+      font-size: 1.375rem;
+    }
+
+    :deep(h2) {
+      font-size: 1.25rem;
+    }
+
+    :deep(h3) {
+      font-size: 1.125rem;
+    }
+
+    :deep(pre) {
+      padding: 0.75rem;
+      font-size: 0.8125rem;
+    }
   }
 }
 
