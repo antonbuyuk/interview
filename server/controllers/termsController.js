@@ -1,86 +1,86 @@
-const prisma = require('../utils/prisma')
+const prisma = require('../utils/prisma');
 
 const getTerms = async (req, res, next) => {
   try {
-    const { category, search, sortBy = 'term' } = req.query
+    const { category, search, sortBy = 'term' } = req.query;
 
-    const where = {}
+    const where = {};
 
     if (category && category !== 'all') {
-      where.category = category
+      where.category = category;
     }
 
     if (search) {
       where.OR = [
         { term: { contains: search, mode: 'insensitive' } },
         { translation: { contains: search, mode: 'insensitive' } },
-        { phrases: { some: { phrase: { contains: search, mode: 'insensitive' } } } }
-      ]
+        { phrases: { some: { phrase: { contains: search, mode: 'insensitive' } } } },
+      ];
     }
 
-    const orderBy = {}
+    const orderBy = {};
     switch (sortBy) {
       case 'term':
-        orderBy.term = 'asc'
-        break
+        orderBy.term = 'asc';
+        break;
       case 'translation':
-        orderBy.translation = 'asc'
-        break
+        orderBy.translation = 'asc';
+        break;
       case 'category':
-        orderBy.category = 'asc'
-        break
+        orderBy.category = 'asc';
+        break;
       default:
-        orderBy.term = 'asc'
+        orderBy.term = 'asc';
     }
 
     const terms = await prisma.term.findMany({
       where,
       include: {
         examples: true,
-        phrases: true
+        phrases: true,
       },
-      orderBy
-    })
+      orderBy,
+    });
 
-    res.json(terms)
+    res.json(terms);
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 const getTermById = async (req, res, next) => {
   try {
-    const { id } = req.params
+    const { id } = req.params;
 
     const term = await prisma.term.findUnique({
       where: { id },
       include: {
         examples: true,
-        phrases: true
-      }
-    })
+        phrases: true,
+      },
+    });
 
     if (!term) {
-      return res.status(404).json({ error: 'Term not found' })
+      return res.status(404).json({ error: 'Term not found' });
     }
 
-    res.json(term)
+    res.json(term);
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 const createTerm = async (req, res, next) => {
   try {
-    const { term, translation, category, categoryTitle, examples, phrases } = req.body
+    const { term, translation, category, categoryTitle, examples, phrases } = req.body;
 
     // Check if term already exists
     const existing = await prisma.term.findUnique({
-      where: { term }
-    })
+      where: { term },
+    });
 
     if (existing) {
-      return res.status(409).json({ error: 'Term already exists' })
+      return res.status(409).json({ error: 'Term already exists' });
     }
 
     const newTerm = await prisma.term.create({
@@ -89,45 +89,49 @@ const createTerm = async (req, res, next) => {
         translation,
         category,
         categoryTitle,
-        examples: examples ? {
-          create: examples.map(example => ({
-            example
-          }))
-        } : undefined,
-        phrases: phrases ? {
-          create: phrases.map(phrase => ({
-            phrase
-          }))
-        } : undefined
+        examples: examples
+          ? {
+              create: examples.map(example => ({
+                example,
+              })),
+            }
+          : undefined,
+        phrases: phrases
+          ? {
+              create: phrases.map(phrase => ({
+                phrase,
+              })),
+            }
+          : undefined,
       },
       include: {
         examples: true,
-        phrases: true
-      }
-    })
+        phrases: true,
+      },
+    });
 
-    res.status(201).json(newTerm)
+    res.status(201).json(newTerm);
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 const updateTerm = async (req, res, next) => {
   try {
-    const { id } = req.params
-    const { term, translation, category, categoryTitle, examples, phrases } = req.body
+    const { id } = req.params;
+    const { term, translation, category, categoryTitle, examples, phrases } = req.body;
 
     // If updating term name, check for conflicts
     if (term) {
       const existing = await prisma.term.findFirst({
         where: {
           term,
-          NOT: { id }
-        }
-      })
+          NOT: { id },
+        },
+      });
 
       if (existing) {
-        return res.status(409).json({ error: 'Term with this name already exists' })
+        return res.status(409).json({ error: 'Term with this name already exists' });
       }
     }
 
@@ -136,27 +140,27 @@ const updateTerm = async (req, res, next) => {
       ...(term !== undefined && { term }),
       ...(translation !== undefined && { translation }),
       ...(category !== undefined && { category }),
-      ...(categoryTitle !== undefined && { categoryTitle })
-    }
+      ...(categoryTitle !== undefined && { categoryTitle }),
+    };
 
     // Handle examples update (delete all and recreate)
     if (examples !== undefined) {
       await prisma.termExample.deleteMany({
-        where: { termId: id }
-      })
+        where: { termId: id },
+      });
       updateData.examples = {
-        create: examples.map(example => ({ example }))
-      }
+        create: examples.map(example => ({ example })),
+      };
     }
 
     // Handle phrases update (delete all and recreate)
     if (phrases !== undefined) {
       await prisma.termPhrase.deleteMany({
-        where: { termId: id }
-      })
+        where: { termId: id },
+      });
       updateData.phrases = {
-        create: phrases.map(phrase => ({ phrase }))
-      }
+        create: phrases.map(phrase => ({ phrase })),
+      };
     }
 
     const updatedTerm = await prisma.term.update({
@@ -164,34 +168,34 @@ const updateTerm = async (req, res, next) => {
       data: updateData,
       include: {
         examples: true,
-        phrases: true
-      }
-    })
+        phrases: true,
+      },
+    });
 
-    res.json(updatedTerm)
+    res.json(updatedTerm);
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 const deleteTerm = async (req, res, next) => {
   try {
-    const { id } = req.params
+    const { id } = req.params;
 
     await prisma.term.delete({
-      where: { id }
-    })
+      where: { id },
+    });
 
-    res.status(204).send()
+    res.status(204).send();
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 module.exports = {
   getTerms,
   getTermById,
   createTerm,
   updateTerm,
-  deleteTerm
-}
+  deleteTerm,
+};

@@ -1,5 +1,5 @@
 <template>
-  <nav class="question-nav" :class="{ 'empty': questions.length === 0 }">
+  <nav class="question-nav" :class="{ empty: questions.length === 0 }">
     <div class="question-nav-header">
       <h3>Навигация по вопросам</h3>
       <span v-if="questions.length > 0" class="question-count">{{ questions.length }}</span>
@@ -8,16 +8,12 @@
       <p>Вопросы не найдены</p>
     </div>
     <ul v-else class="question-list">
-      <li
-        v-for="(question, index) in questions"
-        :key="index"
-        class="question-item"
-      >
+      <li v-for="(question, index) in questions" :key="index" class="question-item">
         <a
           :href="`#question-${index + 1}`"
-          @click.prevent="scrollToQuestion(question.id)"
           class="question-link"
           :class="{ active: activeQuestion === question.id }"
+          @click.prevent="scrollToQuestion(question.id)"
         >
           <span class="question-number">{{ index + 1 }}.</span>
           <span class="question-text">{{ question.text }}</span>
@@ -28,85 +24,85 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue';
 
-const props = defineProps({
+defineProps({
   questions: {
     type: Array,
-    default: () => []
-  }
-})
+    default: () => [],
+  },
+});
 
-const emit = defineEmits(['question-click'])
+const emit = defineEmits(['question-click']);
 
-const activeQuestion = ref(null)
+const activeQuestion = ref(null);
 
-const scrollToQuestion = (questionId) => {
-  const element = document.getElementById(questionId)
+const scrollToQuestion = questionId => {
+  const element = document.getElementById(questionId);
   if (element) {
-    const offset = 100 // Отступ от верха
-    const elementPosition = element.getBoundingClientRect().top + window.pageYOffset
-    const offsetPosition = elementPosition - offset
+    const offset = 100; // Отступ от верха
+    const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+    const offsetPosition = elementPosition - offset;
 
     window.scrollTo({
       top: offsetPosition,
-      behavior: 'smooth'
-    })
+      behavior: 'smooth',
+    });
 
-    activeQuestion.value = questionId
-    emit('question-click', questionId)
+    activeQuestion.value = questionId;
+    emit('question-click', questionId);
 
     // Закрываем фильтр на мобильных после клика на вопрос
     if (window.innerWidth <= 768) {
-      const event = new CustomEvent('filter-closed')
-      window.dispatchEvent(event)
+      const event = new CustomEvent('filter-closed');
+      window.dispatchEvent(event);
     }
   }
-}
+};
 
 // Отслеживание активного вопроса при прокрутке
 const handleScroll = () => {
-  const questionElements = document.querySelectorAll('[id^="question-"]')
-  if (questionElements.length === 0) return
+  const questionElements = document.querySelectorAll('[id^="question-"]');
+  if (questionElements.length === 0) return;
 
-  const scrollPosition = window.pageYOffset + 120
-  let currentActive = null
+  const scrollPosition = window.pageYOffset + 120;
+  let currentActive = null;
 
-  questionElements.forEach((question) => {
-    const questionTop = question.offsetTop
-    const questionBottom = questionTop + question.offsetHeight
+  questionElements.forEach(question => {
+    const questionTop = question.offsetTop;
+    const questionBottom = questionTop + question.offsetHeight;
 
     if (scrollPosition >= questionTop - 50 && scrollPosition < questionBottom) {
-      currentActive = question.id
+      currentActive = question.id;
     }
-  })
+  });
 
   // Если мы в самом верху, выбираем первый вопрос
   if (!currentActive && window.pageYOffset < 100) {
-    currentActive = questionElements[0]?.id || null
+    currentActive = questionElements[0]?.id || null;
   }
 
   // Если мы прокрутили вниз и нет активного, выбираем последний
   if (!currentActive && questionElements.length > 0) {
-    const lastQuestion = questionElements[questionElements.length - 1]
+    const lastQuestion = questionElements[questionElements.length - 1];
     if (scrollPosition >= lastQuestion.offsetTop - 50) {
-      currentActive = lastQuestion.id
+      currentActive = lastQuestion.id;
     }
   }
 
   if (currentActive) {
-    activeQuestion.value = currentActive
+    activeQuestion.value = currentActive;
   }
-}
+};
 
 onMounted(() => {
-  window.addEventListener('scroll', handleScroll)
-  handleScroll() // Проверяем сразу
-})
+  window.addEventListener('scroll', handleScroll);
+  handleScroll(); // Проверяем сразу
+});
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
-})
+  window.removeEventListener('scroll', handleScroll);
+});
 </script>
 
 <style scoped>
@@ -205,6 +201,10 @@ onUnmounted(() => {
   font-size: 0.8125rem;
   line-height: 1.4;
   flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .question-link.active .question-text {
@@ -314,4 +314,3 @@ onUnmounted(() => {
   }
 }
 </style>
-

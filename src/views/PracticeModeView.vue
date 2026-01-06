@@ -6,16 +6,12 @@
     </div>
 
     <!-- Настройки -->
-    <div class="settings-panel" v-if="!started">
+    <div v-if="!started" class="settings-panel">
       <div class="setting-group">
         <label class="setting-label">Выберите раздел:</label>
         <select v-model="selectedSection" class="setting-select">
           <option value="all">Все разделы</option>
-          <option
-            v-for="section in sections"
-            :key="section.id"
-            :value="section.id"
-          >
+          <option v-for="section in sections" :key="section.id" :value="section.id">
             {{ section.title }}
           </option>
         </select>
@@ -34,16 +30,12 @@
 
       <div class="setting-group">
         <label class="setting-label">
-          <input
-            type="checkbox"
-            v-model="shuffleQuestions"
-            class="setting-checkbox"
-          />
+          <input v-model="shuffleQuestions" type="checkbox" class="setting-checkbox" />
           Перемешать вопросы
         </label>
       </div>
 
-      <button @click="startPractice" class="start-btn" :disabled="!canStart">
+      <button class="start-btn" :disabled="!canStart" @click="startPractice">
         Начать практику
       </button>
     </div>
@@ -51,10 +43,7 @@
     <!-- Режим практики -->
     <div v-else class="practice-container">
       <div class="progress-bar">
-        <div
-          class="progress-fill"
-          :style="{ width: `${progressPercent}%` }"
-        ></div>
+        <div class="progress-fill" :style="{ width: `${progressPercent}%` }"></div>
       </div>
 
       <div class="progress-text">
@@ -63,7 +52,10 @@
 
       <!-- Таймер -->
       <div class="timer-container">
-        <div class="timer" :class="{ 'timer-warning': timeLeft <= 60, 'timer-danger': timeLeft <= 30 }">
+        <div
+          class="timer"
+          :class="{ 'timer-warning': timeLeft <= 60, 'timer-danger': timeLeft <= 30 }"
+        >
           <span class="timer-label">Осталось времени:</span>
           <span class="timer-value">{{ formattedTime }}</span>
         </div>
@@ -75,9 +67,9 @@
           <div class="question-label">Вопрос</div>
           <button
             v-if="ttsEnabled && isSupported"
-            @click="speakQuestion(currentQuestion.question)"
             class="tts-btn"
             title="Озвучить вопрос"
+            @click="speakQuestion(currentQuestion.question)"
           >
             🔊
           </button>
@@ -97,9 +89,9 @@
         ></textarea>
         <div class="answer-actions">
           <button
-            @click="showAnswer"
             class="action-btn primary"
             :disabled="!userAnswer.trim() && !showCorrectAnswer"
+            @click="showAnswer"
           >
             {{ showCorrectAnswer ? 'Скрыть правильный ответ' : 'Показать правильный ответ' }}
           </button>
@@ -112,9 +104,9 @@
           <div class="answer-label">Answer EN (эталонный ответ):</div>
           <button
             v-if="ttsEnabled && isSupported && currentQuestion.answerEn"
-            @click="speakAnswer(currentQuestion.answerEn)"
             class="tts-btn"
             title="Озвучить ответ"
+            @click="speakAnswer(currentQuestion.answerEn)"
           >
             🔊
           </button>
@@ -124,25 +116,15 @@
 
       <!-- Управление -->
       <div class="practice-controls">
-        <button
-          @click="previousQuestion"
-          class="control-btn"
-          :disabled="currentIndex === 0"
-        >
+        <button class="control-btn" :disabled="currentIndex === 0" @click="previousQuestion">
           ← Предыдущий
         </button>
-        <button @click="nextQuestion" class="control-btn primary">
-          Следующий вопрос →
-        </button>
+        <button class="control-btn primary" @click="nextQuestion">Следующий вопрос →</button>
       </div>
 
       <div class="practice-actions">
-        <button @click="restartPractice" class="action-btn">
-          🔄 Начать заново
-        </button>
-        <button @click="stopPractice" class="action-btn">
-          ⏹️ Завершить
-        </button>
+        <button class="action-btn" @click="restartPractice">🔄 Начать заново</button>
+        <button class="action-btn" @click="stopPractice">⏹️ Завершить</button>
       </div>
     </div>
 
@@ -155,141 +137,140 @@
     <!-- Состояние ошибки -->
     <div v-if="error" class="error-state">
       <p>{{ error }}</p>
-      <button @click="loadQuestions" class="retry-btn">Повторить</button>
+      <button class="retry-btn" @click="loadQuestions">Повторить</button>
     </div>
 
     <!-- Нет вопросов -->
-    <div v-if="!loading && !error && filteredQuestions.length === 0 && started" class="no-questions">
+    <div
+      v-if="!loading && !error && filteredQuestions.length === 0 && started"
+      class="no-questions"
+    >
       <p>Вопросы не найдены. Выберите другой раздел.</p>
-      <button @click="started = false" class="action-btn">
-        Вернуться к настройкам
-      </button>
+      <button class="action-btn" @click="started = false">Вернуться к настройкам</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
-import { marked } from 'marked'
-import { useTrainingMode } from '../composables/useTrainingMode'
-import { useTextToSpeech } from '../composables/useTextToSpeech'
-import { getQuestions } from '../api/questions'
-import { getSectionById } from '../api/sections'
-import { sections } from '../data/sections.js'
+import { ref, computed, watch, onUnmounted } from 'vue';
+import { marked } from 'marked';
+import { useTrainingMode } from '../composables/useTrainingMode';
+import { useTextToSpeech } from '../composables/useTextToSpeech';
+import { getQuestions } from '../api/questions';
+import { getSectionById } from '../api/sections';
+import { sections } from '../data/sections.js';
 
-const { practiceTimerDuration, ttsEnabled } = useTrainingMode()
-const { isSupported, speakQuestion, speakAnswer, stop: stopTTS } = useTextToSpeech()
+const { practiceTimerDuration, ttsEnabled } = useTrainingMode();
+const { isSupported, speakQuestion, speakAnswer, stop: stopTTS } = useTextToSpeech();
 
-const loading = ref(false)
-const error = ref(null)
-const started = ref(false)
-const selectedSection = ref('all')
-const shuffleQuestions = ref(true)
-const currentIndex = ref(0)
-const showCorrectAnswer = ref(false)
-const userAnswer = ref('')
-const allQuestions = ref([])
-const timeLeft = ref(0)
+const loading = ref(false);
+const error = ref(null);
+const started = ref(false);
+const selectedSection = ref('all');
+const shuffleQuestions = ref(true);
+const currentIndex = ref(0);
+const showCorrectAnswer = ref(false);
+const userAnswer = ref('');
+const allQuestions = ref([]);
+const timeLeft = ref(0);
 
-let timerInterval = null
+let timerInterval = null;
 
 const filteredQuestions = computed(() => {
   if (selectedSection.value === 'all') {
-    return allQuestions.value
+    return allQuestions.value;
   }
-  return allQuestions.value.filter(
-    (q) => q.sectionId === selectedSection.value
-  )
-})
+  return allQuestions.value.filter(q => q.sectionId === selectedSection.value);
+});
 
 const currentQuestion = computed(() => {
-  if (filteredQuestions.value.length === 0) return null
-  return filteredQuestions.value[currentIndex.value]
-})
+  if (filteredQuestions.value.length === 0) return null;
+  return filteredQuestions.value[currentIndex.value];
+});
 
 const formattedQuestion = computed(() => {
-  if (!currentQuestion.value?.question) return ''
-  return marked.parse(`### ${currentQuestion.value.question}`)
-})
+  if (!currentQuestion.value?.question) return '';
+  return marked.parse(`### ${currentQuestion.value.question}`);
+});
 
 const formattedAnswer = computed(() => {
-  if (!currentQuestion.value?.answerEn) return ''
-  return marked.parse(currentQuestion.value.answerEn)
-})
+  if (!currentQuestion.value?.answerEn) return '';
+  return marked.parse(currentQuestion.value.answerEn);
+});
 
 const progressPercent = computed(() => {
-  if (filteredQuestions.value.length === 0) return 0
-  return ((currentIndex.value + 1) / filteredQuestions.value.length) * 100
-})
+  if (filteredQuestions.value.length === 0) return 0;
+  return ((currentIndex.value + 1) / filteredQuestions.value.length) * 100;
+});
 
 const formattedTime = computed(() => {
-  const minutes = Math.floor(timeLeft.value / 60)
-  const seconds = timeLeft.value % 60
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`
-})
+  const minutes = Math.floor(timeLeft.value / 60);
+  const seconds = timeLeft.value % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+});
 
 const canStart = computed(() => {
-  return !loading.value && !error.value
-})
+  return !loading.value && !error.value;
+});
 
 const startTimer = () => {
-  clearTimer()
+  clearTimer();
   if (practiceTimerDuration.value > 0) {
-    timeLeft.value = practiceTimerDuration.value * 60
+    timeLeft.value = practiceTimerDuration.value * 60;
     timerInterval = setInterval(() => {
       if (timeLeft.value > 0) {
-        timeLeft.value--
+        timeLeft.value--;
       } else {
-        clearTimer()
+        clearTimer();
         // Можно добавить уведомление о том, что время вышло
       }
-    }, 1000)
+    }, 1000);
   }
-}
+};
 
 const clearTimer = () => {
   if (timerInterval) {
-    clearInterval(timerInterval)
-    timerInterval = null
+    clearInterval(timerInterval);
+    timerInterval = null;
   }
-}
+};
 
-const shuffleArray = (array) => {
-  const shuffled = [...array]
+const shuffleArray = array => {
+  const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
-  return shuffled
-}
+  return shuffled;
+};
 
 const loadQuestions = async () => {
-  loading.value = true
-  error.value = null
-  allQuestions.value = []
+  loading.value = true;
+  error.value = null;
+  allQuestions.value = [];
 
   try {
     const sectionsToLoad =
       selectedSection.value === 'all'
         ? sections
-        : sections.filter((s) => s.id === selectedSection.value)
+        : sections.filter(s => s.id === selectedSection.value);
 
     for (const section of sectionsToLoad) {
       try {
         // Получаем раздел из БД по sectionId
-        const dbSection = await getSectionById(section.id)
+        const dbSection = await getSectionById(section.id);
 
         // Загружаем вопросы через API
-        const questions = await getQuestions(dbSection.id)
+        const questions = await getQuestions(dbSection.id);
 
         // Преобразуем данные из API в формат для тренировки
         const questionsForTraining = questions
-          .filter((q) => {
+          .filter(q => {
             // Фильтруем только вопросы с Answer EN
-            return q.answers && q.answers.some(a => a.type === 'en')
+            return q.answers && q.answers.some(a => a.type === 'en');
           })
-          .map((q) => {
-            const answerEn = q.answers.find(a => a.type === 'en')
+          .map(q => {
+            const answerEn = q.answers.find(a => a.type === 'en');
             return {
               id: q.id,
               number: q.number,
@@ -302,135 +283,134 @@ const loadQuestions = async () => {
               hasAnswerEn: !!answerEn,
               hasAnswerRu: !!q.answers.find(a => a.type === 'ru'),
               hasAnswerSenior: !!q.answers.find(a => a.type === 'senior'),
-              codeBlocks: q.codeBlocks || []
-            }
-          })
+              codeBlocks: q.codeBlocks || [],
+            };
+          });
 
-        allQuestions.value.push(...questionsForTraining)
+        allQuestions.value.push(...questionsForTraining);
       } catch (err) {
-        console.warn(`Ошибка загрузки раздела ${section.title}:`, err)
+        console.warn(`Ошибка загрузки раздела ${section.title}:`, err);
       }
     }
 
     if (shuffleQuestions.value) {
-      allQuestions.value = shuffleArray(allQuestions.value)
+      allQuestions.value = shuffleArray(allQuestions.value);
     }
 
     if (allQuestions.value.length === 0) {
-      error.value = 'Не найдено вопросов с английскими ответами'
+      error.value = 'Не найдено вопросов с английскими ответами';
     }
   } catch (err) {
-    error.value = `Ошибка загрузки: ${err.message}`
-    console.error('Ошибка загрузки вопросов:', err)
+    error.value = `Ошибка загрузки: ${err.message}`;
+    console.error('Ошибка загрузки вопросов:', err);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const startPractice = async () => {
-  await loadQuestions()
+  await loadQuestions();
   if (allQuestions.value.length > 0) {
-    started.value = true
-    currentIndex.value = 0
-    showCorrectAnswer.value = false
-    userAnswer.value = ''
-    startTimer()
+    started.value = true;
+    currentIndex.value = 0;
+    showCorrectAnswer.value = false;
+    userAnswer.value = '';
+    startTimer();
   }
-}
+};
 
 const showAnswer = () => {
-  showCorrectAnswer.value = !showCorrectAnswer.value
+  showCorrectAnswer.value = !showCorrectAnswer.value;
   // Автоматическое озвучивание правильного ответа
-  if (showCorrectAnswer.value && ttsEnabled.value && isSupported.value && currentQuestion.value?.answerEn) {
+  if (
+    showCorrectAnswer.value &&
+    ttsEnabled.value &&
+    isSupported.value &&
+    currentQuestion.value?.answerEn
+  ) {
     setTimeout(() => {
-      speakAnswer(currentQuestion.value.answerEn)
-    }, 200)
+      speakAnswer(currentQuestion.value.answerEn);
+    }, 200);
   } else {
-    stopTTS()
+    stopTTS();
   }
-}
+};
 
 const nextQuestion = () => {
-  stopTTS()
+  stopTTS();
   if (currentIndex.value < filteredQuestions.value.length - 1) {
-    currentIndex.value++
-    showCorrectAnswer.value = false
-    userAnswer.value = ''
+    currentIndex.value++;
+    showCorrectAnswer.value = false;
+    userAnswer.value = '';
     if (practiceTimerDuration.value > 0) {
-      startTimer()
+      startTimer();
     }
 
     // Автоматическое озвучивание вопроса
     if (ttsEnabled.value && isSupported.value && currentQuestion.value?.question) {
       setTimeout(() => {
-        speakQuestion(currentQuestion.value.question)
-      }, 200)
+        speakQuestion(currentQuestion.value.question);
+      }, 200);
     }
   }
-}
+};
 
 const previousQuestion = () => {
-  stopTTS()
+  stopTTS();
   if (currentIndex.value > 0) {
-    currentIndex.value--
-    showCorrectAnswer.value = false
-    userAnswer.value = ''
+    currentIndex.value--;
+    showCorrectAnswer.value = false;
+    userAnswer.value = '';
     if (practiceTimerDuration.value > 0) {
-      startTimer()
+      startTimer();
     }
 
     // Автоматическое озвучивание вопроса
     if (ttsEnabled.value && isSupported.value && currentQuestion.value?.question) {
       setTimeout(() => {
-        speakQuestion(currentQuestion.value.question)
-      }, 200)
+        speakQuestion(currentQuestion.value.question);
+      }, 200);
     }
   }
-}
+};
 
 const restartPractice = () => {
-  currentIndex.value = 0
-  showCorrectAnswer.value = false
-  userAnswer.value = ''
-  clearTimer()
+  currentIndex.value = 0;
+  showCorrectAnswer.value = false;
+  userAnswer.value = '';
+  clearTimer();
   if (shuffleQuestions.value) {
-    allQuestions.value = shuffleArray(allQuestions.value)
+    allQuestions.value = shuffleArray(allQuestions.value);
   }
   if (practiceTimerDuration.value > 0) {
-    startTimer()
+    startTimer();
   }
-}
+};
 
 const stopPractice = () => {
-  started.value = false
-  currentIndex.value = 0
-  showCorrectAnswer.value = false
-  userAnswer.value = ''
-  clearTimer()
-  timeLeft.value = 0
-}
+  started.value = false;
+  currentIndex.value = 0;
+  showCorrectAnswer.value = false;
+  userAnswer.value = '';
+  clearTimer();
+  timeLeft.value = 0;
+};
 
 watch(practiceTimerDuration, () => {
   if (started.value && practiceTimerDuration.value > 0) {
-    startTimer()
+    startTimer();
   }
-})
+});
 
 onUnmounted(() => {
-  clearTimer()
-  stopTTS()
-})
+  clearTimer();
+  stopTTS();
+});
 </script>
 
 <style lang="scss" scoped>
-$primary-color: #42b883;
-$primary-hover: #35a372;
-$text-dark: #1e1e1e;
-$text-gray: #333;
-$border-color: #e0e0e0;
-$bg-light: #f5f5f5;
-$bg-white: white;
-$breakpoint-mobile: 768px;
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
 
 .practice-mode-view {
   max-width: 1000px;
@@ -595,7 +575,8 @@ $breakpoint-mobile: 768px;
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -758,7 +739,8 @@ $breakpoint-mobile: 768px;
     font-family: 'Courier New', monospace;
   }
 
-  :deep(ul), :deep(ol) {
+  :deep(ul),
+  :deep(ol) {
     margin: 0.75rem 0;
     padding-left: 2rem;
   }

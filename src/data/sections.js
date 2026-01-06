@@ -3,97 +3,96 @@ export const sections = [
     id: 'javascript-typescript',
     title: 'JavaScript / TypeScript',
     path: '/javascript-typescript',
-    dir: 'javascript-typescript'
+    dir: 'javascript-typescript',
   },
   {
     id: 'vuejs',
     title: 'Vue.js',
     path: '/vuejs',
-    dir: 'vuejs'
+    dir: 'vuejs',
   },
   {
     id: 'nuxtjs',
     title: 'Nuxt.js',
     path: '/nuxtjs',
-    dir: 'nuxtjs'
+    dir: 'nuxtjs',
   },
   {
     id: 'typescript',
     title: 'TypeScript',
     path: '/typescript',
-    dir: 'typescript'
+    dir: 'typescript',
   },
   {
     id: 'microfrontends',
     title: 'Микрофронтенды',
     path: '/microfrontends',
-    dir: 'microfrontends'
+    dir: 'microfrontends',
   },
   {
     id: 'css-styling',
     title: 'CSS / Styling',
     path: '/css-styling',
-    dir: 'css-styling'
+    dir: 'css-styling',
   },
   {
     id: 'web-performance',
     title: 'Web Performance',
     path: '/web-performance',
-    dir: 'web-performance'
+    dir: 'web-performance',
   },
   {
     id: 'http-api',
     title: 'HTTP / API',
     path: '/http-api',
-    dir: 'http-api'
+    dir: 'http-api',
   },
   {
     id: 'general',
     title: 'Общие вопросы',
     path: '/general',
-    dir: 'general-questions'
+    dir: 'general-questions',
   },
   {
     id: 'practical',
     title: 'Практические задачи',
     path: '/practical',
-    dir: 'practical-tasks'
+    dir: 'practical-tasks',
   },
   {
     id: 'architecture',
     title: 'Архитектура и паттерны',
     path: '/architecture',
-    dir: 'architecture-patterns'
+    dir: 'architecture-patterns',
   },
   {
     id: 'performance',
     title: 'Производительность',
     path: '/performance',
-    dir: 'performance'
+    dir: 'performance',
   },
   {
     id: 'security',
     title: 'Безопасность',
     path: '/security',
-    dir: 'security'
+    dir: 'security',
   },
   {
     id: 'testing',
     title: 'Тестирование',
     path: '/testing',
-    dir: 'testing'
+    dir: 'testing',
   },
   {
     id: 'accessibility',
     title: 'Accessibility (a11y)',
     path: '/accessibility',
-    dir: 'accessibility-a11y'
+    dir: 'accessibility-a11y',
   },
   {
     id: 'practical-senior',
     title: 'Практические задачи (Senior)',
     path: '/practical-senior',
-    dir: 'practical-tasks-senior'
-  }
-]
-
+    dir: 'practical-tasks-senior',
+  },
+];

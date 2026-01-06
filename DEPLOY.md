@@ -1,6 +1,7 @@
 # Деплой проекта с БД
 
 Проект состоит из двух частей:
+
 1. **Фронтенд** (Vue 3) - деплоится на GitHub Pages
 2. **API сервер** (Express + Prisma) - деплоится на Railway/Render
 3. **База данных** (PostgreSQL) - используем Supabase или Neon (бесплатные планы)
@@ -32,6 +33,7 @@
 6. Сохраните её - она понадобится для API сервера
 
 **Если нужно включить прямые подключения:**
+
 - В настройках Database найдите **Network Restrictions**
 - Добавьте ваш IP адрес или разрешите все подключения (для разработки)
 
@@ -105,6 +107,7 @@ npm run migrate:data
 4. Используйте её в Railway как `DATABASE_URL`
 
 **Важно:**
+
 - Direct Connection (порт 5432) - для миграций и локальной разработки
 - Connection Pooling (порт 6543) - для продакшена (Railway)
 
@@ -123,21 +126,25 @@ npm run migrate:data
 После деплоя API на Railway:
 
 1. Установите Railway CLI:
+
 ```bash
 npm i -g @railway/cli
 ```
 
 2. Войдите в Railway:
+
 ```bash
 railway login
 ```
 
 3. Подключитесь к проекту:
+
 ```bash
 railway link
 ```
 
 4. Выполните миграцию данных:
+
 ```bash
 railway run npm run migrate:data
 ```
@@ -163,6 +170,7 @@ Railway использует переменную `DATABASE_URL` из настр
 ## Локальная разработка
 
 Создайте `.env` файл:
+
 ```env
 DATABASE_URL="postgresql://..."
 API_PORT=3001
@@ -171,6 +179,7 @@ VITE_API_URL=http://localhost:3001
 ```
 
 Запустите:
+
 ```bash
 npm run dev:server  # В одном терминале
 npm run dev:client  # В другом терминале
@@ -181,6 +190,7 @@ npm run dev:client  # В другом терминале
 ### CORS ошибки
 
 CORS уже настроен в `server/index.js` для:
+
 - `http://localhost:3000` (локальная разработка)
 - `https://antonbuyuk.github.io` (GitHub Pages)
 

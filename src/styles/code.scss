@@ -1,8 +1,13 @@
+@use './variables' as *;
+
 /* Дополнительные стили для улучшения подсветки кода */
 
 /* Улучшенная типографика для кода */
-code, pre code {
-  font-feature-settings: "liga" 1, "calt" 1;
+code,
+pre code {
+  font-feature-settings:
+    'liga' 1,
+    'calt' 1;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -10,17 +15,17 @@ code, pre code {
 
 /* Убеждаемся, что блоки кода имеют правильный стиль */
 pre {
-  background: #f8f9fa !important;
-  background-color: #f8f9fa !important;
-  color: #1e1e1e !important;
+  background: $bg-code !important;
+  background-color: $bg-code !important;
+  color: $code-text-light !important;
 }
 
 /* Дополнительная гарантия для всех блоков кода */
 .content pre,
 .content :deep(pre),
-pre[class*="language-"] {
-  background: #f8f9fa !important;
-  background-color: #f8f9fa !important;
+pre[class*='language-'] {
+  background: $bg-code !important;
+  background-color: $bg-code !important;
 }
 
 pre code {

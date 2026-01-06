@@ -1,10 +1,10 @@
-const prisma = require('../utils/prisma')
+const prisma = require('../utils/prisma');
 
 const getQuestions = async (req, res, next) => {
   try {
-    const { sectionId } = req.query
+    const { sectionId } = req.query;
 
-    const where = sectionId ? { sectionId } : {}
+    const where = sectionId ? { sectionId } : {};
 
     const questions = await prisma.question.findMany({
       where,
@@ -12,25 +12,22 @@ const getQuestions = async (req, res, next) => {
         section: true,
         answers: {
           orderBy: {
-            type: 'asc'
-          }
-        }
+            type: 'asc',
+          },
+        },
       },
-      orderBy: [
-        { sectionId: 'asc' },
-        { number: 'asc' }
-      ]
-    })
+      orderBy: [{ sectionId: 'asc' }, { number: 'asc' }],
+    });
 
-    res.json(questions)
+    res.json(questions);
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 const getQuestionById = async (req, res, next) => {
   try {
-    const { id } = req.params
+    const { id } = req.params;
 
     const question = await prisma.question.findUnique({
       where: { id },
@@ -38,33 +35,33 @@ const getQuestionById = async (req, res, next) => {
         section: true,
         answers: {
           orderBy: {
-            type: 'asc'
-          }
-        }
-      }
-    })
+            type: 'asc',
+          },
+        },
+      },
+    });
 
     if (!question) {
-      return res.status(404).json({ error: 'Question not found' })
+      return res.status(404).json({ error: 'Question not found' });
     }
 
-    res.json(question)
+    res.json(question);
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 const createQuestion = async (req, res, next) => {
   try {
-    const { sectionId, number, question, questionRaw, codeBlocks, rawMarkdown, answers } = req.body
+    const { sectionId, number, question, questionRaw, codeBlocks, rawMarkdown, answers } = req.body;
 
     // Check if section exists
     const section = await prisma.section.findUnique({
-      where: { id: sectionId }
-    })
+      where: { id: sectionId },
+    });
 
     if (!section) {
-      return res.status(404).json({ error: 'Section not found' })
+      return res.status(404).json({ error: 'Section not found' });
     }
 
     // Check if question number already exists in section
@@ -72,13 +69,15 @@ const createQuestion = async (req, res, next) => {
       where: {
         sectionId_number: {
           sectionId,
-          number
-        }
-      }
-    })
+          number,
+        },
+      },
+    });
 
     if (existing) {
-      return res.status(409).json({ error: 'Question with this number already exists in this section' })
+      return res
+        .status(409)
+        .json({ error: 'Question with this number already exists in this section' });
     }
 
     const newQuestion = await prisma.question.create({
@@ -89,29 +88,31 @@ const createQuestion = async (req, res, next) => {
         questionRaw,
         codeBlocks: codeBlocks || null,
         rawMarkdown,
-        answers: answers ? {
-          create: answers.map(answer => ({
-            type: answer.type,
-            content: answer.content
-          }))
-        } : undefined
+        answers: answers
+          ? {
+              create: answers.map(answer => ({
+                type: answer.type,
+                content: answer.content,
+              })),
+            }
+          : undefined,
       },
       include: {
         section: true,
-        answers: true
-      }
-    })
+        answers: true,
+      },
+    });
 
-    res.status(201).json(newQuestion)
+    res.status(201).json(newQuestion);
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 const updateQuestion = async (req, res, next) => {
   try {
-    const { id } = req.params
-    const { sectionId, number, question, questionRaw, codeBlocks, rawMarkdown } = req.body
+    const { id } = req.params;
+    const { sectionId, number, question, questionRaw, codeBlocks, rawMarkdown } = req.body;
 
     const updatedQuestion = await prisma.question.update({
       where: { id },
@@ -121,38 +122,38 @@ const updateQuestion = async (req, res, next) => {
         ...(question !== undefined && { question }),
         ...(questionRaw !== undefined && { questionRaw }),
         ...(codeBlocks !== undefined && { codeBlocks }),
-        ...(rawMarkdown !== undefined && { rawMarkdown })
+        ...(rawMarkdown !== undefined && { rawMarkdown }),
       },
       include: {
         section: true,
-        answers: true
-      }
-    })
+        answers: true,
+      },
+    });
 
-    res.json(updatedQuestion)
+    res.json(updatedQuestion);
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 const deleteQuestion = async (req, res, next) => {
   try {
-    const { id } = req.params
+    const { id } = req.params;
 
     await prisma.question.delete({
-      where: { id }
-    })
+      where: { id },
+    });
 
-    res.status(204).send()
+    res.status(204).send();
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 module.exports = {
   getQuestions,
   getQuestionById,
   createQuestion,
   updateQuestion,
-  deleteQuestion
-}
+  deleteQuestion,
+};

@@ -6,16 +6,12 @@
     </div>
 
     <!-- Настройки -->
-    <div class="settings-panel" v-if="!started">
+    <div v-if="!started" class="settings-panel">
       <div class="setting-group">
         <label class="setting-label">Выберите раздел:</label>
         <select v-model="selectedSection" class="setting-select">
           <option value="all">Все разделы</option>
-          <option
-            v-for="section in sections"
-            :key="section.id"
-            :value="section.id"
-          >
+          <option v-for="section in sections" :key="section.id" :value="section.id">
             {{ section.title }}
           </option>
         </select>
@@ -34,27 +30,19 @@
 
       <div class="setting-group">
         <label class="setting-label">
-          <input
-            type="checkbox"
-            v-model="autoFlip"
-            class="setting-checkbox"
-          />
+          <input v-model="autoFlip" type="checkbox" class="setting-checkbox" />
           Автоматический переход
         </label>
       </div>
 
       <div class="setting-group">
         <label class="setting-label">
-          <input
-            type="checkbox"
-            v-model="shuffleQuestions"
-            class="setting-checkbox"
-          />
+          <input v-model="shuffleQuestions" type="checkbox" class="setting-checkbox" />
           Перемешать вопросы
         </label>
       </div>
 
-      <button @click="startTraining" class="start-btn" :disabled="!canStart">
+      <button class="start-btn" :disabled="!canStart" @click="startTraining">
         Начать тренировку
       </button>
     </div>
@@ -62,10 +50,7 @@
     <!-- Карточка -->
     <div v-else class="flash-card-container">
       <div class="progress-bar">
-        <div
-          class="progress-fill"
-          :style="{ width: `${progressPercent}%` }"
-        ></div>
+        <div class="progress-fill" :style="{ width: `${progressPercent}%` }"></div>
       </div>
 
       <div class="progress-text">
@@ -79,9 +64,9 @@
               <div class="card-label">Вопрос</div>
               <button
                 v-if="ttsEnabled && isSupported"
-                @click.stop="speakQuestion(currentQuestion.question)"
                 class="tts-btn"
                 title="Озвучить вопрос"
+                @click.stop="speakQuestion(currentQuestion.question)"
               >
                 🔊
               </button>
@@ -93,52 +78,38 @@
               <div class="card-label">Answer EN</div>
               <button
                 v-if="ttsEnabled && isSupported && currentQuestion.answerEn"
-                @click.stop="speakAnswer(currentQuestion.answerEn)"
                 class="tts-btn"
                 title="Озвучить ответ"
+                @click.stop="speakAnswer(currentQuestion.answerEn)"
               >
                 🔊
               </button>
             </div>
-            <div
-              class="card-text"
-              v-html="formattedAnswer"
-              v-if="currentQuestion.answerEn"
-            ></div>
-            <div v-else class="no-answer">
-              Английский ответ не найден
-            </div>
+            <div v-if="currentQuestion.answerEn" class="card-text" v-html="formattedAnswer"></div>
+            <div v-else class="no-answer">Английский ответ не найден</div>
           </div>
         </div>
       </div>
 
       <div class="card-controls">
-        <button
-          @click="previousQuestion"
-          class="control-btn"
-          :disabled="currentIndex === 0"
-        >
+        <button class="control-btn" :disabled="currentIndex === 0" @click="previousQuestion">
           ← Предыдущий
         </button>
-        <button @click="toggleCard" class="control-btn primary">
+        <button class="control-btn primary" @click="toggleCard">
           {{ showAnswer ? 'Скрыть ответ' : 'Показать ответ' }}
         </button>
         <button
-          @click="nextQuestion"
           class="control-btn"
           :disabled="currentIndex === filteredQuestions.length - 1"
+          @click="nextQuestion"
         >
           Следующий →
         </button>
       </div>
 
       <div class="card-actions">
-        <button @click="restartTraining" class="action-btn">
-          🔄 Начать заново
-        </button>
-        <button @click="stopTraining" class="action-btn">
-          ⏹️ Завершить
-        </button>
+        <button class="action-btn" @click="restartTraining">🔄 Начать заново</button>
+        <button class="action-btn" @click="stopTraining">⏹️ Завершить</button>
       </div>
     </div>
 
@@ -151,193 +122,187 @@
     <!-- Состояние ошибки -->
     <div v-if="error" class="error-state">
       <p>{{ error }}</p>
-      <button @click="loadQuestions" class="retry-btn">Повторить</button>
+      <button class="retry-btn" @click="loadQuestions">Повторить</button>
     </div>
 
     <!-- Нет вопросов -->
-    <div v-if="!loading && !error && filteredQuestions.length === 0 && started" class="no-questions">
+    <div
+      v-if="!loading && !error && filteredQuestions.length === 0 && started"
+      class="no-questions"
+    >
       <p>Вопросы не найдены. Выберите другой раздел.</p>
-      <button @click="started = false" class="action-btn">
-        Вернуться к настройкам
-      </button>
+      <button class="action-btn" @click="started = false">Вернуться к настройкам</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
-import { marked } from 'marked'
-import { useTrainingMode } from '../composables/useTrainingMode'
-import { useTextToSpeech } from '../composables/useTextToSpeech'
-import { getQuestions } from '../api/questions'
-import { getSectionById } from '../api/sections'
-import { sections } from '../data/sections.js'
+import { ref, computed, watch, onUnmounted } from 'vue';
+import { marked } from 'marked';
+import { useTrainingMode } from '../composables/useTrainingMode';
+import { useTextToSpeech } from '../composables/useTextToSpeech';
+import { getQuestions } from '../api/questions';
+import { getSectionById } from '../api/sections';
+import { sections } from '../data/sections.js';
 
-const { flashCardDuration, extractQuestionData, ttsEnabled } = useTrainingMode()
-const {
-  isSupported,
-  speakQuestion,
-  speakAnswer,
-  stop: stopTTS
-} = useTextToSpeech()
+const { flashCardDuration, ttsEnabled } = useTrainingMode();
+const { isSupported, speakQuestion, speakAnswer, stop: stopTTS } = useTextToSpeech();
 
-const loading = ref(false)
-const error = ref(null)
-const started = ref(false)
-const selectedSection = ref('all')
-const autoFlip = ref(false)
-const shuffleQuestions = ref(true)
-const currentIndex = ref(0)
-const showAnswer = ref(false)
-const allQuestions = ref([])
+const loading = ref(false);
+const error = ref(null);
+const started = ref(false);
+const selectedSection = ref('all');
+const autoFlip = ref(false);
+const shuffleQuestions = ref(true);
+const currentIndex = ref(0);
+const showAnswer = ref(false);
+const allQuestions = ref([]);
 
-let autoFlipTimer = null
+let autoFlipTimer = null;
 
 const filteredQuestions = computed(() => {
   if (selectedSection.value === 'all') {
-    return allQuestions.value
+    return allQuestions.value;
   }
-  return allQuestions.value.filter(
-    (q) => q.sectionId === selectedSection.value
-  )
-})
+  return allQuestions.value.filter(q => q.sectionId === selectedSection.value);
+});
 
 const currentQuestion = computed(() => {
-  if (filteredQuestions.value.length === 0) return null
-  return filteredQuestions.value[currentIndex.value]
-})
+  if (filteredQuestions.value.length === 0) return null;
+  return filteredQuestions.value[currentIndex.value];
+});
 
 const formattedAnswer = computed(() => {
-  if (!currentQuestion.value?.answerEn) return ''
-  return marked.parse(currentQuestion.value.answerEn)
-})
+  if (!currentQuestion.value?.answerEn) return '';
+  return marked.parse(currentQuestion.value.answerEn);
+});
 
 const progressPercent = computed(() => {
-  if (filteredQuestions.value.length === 0) return 0
-  return ((currentIndex.value + 1) / filteredQuestions.value.length) * 100
-})
+  if (filteredQuestions.value.length === 0) return 0;
+  return ((currentIndex.value + 1) / filteredQuestions.value.length) * 100;
+});
 
 const canStart = computed(() => {
-  return !loading.value && !error.value
-})
+  return !loading.value && !error.value;
+});
 
 const toggleCard = () => {
-  stopTTS()
-  showAnswer.value = !showAnswer.value
+  stopTTS();
+  showAnswer.value = !showAnswer.value;
   if (showAnswer.value && autoFlip.value && flashCardDuration.value > 0) {
-    startAutoFlip()
+    startAutoFlip();
   } else {
-    clearAutoFlip()
+    clearAutoFlip();
   }
 
   // Автоматическое озвучивание
   if (ttsEnabled.value && isSupported.value) {
     if (showAnswer.value && currentQuestion.value?.answerEn) {
-      speakAnswer(currentQuestion.value.answerEn)
+      speakAnswer(currentQuestion.value.answerEn);
     } else if (!showAnswer.value && currentQuestion.value?.question) {
-      speakQuestion(currentQuestion.value.question)
+      speakQuestion(currentQuestion.value.question);
     }
   }
-}
+};
 
 const nextQuestion = () => {
-  stopTTS()
+  stopTTS();
   if (currentIndex.value < filteredQuestions.value.length - 1) {
-    currentIndex.value++
-    showAnswer.value = false
-    clearAutoFlip()
+    currentIndex.value++;
+    showAnswer.value = false;
+    clearAutoFlip();
     if (autoFlip.value && flashCardDuration.value > 0) {
       setTimeout(() => {
-        startAutoFlip()
-      }, 100)
+        startAutoFlip();
+      }, 100);
     }
 
     // Автоматическое озвучивание вопроса
     if (ttsEnabled.value && isSupported.value && currentQuestion.value?.question) {
       setTimeout(() => {
-        speakQuestion(currentQuestion.value.question)
-      }, 200)
+        speakQuestion(currentQuestion.value.question);
+      }, 200);
     }
   }
-}
+};
 
 const previousQuestion = () => {
-  stopTTS()
+  stopTTS();
   if (currentIndex.value > 0) {
-    currentIndex.value--
-    showAnswer.value = false
-    clearAutoFlip()
+    currentIndex.value--;
+    showAnswer.value = false;
+    clearAutoFlip();
 
     // Автоматическое озвучивание вопроса
     if (ttsEnabled.value && isSupported.value && currentQuestion.value?.question) {
       setTimeout(() => {
-        speakQuestion(currentQuestion.value.question)
-      }, 200)
+        speakQuestion(currentQuestion.value.question);
+      }, 200);
     }
   }
-}
+};
 
 const startAutoFlip = () => {
-  clearAutoFlip()
+  clearAutoFlip();
   if (!showAnswer.value) {
     autoFlipTimer = setTimeout(() => {
-      showAnswer.value = true
+      showAnswer.value = true;
       if (flashCardDuration.value > 0) {
         autoFlipTimer = setTimeout(() => {
-          nextQuestion()
-        }, flashCardDuration.value * 1000)
+          nextQuestion();
+        }, flashCardDuration.value * 1000);
       }
-    }, flashCardDuration.value * 1000)
+    }, flashCardDuration.value * 1000);
   } else {
     autoFlipTimer = setTimeout(() => {
-      nextQuestion()
-    }, flashCardDuration.value * 1000)
+      nextQuestion();
+    }, flashCardDuration.value * 1000);
   }
-}
+};
 
 const clearAutoFlip = () => {
   if (autoFlipTimer) {
-    clearTimeout(autoFlipTimer)
-    autoFlipTimer = null
+    clearTimeout(autoFlipTimer);
+    autoFlipTimer = null;
   }
-}
+};
 
-const shuffleArray = (array) => {
-  const shuffled = [...array]
+const shuffleArray = array => {
+  const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
-  return shuffled
-}
+  return shuffled;
+};
 
 const loadQuestions = async () => {
-  loading.value = true
-  error.value = null
-  allQuestions.value = []
+  loading.value = true;
+  error.value = null;
+  allQuestions.value = [];
 
   try {
     const sectionsToLoad =
       selectedSection.value === 'all'
         ? sections
-        : sections.filter((s) => s.id === selectedSection.value)
+        : sections.filter(s => s.id === selectedSection.value);
 
     for (const section of sectionsToLoad) {
       try {
         // Получаем раздел из БД по sectionId
-        const dbSection = await getSectionById(section.id)
+        const dbSection = await getSectionById(section.id);
 
         // Загружаем вопросы через API
-        const questions = await getQuestions(dbSection.id)
+        const questions = await getQuestions(dbSection.id);
 
         // Преобразуем данные из API в формат для тренировки
         const questionsForTraining = questions
-          .filter((q) => {
+          .filter(q => {
             // Фильтруем только вопросы с Answer EN
-            return q.answers && q.answers.some(a => a.type === 'en')
+            return q.answers && q.answers.some(a => a.type === 'en');
           })
-          .map((q) => {
-            const answerEn = q.answers.find(a => a.type === 'en')
+          .map(q => {
+            const answerEn = q.answers.find(a => a.type === 'en');
             return {
               id: q.id,
               number: q.number,
@@ -350,86 +315,80 @@ const loadQuestions = async () => {
               hasAnswerEn: !!answerEn,
               hasAnswerRu: !!q.answers.find(a => a.type === 'ru'),
               hasAnswerSenior: !!q.answers.find(a => a.type === 'senior'),
-              codeBlocks: q.codeBlocks || []
-            }
-          })
+              codeBlocks: q.codeBlocks || [],
+            };
+          });
 
-        allQuestions.value.push(...questionsForTraining)
+        allQuestions.value.push(...questionsForTraining);
       } catch (err) {
-        console.warn(`Ошибка загрузки раздела ${section.title}:`, err)
+        console.warn(`Ошибка загрузки раздела ${section.title}:`, err);
       }
     }
 
     if (shuffleQuestions.value) {
-      allQuestions.value = shuffleArray(allQuestions.value)
+      allQuestions.value = shuffleArray(allQuestions.value);
     }
 
     if (allQuestions.value.length === 0) {
-      error.value = 'Не найдено вопросов с английскими ответами'
+      error.value = 'Не найдено вопросов с английскими ответами';
     }
   } catch (err) {
-    error.value = `Ошибка загрузки: ${err.message}`
-    console.error('Ошибка загрузки вопросов:', err)
+    error.value = `Ошибка загрузки: ${err.message}`;
+    console.error('Ошибка загрузки вопросов:', err);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const startTraining = async () => {
-  await loadQuestions()
+  await loadQuestions();
   if (allQuestions.value.length > 0) {
-    started.value = true
-    currentIndex.value = 0
-    showAnswer.value = false
+    started.value = true;
+    currentIndex.value = 0;
+    showAnswer.value = false;
     if (autoFlip.value && flashCardDuration.value > 0) {
-      startAutoFlip()
+      startAutoFlip();
     }
   }
-}
+};
 
 const restartTraining = () => {
-  currentIndex.value = 0
-  showAnswer.value = false
-  clearAutoFlip()
+  currentIndex.value = 0;
+  showAnswer.value = false;
+  clearAutoFlip();
   if (shuffleQuestions.value) {
-    allQuestions.value = shuffleArray(allQuestions.value)
+    allQuestions.value = shuffleArray(allQuestions.value);
   }
   if (autoFlip.value && flashCardDuration.value > 0) {
-    startAutoFlip()
+    startAutoFlip();
   }
-}
+};
 
 const stopTraining = () => {
-  started.value = false
-  currentIndex.value = 0
-  showAnswer.value = false
-  clearAutoFlip()
-}
+  started.value = false;
+  currentIndex.value = 0;
+  showAnswer.value = false;
+  clearAutoFlip();
+};
 
 watch(flashCardDuration, () => {
   if (started.value && autoFlip.value) {
-    clearAutoFlip()
+    clearAutoFlip();
     if (flashCardDuration.value > 0) {
-      startAutoFlip()
+      startAutoFlip();
     }
   }
-})
+});
 
 onUnmounted(() => {
-  clearAutoFlip()
-  stopTTS()
-})
+  clearAutoFlip();
+  stopTTS();
+});
 </script>
 
 <style lang="scss" scoped>
-$primary-color: #42b883;
-$primary-hover: #35a372;
-$text-dark: #1e1e1e;
-$text-gray: #333;
-$border-color: #e0e0e0;
-$bg-light: #f5f5f5;
-$bg-white: white;
-$breakpoint-mobile: 768px;
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
 
 .flash-cards-view {
   max-width: 900px;
@@ -578,7 +537,9 @@ $breakpoint-mobile: 768px;
   border-radius: 12px;
   padding: 2rem;
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
   margin-bottom: 2rem;
   display: flex;
   align-items: center;

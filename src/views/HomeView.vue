@@ -5,6 +5,9 @@
       <p class="description">
         Подборка вопросов и ответов для подготовки к собеседованиям на позицию Frontend Developer
       </p>
+      <button class="manage-sections-btn" @click="openManageSections">
+        ➕ Управление разделами
+      </button>
     </div>
 
     <div class="sections-grid">
@@ -16,6 +19,9 @@
       >
         <div class="card-header">
           <h3>{{ section.title }}</h3>
+          <span v-if="section._count" class="question-count-badge">
+            {{ section._count.questions || 0 }} вопросов
+          </span>
         </div>
         <div class="card-footer">
           <span class="card-link">Перейти →</span>
@@ -26,7 +32,34 @@
 </template>
 
 <script setup>
-import { sections } from '../data/sections.js'
+import { ref, onMounted, onUnmounted } from 'vue';
+import { getSections } from '../api/sections';
+
+const sections = ref([]);
+
+const loadSections = async () => {
+  try {
+    sections.value = await getSections();
+  } catch (error) {
+    console.error('Ошибка загрузки разделов:', error);
+  }
+};
+
+const openManageSections = () => {
+  // Эмитим событие для открытия модального окна управления разделами
+  window.dispatchEvent(new CustomEvent('open-manage-sections'));
+};
+
+onMounted(() => {
+  loadSections();
+
+  // Обновляем разделы при изменении
+  window.addEventListener('sections-updated', loadSections);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('sections-updated', loadSections);
+});
 </script>
 
 <style scoped>
@@ -100,6 +133,40 @@ import { sections } from '../data/sections.js'
   font-weight: 500;
 }
 
+.manage-sections-btn {
+  margin-top: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #42b883;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #35a372;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(66, 184, 131, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.question-count-badge {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: #f0f7ff;
+  color: #42b883;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
 @media (max-width: 768px) {
   .home-header h1 {
     font-size: 2rem;
@@ -110,4 +177,3 @@ import { sections } from '../data/sections.js'
   }
 }
 </style>
-

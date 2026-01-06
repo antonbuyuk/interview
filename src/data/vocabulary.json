@@ -40,12 +40,7 @@
       "A closure is a function that has access to variables from its outer scope.",
       "Closures allow functions to access variables even after the outer function has returned."
     ],
-    "phrases": [
-      "closure scope",
-      "closure variable",
-      "closure function",
-      "lexical closure"
-    ]
+    "phrases": ["closure scope", "closure variable", "closure function", "lexical closure"]
   },
   {
     "term": "hoisting",
@@ -56,12 +51,7 @@
       "Hoisting is a JavaScript mechanism where variables and function declarations are moved to the top.",
       "Function declarations are hoisted, but function expressions are not."
     ],
-    "phrases": [
-      "variable hoisting",
-      "function hoisting",
-      "hoisting behavior",
-      "hoisting mechanism"
-    ]
+    "phrases": ["variable hoisting", "function hoisting", "hoisting behavior", "hoisting mechanism"]
   },
   {
     "term": "static typing",
@@ -72,11 +62,7 @@
       "Static typing allows type checking at compile time.",
       "TypeScript provides static typing for JavaScript."
     ],
-    "phrases": [
-      "static type checking",
-      "static type system",
-      "static typing benefits"
-    ]
+    "phrases": ["static type checking", "static type system", "static typing benefits"]
   },
   {
     "term": "type inference",
@@ -87,11 +73,7 @@
       "TypeScript uses type inference to automatically determine types.",
       "Type inference reduces the need for explicit type annotations."
     ],
-    "phrases": [
-      "automatic type inference",
-      "type inference mechanism",
-      "type inference rules"
-    ]
+    "phrases": ["automatic type inference", "type inference mechanism", "type inference rules"]
   },
   {
     "term": "generics",
@@ -102,12 +84,7 @@
       "Generics allow creating reusable components that work with different data types.",
       "TypeScript generics provide type safety while maintaining flexibility."
     ],
-    "phrases": [
-      "generic types",
-      "generic function",
-      "generic interface",
-      "generic constraints"
-    ]
+    "phrases": ["generic types", "generic function", "generic interface", "generic constraints"]
   },
   {
     "term": "interface",
@@ -134,12 +111,7 @@
       "Vue is a progressive JavaScript framework.",
       "Vue provides a reactive system for building user interfaces."
     ],
-    "phrases": [
-      "Vue component",
-      "Vue instance",
-      "Vue directive",
-      "Vue reactivity"
-    ]
+    "phrases": ["Vue component", "Vue instance", "Vue directive", "Vue reactivity"]
   },
   {
     "term": "reactive",
@@ -150,12 +122,7 @@
       "Vue uses a reactive system to track data changes.",
       "Reactive data automatically updates the DOM when changed."
     ],
-    "phrases": [
-      "reactive data",
-      "reactive property",
-      "reactive system",
-      "reactive state"
-    ]
+    "phrases": ["reactive data", "reactive property", "reactive system", "reactive state"]
   },
   {
     "term": "component",
@@ -166,12 +133,7 @@
       "A component is a reusable Vue instance.",
       "Components allow building complex UIs from simple building blocks."
     ],
-    "phrases": [
-      "Vue component",
-      "component lifecycle",
-      "component props",
-      "component state"
-    ]
+    "phrases": ["Vue component", "component lifecycle", "component props", "component state"]
   },
   {
     "term": "Composition API",
@@ -182,11 +144,7 @@
       "Composition API provides a more flexible way to organize component logic.",
       "Composition API uses setup() function or <script setup> syntax."
     ],
-    "phrases": [
-      "Vue Composition API",
-      "Composition API setup",
-      "Composition API benefits"
-    ]
+    "phrases": ["Vue Composition API", "Composition API setup", "Composition API benefits"]
   },
   {
     "term": "Options API",
@@ -197,11 +155,7 @@
       "Options API uses data, methods, and computed properties.",
       "Options API is simpler for beginners but less flexible for large components."
     ],
-    "phrases": [
-      "Vue Options API",
-      "Options API structure",
-      "Options API vs Composition API"
-    ]
+    "phrases": ["Vue Options API", "Options API structure", "Options API vs Composition API"]
   },
   {
     "term": "Nuxt",
@@ -212,12 +166,7 @@
       "Nuxt is a framework built on top of Vue.js.",
       "Nuxt provides server-side rendering and static site generation."
     ],
-    "phrases": [
-      "Nuxt application",
-      "Nuxt page",
-      "Nuxt middleware",
-      "Nuxt plugin"
-    ]
+    "phrases": ["Nuxt application", "Nuxt page", "Nuxt middleware", "Nuxt plugin"]
   },
   {
     "term": "server-side rendering",
@@ -228,11 +177,7 @@
       "Server-side rendering generates HTML on the server.",
       "SSR improves initial page load and SEO."
     ],
-    "phrases": [
-      "SSR benefits",
-      "SSR performance",
-      "server-side rendering strategy"
-    ]
+    "phrases": ["SSR benefits", "SSR performance", "server-side rendering strategy"]
   },
   {
     "term": "API",
@@ -243,13 +188,7 @@
       "REST API provides a way to access web services.",
       "API allows different applications to communicate with each other."
     ],
-    "phrases": [
-      "REST API",
-      "GraphQL API",
-      "API endpoint",
-      "API response",
-      "API request"
-    ]
+    "phrases": ["REST API", "GraphQL API", "API endpoint", "API response", "API request"]
   },
   {
     "term": "REST",
@@ -260,12 +199,7 @@
       "REST is an architectural style for designing web services.",
       "REST APIs use HTTP methods like GET, POST, PUT, DELETE."
     ],
-    "phrases": [
-      "REST API",
-      "REST endpoint",
-      "RESTful service",
-      "REST architecture"
-    ]
+    "phrases": ["REST API", "REST endpoint", "RESTful service", "REST architecture"]
   },
   {
     "term": "DOM",
@@ -276,12 +210,7 @@
       "DOM represents the structure of HTML documents.",
       "DOM manipulation allows dynamic updates to web pages."
     ],
-    "phrases": [
-      "DOM manipulation",
-      "DOM element",
-      "virtual DOM",
-      "DOM tree"
-    ]
+    "phrases": ["DOM manipulation", "DOM element", "virtual DOM", "DOM tree"]
   },
   {
     "term": "virtual DOM",
@@ -292,11 +221,7 @@
       "Virtual DOM is a JavaScript representation of the real DOM.",
       "Virtual DOM allows efficient updates by comparing virtual trees."
     ],
-    "phrases": [
-      "virtual DOM diffing",
-      "virtual DOM performance",
-      "virtual DOM implementation"
-    ]
+    "phrases": ["virtual DOM diffing", "virtual DOM performance", "virtual DOM implementation"]
   },
   {
     "term": "lexical environment",
@@ -307,11 +232,7 @@
       "Lexical environment is a data structure that holds identifier-variable mappings.",
       "Each function has its own lexical environment."
     ],
-    "phrases": [
-      "lexical scope",
-      "lexical environment structure",
-      "lexical binding"
-    ]
+    "phrases": ["lexical scope", "lexical environment structure", "lexical binding"]
   },
   {
     "term": "execution context",
@@ -322,11 +243,7 @@
       "Execution context is an environment where JavaScript code is executed.",
       "Each function call creates a new execution context."
     ],
-    "phrases": [
-      "execution context stack",
-      "global execution context",
-      "function execution context"
-    ]
+    "phrases": ["execution context stack", "global execution context", "function execution context"]
   },
   {
     "term": "event loop",
@@ -337,11 +254,7 @@
       "Event loop is responsible for executing code, collecting and processing events.",
       "JavaScript event loop handles asynchronous operations."
     ],
-    "phrases": [
-      "event loop mechanism",
-      "event loop queue",
-      "event loop phases"
-    ]
+    "phrases": ["event loop mechanism", "event loop queue", "event loop phases"]
   },
   {
     "term": "promise",
@@ -352,12 +265,7 @@
       "Promise represents the eventual completion of an asynchronous operation.",
       "Promises can be in pending, fulfilled, or rejected state."
     ],
-    "phrases": [
-      "Promise chain",
-      "Promise resolution",
-      "Promise rejection",
-      "async Promise"
-    ]
+    "phrases": ["Promise chain", "Promise resolution", "Promise rejection", "async Promise"]
   },
   {
     "term": "async/await",
@@ -368,11 +276,7 @@
       "async/await provides a cleaner way to work with promises.",
       "async functions always return a promise."
     ],
-    "phrases": [
-      "async function",
-      "await expression",
-      "async/await syntax"
-    ]
+    "phrases": ["async function", "await expression", "async/await syntax"]
   },
   {
     "term": "CSS",
@@ -383,12 +287,7 @@
       "CSS is used to style and layout web pages.",
       "CSS allows separation of content and presentation."
     ],
-    "phrases": [
-      "CSS selector",
-      "CSS property",
-      "CSS framework",
-      "CSS module"
-    ]
+    "phrases": ["CSS selector", "CSS property", "CSS framework", "CSS module"]
   },
   {
     "term": "performance",
@@ -415,12 +314,7 @@
       "Bundling combines multiple files into fewer files for better performance.",
       "Webpack and Vite are popular bundling tools."
     ],
-    "phrases": [
-      "code bundling",
-      "bundle size",
-      "bundle optimization",
-      "bundle splitting"
-    ]
+    "phrases": ["code bundling", "bundle size", "bundle optimization", "bundle splitting"]
   },
   {
     "term": "code splitting",
@@ -431,11 +325,7 @@
       "Code splitting allows loading only the code needed for the current page.",
       "Code splitting improves initial load time."
     ],
-    "phrases": [
-      "dynamic code splitting",
-      "route-based code splitting",
-      "code splitting strategy"
-    ]
+    "phrases": ["dynamic code splitting", "route-based code splitting", "code splitting strategy"]
   },
   {
     "term": "lazy loading",
@@ -446,11 +336,7 @@
       "Lazy loading defers loading of resources until they are needed.",
       "Lazy loading images improves page load performance."
     ],
-    "phrases": [
-      "lazy load images",
-      "lazy load components",
-      "lazy loading strategy"
-    ]
+    "phrases": ["lazy load images", "lazy load components", "lazy loading strategy"]
   },
   {
     "term": "testing",
@@ -461,12 +347,7 @@
       "Testing ensures code quality and prevents regressions.",
       "Unit tests verify individual functions work correctly."
     ],
-    "phrases": [
-      "unit testing",
-      "integration testing",
-      "test coverage",
-      "test suite"
-    ]
+    "phrases": ["unit testing", "integration testing", "test coverage", "test suite"]
   },
   {
     "term": "security",

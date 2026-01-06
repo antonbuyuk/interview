@@ -1,9 +1,5 @@
 <template>
-  <div
-    class="section-dropdown"
-    @mouseenter="handleMouseEnter"
-    @mouseleave="handleMouseLeave"
-  >
+  <div class="section-dropdown">
     <router-link
       :to="section.path"
       class="nav-item"
@@ -11,224 +7,95 @@
       @click="handleSectionClick"
     >
       <span class="nav-text">{{ section.title }}</span>
-      <span class="dropdown-arrow" :class="{ open: showDropdown }">▼</span>
-      </router-link>
-
-    <transition name="dropdown">
-      <div
-        v-if="showDropdown"
-        ref="menuRef"
-        class="dropdown-menu"
-        :style="menuStyle"
-        @mouseenter="handleMenuEnter"
-        @mouseleave="handleMenuLeave"
-      >
-        <div class="dropdown-header">
-          <span class="dropdown-title">{{ section.title }}</span>
-          <span class="question-count">{{ questions.length }}</span>
-        </div>
-        <div v-if="isLoading" class="dropdown-loading">
-          <p>Загрузка вопросов...</p>
-        </div>
-        <div v-else-if="questions.length === 0" class="dropdown-empty">
-          <p>Вопросы не найдены</p>
-        </div>
-        <div v-else class="dropdown-list">
-          <a
-            v-for="(question, index) in questions"
-            :key="question.id"
-            :href="`${section.path}#${question.id}`"
-            @click.prevent="goToQuestion(question.id)"
-            class="dropdown-item"
-          >
-            <span class="question-number">{{ index + 1 }}.</span>
-            <span class="question-text">{{ question.text }}</span>
-          </a>
-        </div>
-      </div>
-    </transition>
+    </router-link>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, watch, onUnmounted } from 'vue';
+import { useRoute } from 'vue-router';
+import { getSectionById } from '../api/sections.js';
+import { getQuestions } from '../api/questions.js';
 
 const props = defineProps({
   section: {
     type: Object,
-    required: true
-  }
-})
+    required: true,
+  },
+});
 
-const route = useRoute()
-const router = useRouter()
+const route = useRoute();
 
-const showDropdown = ref(false)
-const questions = ref([])
-const isLoading = ref(false)
-const questionsCache = ref(new Map())
-const menuRef = ref(null)
-const menuStyle = ref({})
-let closeTimeout = null
+const showDropdown = ref(false);
+const questions = ref([]);
+const isLoading = ref(false);
+const questionsCache = ref(new Map());
+let closeTimeout = null;
 
 const isActive = computed(() => {
-  return route.path === props.section.path || route.path.startsWith(props.section.path + '#')
-})
-
-const handleMouseEnter = (event) => {
-  // Отменяем закрытие, если было запланировано
-  if (closeTimeout) {
-    clearTimeout(closeTimeout)
-    closeTimeout = null
-  }
-
-  showDropdown.value = true
-  if (questions.value.length === 0 && !isLoading.value) {
-    loadQuestions()
-  }
-
-  // Позиционируем меню
-  nextTick(() => {
-    positionMenu(event.currentTarget)
-  })
-}
-
-const positionMenu = (triggerElement) => {
-  if (!triggerElement) return
-
-  const rect = triggerElement.getBoundingClientRect()
-  menuStyle.value = {
-    left: `${rect.right + 4}px`,
-    top: `${rect.top}px`
-  }
-
-  // Проверяем после рендеринга, не выходит ли за пределы
-  setTimeout(() => {
-    if (menuRef.value) {
-      const menuRect = menuRef.value.getBoundingClientRect()
-      const newStyle = { ...menuStyle.value }
-
-      if (menuRect.right > window.innerWidth - 20) {
-        newStyle.left = `${rect.left - menuRect.width - 8}px`
-      }
-      if (menuRect.bottom > window.innerHeight - 20) {
-        newStyle.top = `${window.innerHeight - menuRect.height - 20}px`
-      }
-
-      menuStyle.value = newStyle
-    }
-  }, 0)
-}
-
-const handleMouseLeave = () => {
-  // Задержка перед закрытием, чтобы можно было переместиться на меню
-  closeTimeout = setTimeout(() => {
-    showDropdown.value = false
-    closeTimeout = null
-  }, 150)
-}
-
-const handleMenuEnter = () => {
-  // Отменяем закрытие при входе в меню
-  if (closeTimeout) {
-    clearTimeout(closeTimeout)
-    closeTimeout = null
-  }
-}
-
-const handleMenuLeave = () => {
-  // Закрываем при выходе из меню
-  showDropdown.value = false
-}
+  return route.path === props.section.path || route.path.startsWith(props.section.path + '#');
+});
 
 const handleSectionClick = () => {
   // Отменяем таймер при клике
   if (closeTimeout) {
-    clearTimeout(closeTimeout)
-    closeTimeout = null
+    clearTimeout(closeTimeout);
+    closeTimeout = null;
   }
-  showDropdown.value = false
-}
+  showDropdown.value = false;
+};
 
 // Очищаем таймер при размонтировании
 onUnmounted(() => {
   if (closeTimeout) {
-    clearTimeout(closeTimeout)
+    clearTimeout(closeTimeout);
   }
-})
+});
 
 const loadQuestions = async () => {
   // Проверяем кеш
   if (questionsCache.value.has(props.section.id)) {
-    questions.value = questionsCache.value.get(props.section.id)
-    return
+    questions.value = questionsCache.value.get(props.section.id);
+    return;
   }
 
-  isLoading.value = true
+  isLoading.value = true;
   try {
-    // Используем base URL для корректной работы на GitHub Pages
-    const baseUrl = import.meta.env.BASE_URL || '/'
-    const response = await fetch(`${baseUrl}${props.section.dir}/README.md`)
-    if (response.ok) {
-      const markdown = await response.text()
-      const extractedQuestions = extractQuestionsFromMarkdown(markdown)
-      questions.value = extractedQuestions
-      questionsCache.value.set(props.section.id, extractedQuestions)
+    // Получаем раздел по ID для получения UUID
+    const section = await getSectionById(props.section.id);
+
+    if (!section) {
+      questions.value = [];
+      return;
     }
+
+    // Загружаем вопросы через API
+    const questionsData = await getQuestions(section.id);
+    const extractedQuestions = questionsData.map(q => ({
+      id: `question-${q.number}`,
+      text: q.question,
+    }));
+
+    questions.value = extractedQuestions;
+    questionsCache.value.set(props.section.id, extractedQuestions);
   } catch (err) {
-    console.error(`Ошибка загрузки вопросов для ${props.section.title}:`, err)
+    console.error(`Ошибка загрузки вопросов для ${props.section.title}:`, err);
+    questions.value = [];
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
-}
-
-const extractQuestionsFromMarkdown = (markdown) => {
-  const questionRegex = /^###\s+\d+\.\s+(.+)$/gm
-  const extractedQuestions = []
-  let match
-
-  while ((match = questionRegex.exec(markdown)) !== null) {
-    const questionText = match[1].trim()
-      .replace(/\*\*/g, '')
-      .replace(/`/g, '')
-      .trim()
-
-    extractedQuestions.push({
-      id: `question-${extractedQuestions.length + 1}`,
-      text: questionText
-    })
-  }
-
-  return extractedQuestions
-}
-
-const goToQuestion = (questionId) => {
-  router.push(`${props.section.path}#${questionId}`)
-  showDropdown.value = false
-
-  // Прокрутка к вопросу после перехода
-  setTimeout(() => {
-    const element = document.getElementById(questionId)
-    if (element) {
-      const offset = 120
-      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset
-      const offsetPosition = elementPosition - offset
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      })
-    }
-  }, 300)
-}
+};
 
 // Предзагрузка вопросов для активного раздела
-watch(() => route.path, (newPath) => {
-  if (newPath === props.section.path) {
-    loadQuestions()
-  }
-}, { immediate: true })
+watch(
+  () => route.path,
+  newPath => {
+    if (newPath === props.section.path) {
+      loadQuestions();
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>
@@ -415,4 +282,3 @@ watch(() => route.path, (newPath) => {
   }
 }
 </style>
-

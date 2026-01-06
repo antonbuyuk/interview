@@ -8,32 +8,32 @@
     <div v-else-if="error" class="error">
       <h2>Ошибка загрузки</h2>
       <p>{{ error }}</p>
-      <button @click="loadContent" class="retry-btn">Повторить</button>
+      <button class="retry-btn" @click="loadContent">Повторить</button>
     </div>
 
     <div v-else class="section-wrapper">
       <div class="mobile-nav-wrapper">
         <Search :current-section="section" :questions="questions" />
       </div>
-      <article class="content" ref="contentRef" :class="{ 'english-only': englishOnly }" v-html="htmlContent" @click="handleCodeBlockClick"></article>
+
+      <article
+        ref="contentRef"
+        class="content"
+        :class="{ 'english-only': englishOnly }"
+        @click="handleContentClick"
+        v-html="htmlContent"
+      ></article>
+
       <div class="right-sidebar">
         <Search :current-section="section" :questions="questions" />
         <div class="training-controls">
           <label class="toggle-label">
-            <input
-              type="checkbox"
-              v-model="englishOnly"
-              class="toggle-input"
-            />
+            <input v-model="englishOnly" type="checkbox" class="toggle-input" />
             <span class="toggle-slider"></span>
             <span class="toggle-text">English Only</span>
           </label>
           <label class="toggle-label">
-            <input
-              type="checkbox"
-              v-model="ttsEnabled"
-              class="toggle-input"
-            />
+            <input v-model="ttsEnabled" type="checkbox" class="toggle-input" />
             <span class="toggle-slider"></span>
             <span class="toggle-text">Text-to-Speech</span>
           </label>
@@ -41,24 +41,36 @@
             <router-link to="/training/flash-cards" class="training-link">
               🎴 Флэш-карточки
             </router-link>
-            <router-link to="/training/practice" class="training-link">
-              ⏱️ Тренировка
-            </router-link>
+            <router-link to="/training/practice" class="training-link"> ⏱️ Тренировка </router-link>
           </div>
         </div>
-        <QuestionNav :questions="questions" class="desktop-nav" />
+        <div v-if="isAdmin" class="question-management">
+          <button class="add-question-btn" @click="openAddQuestion">➕ Добавить вопрос</button>
+        </div>
+        <QuestionNav :questions="questions" :is-admin="isAdmin" class="desktop-nav" />
       </div>
     </div>
+
+    <!-- Модальное окно для добавления/редактирования вопросов -->
+    <AddQuestionModal
+      :is-open="showQuestionModal"
+      :question="editingQuestion"
+      :default-section-id="currentSectionId"
+      :is-admin="isAdmin"
+      @close="closeQuestionModal"
+      @saved="handleQuestionSaved"
+      @deleted="handleQuestionDeleted"
+    />
 
     <!-- Модальное окно для вопросов на мобильных -->
     <div v-if="filterOpen" class="filter-overlay" @click="closeFilter">
       <div class="filter-modal" @click.stop>
         <div class="filter-modal-header">
           <h3>Навигация по вопросам</h3>
-          <button @click="closeFilter" class="filter-close-btn" aria-label="Закрыть">×</button>
+          <button class="filter-close-btn" aria-label="Закрыть" @click="closeFilter">×</button>
         </div>
         <div class="filter-modal-content">
-          <QuestionNav :questions="questions" class="mobile-filter" />
+          <QuestionNav :questions="questions" :is-admin="isAdmin" class="mobile-filter" />
         </div>
       </div>
     </div>
@@ -66,425 +78,535 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { useRoute } from 'vue-router'
-import { marked } from 'marked'
-import hljs from 'highlight.js'
-import QuestionNav from '../components/QuestionNav.vue'
-import Search from '../components/Search.vue'
-import { useTrainingMode } from '../composables/useTrainingMode'
-import { getQuestions } from '../api/questions'
-import { getSectionById } from '../api/sections'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { useRoute } from 'vue-router';
+import { marked } from 'marked';
+import hljs from 'highlight.js';
+import QuestionNav from '../components/QuestionNav.vue';
+import Search from '../components/Search.vue';
+import AddQuestionModal from '../components/AddQuestionModal.vue';
+import { useTrainingMode } from '../composables/useTrainingMode';
+import { useAdminAuth } from '../composables/useAdminAuth';
+import { getQuestions } from '../api/questions';
+import { getSectionById } from '../api/sections';
 // Используем темную тему и переопределим цвета для VS Code стиля
-import 'highlight.js/styles/github-dark.css'
-import '../styles/code.css'
-import '../styles/vscode-theme.css'
-import '../styles/highlight-fix.css'
+import 'highlight.js/styles/github-dark.css';
+import '../styles/code.scss';
+import '../styles/vscode-theme.scss';
+import '../styles/highlight-fix.scss';
 
 const props = defineProps({
   section: {
     type: Object,
-    required: true
-  }
-})
+    required: true,
+  },
+});
 
-const route = useRoute()
-const loading = ref(true)
-const error = ref(null)
-const htmlContent = ref('')
-const contentRef = ref(null)
-const questions = ref([])
-const filterOpen = ref(false)
+const route = useRoute();
+const loading = ref(true);
+const error = ref(null);
+const htmlContent = ref('');
+const contentRef = ref(null);
+const questions = ref([]);
+const filterOpen = ref(false);
+const fullQuestionsData = ref([]); // Полные данные вопросов для редактирования
+const currentSectionId = ref(null); // UUID текущего раздела
+
+// Модалка для добавления/редактирования вопросов
+const showQuestionModal = ref(false);
+const editingQuestion = ref(null);
 
 // Training mode
-const { englishOnly, ttsEnabled } = useTrainingMode()
+const { englishOnly, ttsEnabled } = useTrainingMode();
+
+// Admin auth
+const { isAdmin } = useAdminAuth();
 
 // Закрытие фильтра
 const closeFilter = () => {
-  filterOpen.value = false
-  const event = new CustomEvent('filter-closed')
-  window.dispatchEvent(event)
-}
+  filterOpen.value = false;
+  const event = new CustomEvent('filter-closed');
+  window.dispatchEvent(event);
+};
 
 // Обработчик открытия/закрытия фильтра
-const handleToggleFilter = (event) => {
-  filterOpen.value = event.detail.open
-}
+const handleToggleFilter = event => {
+  filterOpen.value = event.detail.open;
+};
+
+// Методы для работы с модалкой вопросов
+const openAddQuestion = async () => {
+  editingQuestion.value = null;
+  showQuestionModal.value = true;
+  // Автоматически заполняем sectionId текущим разделом
+  // Это будет обработано в модалке через prop
+};
+
+const openEditQuestion = question => {
+  editingQuestion.value = question;
+  showQuestionModal.value = true;
+};
+
+const closeQuestionModal = () => {
+  showQuestionModal.value = false;
+  editingQuestion.value = null;
+};
+
+const handleQuestionSaved = () => {
+  // Перезагружаем контент после сохранения
+  loadContent();
+};
+
+const handleQuestionDeleted = () => {
+  // Перезагружаем контент после удаления
+  loadContent();
+};
 
 // Передаем количество вопросов в Header через событие
-watch(questions, (newQuestions) => {
-  const event = new CustomEvent('questions-count-updated', {
-    detail: { count: newQuestions.length }
-  })
-  window.dispatchEvent(event)
-}, { immediate: true })
+watch(
+  questions,
+  newQuestions => {
+    const event = new CustomEvent('questions-count-updated', {
+      detail: { count: newQuestions.length },
+    });
+    window.dispatchEvent(event);
+  },
+  { immediate: true }
+);
 
 // Настройка marked для подсветки синтаксиса
 marked.setOptions({
-  highlight: function(code, lang) {
+  highlight: function (code, lang) {
     if (lang && hljs.getLanguage(lang)) {
       try {
-        return hljs.highlight(code, { language: lang }).value
-      } catch (err) {}
+        return hljs.highlight(code, { language: lang }).value;
+      } catch (err) {
+        console.error('Ошибка подсветки синтаксиса:', err);
+      }
     }
-    return hljs.highlightAuto(code).value
+    return hljs.highlightAuto(code).value;
   },
   breaks: true,
-  gfm: true
-})
+  gfm: true,
+});
 
 // Генерация HTML из вопросов
-const generateHtmlFromQuestions = (questionsData) => {
-  let html = ''
+const generateHtmlFromQuestions = questionsData => {
+  let html = '';
 
-  questionsData.forEach((q) => {
+  questionsData.forEach(q => {
     // Заголовок вопроса
-    html += `<h3 id="question-${q.number}">${q.number}. ${q.questionRaw || q.question}</h3>\n\n`
+    html += `<h3 id="question-${q.number}" data-question-id="${q.id}">${q.number}. ${q.questionRaw || q.question}</h3>\n\n`;
 
     // Блоки кода из вопроса (если есть)
     if (q.codeBlocks && Array.isArray(q.codeBlocks) && q.codeBlocks.length > 0) {
-      q.codeBlocks.forEach((codeBlock) => {
-        const lang = codeBlock.language || ''
-        html += `\`\`\`${lang}\n${codeBlock.code}\n\`\`\`\n\n`
-      })
+      q.codeBlocks.forEach(codeBlock => {
+        const lang = codeBlock.language || '';
+        html += `\`\`\`${lang}\n${codeBlock.code}\n\`\`\`\n\n`;
+      });
     }
 
     // Ответы
-    const answers = q.answers || []
-    const answerRu = answers.find(a => a.type === 'ru')
-    const answerEn = answers.find(a => a.type === 'en')
-    const answerSenior = answers.find(a => a.type === 'senior')
+    const answers = q.answers || [];
+
+    const answerRu = answers.find(a => a.type === 'ru');
+    const answerEn = answers.find(a => a.type === 'en');
+    const answerSenior = answers.find(a => a.type === 'senior');
 
     if (answerRu) {
-      html += `**Ответ:**\n\n${answerRu.content}\n\n`
+      html += `\n\n${answerRu.content}\n\n`;
     }
 
     if (answerEn) {
-      html += `**Answer EN:**\n\n${answerEn.content}\n\n`
+      html += `**Answer EN:**\n\n${answerEn.content}\n\n`;
     }
 
     if (answerSenior) {
-      html += `**Ответ Senior:**\n\n${answerSenior.content}\n\n`
+      html += `**Ответ Senior:**\n\n${answerSenior.content}\n\n`;
     }
 
-    html += '\n'
-  })
+    html += '\n';
+  });
 
-  return html
-}
+  return html;
+};
 
 const loadContent = async () => {
-  loading.value = true
-  error.value = null
+  loading.value = true;
+  error.value = null;
 
   try {
     // Получаем раздел по sectionId для получения UUID
-    const section = await getSectionById(props.section.id)
+    const section = await getSectionById(props.section.id);
+    currentSectionId.value = section.id;
 
     // Загружаем вопросы через API
-    const questionsData = await getQuestions(section.id)
+    const questionsData = await getQuestions(section.id);
+
+    // Сохраняем полные данные вопросов для редактирования
+    fullQuestionsData.value = questionsData;
 
     // Извлекаем вопросы для навигации
     questions.value = questionsData.map(q => ({
       id: `question-${q.number}`,
-      text: q.question
-    }))
+      text: q.question,
+    }));
 
     // Генерируем Markdown из вопросов
-    const markdown = generateHtmlFromQuestions(questionsData)
+    const markdown = generateHtmlFromQuestions(questionsData);
 
     // Парсим Markdown в HTML
-    let parsedHtml = marked.parse(markdown)
+    let parsedHtml = marked.parse(markdown);
 
     // Оборачиваем ответы в аккордеоны
-    parsedHtml = wrapAnswersInAccordions(parsedHtml)
-    htmlContent.value = parsedHtml
+    parsedHtml = wrapAnswersInAccordions(parsedHtml);
+
+    // Добавляем кнопки редактирования к заголовкам вопросов
+    parsedHtml = addEditButtonsToQuestions(parsedHtml);
+
+    htmlContent.value = parsedHtml;
 
     // Добавляем кнопки копирования и якоря после рендеринга DOM
-    await nextTick()
+    await nextTick();
     setTimeout(() => {
-      addCopyButtons()
-      addQuestionAnchors()
-      initAccordions()
+      addCopyButtons();
+      addQuestionAnchors();
+      initAccordions();
       // Применяем подсветку после создания аккордеонов
-      ensureHighlightClasses()
+      ensureHighlightClasses();
       // Повторно применяем через небольшую задержку для аккордеонов
       setTimeout(() => {
-        ensureHighlightClasses()
-      }, 100)
-    }, 150)
+        ensureHighlightClasses();
+      }, 100);
+    }, 150);
   } catch (err) {
-    error.value = err.message || 'Ошибка загрузки контента'
-    console.error('Ошибка загрузки контента:', err)
+    error.value = err.message || 'Ошибка загрузки контента';
+    console.error('Ошибка загрузки контента:', err);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 // Слушаем события от Header для открытия/закрытия фильтра
 onMounted(() => {
-  window.addEventListener('toggle-filter', handleToggleFilter)
-  loadContent()
-})
+  window.addEventListener('toggle-filter', handleToggleFilter);
+});
 
 onUnmounted(() => {
-  window.removeEventListener('toggle-filter', handleToggleFilter)
-})
+  window.removeEventListener('toggle-filter', handleToggleFilter);
+});
 
-watch(() => props.section.id, () => {
-  loadContent()
-})
+watch(
+  () => props.section.id,
+  () => {
+    loadContent();
+  },
+  { immediate: true }
+);
 
-// Обработчик клика для копирования кода
-const handleCodeBlockClick = (event) => {
-  const copyBtn = event.target.closest('.copy-code-btn')
+// Обработчик клика для контента (копирование кода и редактирование вопросов)
+const handleContentClick = event => {
+  // Обработка кнопки редактирования вопроса
+  const editBtn = event.target.closest('.edit-question-btn');
+  if (editBtn) {
+    const questionId = editBtn.getAttribute('data-question-id');
+    if (questionId) {
+      const question = fullQuestionsData.value.find(q => q.id === questionId);
+      if (question) {
+        openEditQuestion(question);
+      }
+    }
+    return;
+  }
+
+  // Обработка кнопки копирования кода
+  const copyBtn = event.target.closest('.copy-code-btn');
   if (copyBtn) {
-    const codeBlock = copyBtn.closest('pre')
+    const codeBlock = copyBtn.closest('pre');
     if (codeBlock) {
-      const code = codeBlock.querySelector('code')
+      const code = codeBlock.querySelector('code');
       if (code) {
-        navigator.clipboard.writeText(code.textContent || code.innerText)
-        copyBtn.textContent = '✓ Скопировано'
-        copyBtn.classList.add('copied')
+        navigator.clipboard.writeText(code.textContent || code.innerText);
+        copyBtn.textContent = '✓ Скопировано';
+        copyBtn.classList.add('copied');
         setTimeout(() => {
-          copyBtn.textContent = '📋'
-          copyBtn.classList.remove('copied')
-        }, 2000)
+          copyBtn.textContent = '📋';
+          copyBtn.classList.remove('copied');
+        }, 2000);
       }
     }
   }
-}
+};
 
 // Убеждаемся, что классы highlight.js применены
 const ensureHighlightClasses = () => {
-  if (!contentRef.value) return
+  if (!contentRef.value) return;
 
   // Находим все блоки кода, включая внутри аккордеонов (даже скрытых)
-  const codeBlocks = contentRef.value.querySelectorAll('pre code')
+  const codeBlocks = contentRef.value.querySelectorAll('pre code');
 
   codeBlocks.forEach(block => {
     // Проверяем, есть ли уже подсветка (есть ли элементы с классами hljs-*)
-    const hasHighlight = block.querySelector('.hljs-keyword, .hljs-string, .hljs-comment, .hljs-number, .hljs-function')
+    const hasHighlight = block.querySelector(
+      '.hljs-keyword, .hljs-string, .hljs-comment, .hljs-number, .hljs-function'
+    );
 
     // Получаем исходный текст для подсветки
-    const originalText = block.textContent || block.innerText
+    const originalText = block.textContent || block.innerText;
 
     if (!hasHighlight && originalText && originalText.trim()) {
       // Если подсветки нет, применяем её
       try {
         // Определяем язык из класса родительского элемента или самого code
-        let language = null
+        let language = null;
 
         // Проверяем классы на code элементе
-        const codeClassMatch = block.className.match(/language-(\w+)/)
+        const codeClassMatch = block.className.match(/language-(\w+)/);
         if (codeClassMatch) {
-          language = codeClassMatch[1]
+          language = codeClassMatch[1];
         } else {
           // Проверяем классы на pre элементе
-          const pre = block.closest('pre')
+          const pre = block.closest('pre');
           if (pre) {
-            const preClassMatch = pre.className.match(/language-(\w+)/)
+            const preClassMatch = pre.className.match(/language-(\w+)/);
             if (preClassMatch) {
-              language = preClassMatch[1]
+              language = preClassMatch[1];
             }
           }
         }
 
         // Если язык не найден, пробуем автоматическое определение
         if (!language || !hljs.getLanguage(language)) {
-          const highlighted = hljs.highlightAuto(originalText)
-          block.innerHTML = highlighted.value
-          block.classList.add('hljs')
+          const highlighted = hljs.highlightAuto(originalText);
+          block.innerHTML = highlighted.value;
+          block.classList.add('hljs');
           // Сохраняем определенный язык
           if (highlighted.language) {
-            block.classList.add(`language-${highlighted.language}`)
+            block.classList.add(`language-${highlighted.language}`);
           }
         } else {
-          const highlighted = hljs.highlight(originalText, { language })
-          block.innerHTML = highlighted.value
-          block.classList.add('hljs')
-          block.classList.add(`language-${language}`)
+          const highlighted = hljs.highlight(originalText, { language });
+          block.innerHTML = highlighted.value;
+          block.classList.add('hljs');
+          block.classList.add(`language-${language}`);
         }
       } catch (e) {
-        console.warn('Ошибка подсветки кода:', e, block)
+        console.warn('Ошибка подсветки кода:', e, block);
         // Если не удалось подсветить, хотя бы добавим класс и базовые стили
         if (!block.classList.contains('hljs')) {
-          block.classList.add('hljs')
+          block.classList.add('hljs');
         }
       }
     } else if (!block.classList.contains('hljs')) {
       // Если подсветка есть в HTML, но нет класса hljs - добавляем
-      block.classList.add('hljs')
+      block.classList.add('hljs');
     }
 
     // Убеждаемся, что у pre есть правильный фон
-    const pre = block.closest('pre')
+    const pre = block.closest('pre');
     if (pre && !pre.style.backgroundColor) {
-      pre.style.backgroundColor = '#1e1e1e'
+      pre.style.backgroundColor = '#1e1e1e';
     }
-  })
+  });
 
   // Дополнительно применяем highlightAll для любых пропущенных блоков
   // Это важно для блоков, которые могли быть пропущены
   try {
     // Применяем highlightAll только к блокам без подсветки
-    const unhighlighted = contentRef.value.querySelectorAll('pre code:not(.hljs)')
+    const unhighlighted = contentRef.value.querySelectorAll('pre code:not(.hljs)');
     unhighlighted.forEach(block => {
       if (block.textContent && block.textContent.trim()) {
         try {
-          hljs.highlightElement(block)
-        } catch (e) {
-          // Игнорируем ошибки для конкретных блоков
+          hljs.highlightElement(block);
+        } catch (error) {
+          console.error('Ошибка highlightElement:', error);
         }
       }
-    })
-  } catch (e) {
-    console.warn('Ошибка highlightAll:', e)
+    });
+  } catch (error) {
+    console.error('Ошибка highlightAll:', error);
   }
-}
+};
+
+// Добавление кнопок редактирования к заголовкам вопросов
+const addEditButtonsToQuestions = html => {
+  // Не добавляем кнопки, если пользователь не администратор
+  if (!isAdmin.value) {
+    return html;
+  }
+
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
+
+  const questionHeaders = tempDiv.querySelectorAll('h3[data-question-id]');
+  questionHeaders.forEach(header => {
+    // Проверяем, нет ли уже кнопки редактирования
+    if (header.querySelector('.edit-question-btn')) return;
+
+    const questionId = header.getAttribute('data-question-id');
+    const editBtn = document.createElement('button');
+    editBtn.className = 'edit-question-btn';
+    editBtn.setAttribute('data-question-id', questionId);
+    editBtn.title = 'Редактировать вопрос';
+    editBtn.innerHTML = '✏️';
+    editBtn.type = 'button';
+
+    // Добавляем обертку для заголовка, если её нет
+    if (!header.classList.contains('question-header')) {
+      header.classList.add('question-header');
+    }
+
+    header.appendChild(editBtn);
+  });
+
+  return tempDiv.innerHTML;
+};
 
 // Добавление кнопок копирования к блокам кода
 const addCopyButtons = () => {
-  if (!contentRef.value) return
-  const codeBlocks = contentRef.value.querySelectorAll('pre code')
+  if (!contentRef.value) return;
+  const codeBlocks = contentRef.value.querySelectorAll('pre code');
   codeBlocks.forEach(block => {
-    const pre = block.parentElement
+    const pre = block.parentElement;
     if (pre && !pre.querySelector('.copy-code-btn')) {
-      const copyBtn = document.createElement('button')
-      copyBtn.className = 'copy-code-btn'
-      copyBtn.textContent = '📋'
-      copyBtn.title = 'Копировать код'
-      pre.style.position = 'relative'
-      pre.appendChild(copyBtn)
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'copy-code-btn';
+      copyBtn.textContent = '📋';
+      copyBtn.title = 'Копировать код';
+      pre.style.position = 'relative';
+      pre.appendChild(copyBtn);
     }
-  })
-}
+  });
+};
 
 // Извлечение вопросов из markdown
 // Функция extractQuestions больше не нужна, так как вопросы загружаются через API
 
 // Добавление ID к вопросам (h3) для навигации
 const addQuestionAnchors = () => {
-  if (!contentRef.value) return
-  const h3Elements = contentRef.value.querySelectorAll('h3')
-  let questionIndex = 1
+  if (!contentRef.value) return;
+  const h3Elements = contentRef.value.querySelectorAll('h3');
+  let questionIndex = 1;
 
-  h3Elements.forEach((h3) => {
-    const text = h3.textContent || ''
+  h3Elements.forEach(h3 => {
+    const text = h3.textContent || '';
     // Проверяем, что это вопрос (начинается с числа и точки)
     if (/^\d+\.\s+/.test(text.trim())) {
-      h3.id = `question-${questionIndex}`
-      h3.style.scrollMarginTop = '120px'
-      questionIndex++
+      h3.id = `question-${questionIndex}`;
+      h3.style.scrollMarginTop = '120px';
+      questionIndex++;
     }
-  })
-
-  console.log('Добавлено якорей к вопросам:', questionIndex - 1)
-}
+  });
+};
 
 watch(htmlContent, async () => {
   if (htmlContent.value && contentRef.value) {
-    await nextTick()
+    await nextTick();
     setTimeout(() => {
-      addCopyButtons()
-      addQuestionAnchors()
-      initAccordions()
+      addCopyButtons();
+      addQuestionAnchors();
+      initAccordions();
       // Применяем подсветку после создания аккордеонов
-      ensureHighlightClasses()
+      ensureHighlightClasses();
       // Повторно применяем через небольшую задержку для аккордеонов
       setTimeout(() => {
-        ensureHighlightClasses()
-      }, 100)
+        ensureHighlightClasses();
+      }, 100);
       // Альтернативное извлечение вопросов из HTML, если они не были извлечены из markdown
       if (questions.value.length === 0) {
-        extractQuestionsFromHTML()
+        extractQuestionsFromHTML();
       }
 
       // Прокручиваем к вопросу, если он указан в hash
       if (route.hash) {
-        const questionId = route.hash.substring(1)
+        const questionId = route.hash.substring(1);
         if (questionId) {
-          scrollToQuestion(questionId)
+          scrollToQuestion(questionId);
         }
       }
-    }, 150)
+    }, 150);
   }
-})
+});
 
 // Функция для прокрутки к вопросу
-const scrollToQuestion = (questionId) => {
+const scrollToQuestion = questionId => {
   const attemptScroll = () => {
-    const element = document.getElementById(questionId)
+    const element = document.getElementById(questionId);
     if (element) {
-      const offset = 120
-      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset
-      const offsetPosition = elementPosition - offset
+      const offset = 120;
+      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - offset;
 
       window.scrollTo({
         top: offsetPosition,
-        behavior: 'smooth'
-      })
-      return true
+        behavior: 'smooth',
+      });
+      return true;
     }
-    return false
-  }
+    return false;
+  };
 
   // Пробуем сразу
-  if (attemptScroll()) return
+  if (attemptScroll()) return;
 
   // Если не получилось, пробуем через небольшие интервалы
-  let attempts = 0
-  const maxAttempts = 20
+  let attempts = 0;
+  const maxAttempts = 20;
   const interval = setInterval(() => {
-    attempts++
+    attempts++;
     if (attemptScroll() || attempts >= maxAttempts) {
-      clearInterval(interval)
+      clearInterval(interval);
     }
-  }, 100)
-}
+  }, 100);
+};
 
 // Следим за изменением hash
-watch(() => route.hash, (newHash) => {
-  if (newHash && htmlContent.value) {
-    const questionId = newHash.substring(1)
-    if (questionId) {
-      nextTick(() => {
-        setTimeout(() => {
-          scrollToQuestion(questionId)
-        }, 200)
-      })
+watch(
+  () => route.hash,
+  newHash => {
+    if (newHash && htmlContent.value) {
+      const questionId = newHash.substring(1);
+      if (questionId) {
+        nextTick(() => {
+          setTimeout(() => {
+            scrollToQuestion(questionId);
+          }, 200);
+        });
+      }
     }
   }
-})
+);
 
 // Альтернативный способ извлечения вопросов из HTML
 const extractQuestionsFromHTML = () => {
-  if (!contentRef.value) return
-  const h3Elements = contentRef.value.querySelectorAll('h3')
-  const extractedQuestions = []
+  if (!contentRef.value) return;
+  const h3Elements = contentRef.value.querySelectorAll('h3');
+  const extractedQuestions = [];
 
   h3Elements.forEach((h3, index) => {
-    const text = h3.textContent || ''
+    const text = h3.textContent || '';
     // Проверяем, что это вопрос (начинается с числа и точки)
     if (/^\d+\.\s+/.test(text.trim())) {
-      const cleanText = text.trim().replace(/^\d+\.\s+/, '').trim()
+      const cleanText = text
+        .trim()
+        .replace(/^\d+\.\s+/, '')
+        .trim();
       extractedQuestions.push({
         id: `question-${index + 1}`,
-        text: cleanText
-      })
+        text: cleanText,
+      });
     }
-  })
+  });
 
   if (extractedQuestions.length > 0) {
-    questions.value = extractedQuestions
-    console.log('Извлечено вопросов из HTML:', extractedQuestions.length)
+    questions.value = extractedQuestions;
   }
-}
+};
 
 // Проверка, является ли элемент маркером senior ответа
-const isSeniorMarker = (element) => {
-  const text = (element.textContent || '').toLowerCase().trim()
-  const html = (element.innerHTML || '').toLowerCase()
+const isSeniorMarker = element => {
+  const text = (element.textContent || '').toLowerCase().trim();
+  const html = (element.innerHTML || '').toLowerCase();
 
   // Проверяем различные варианты маркеров
   const seniorPatterns = [
@@ -494,13 +616,13 @@ const isSeniorMarker = (element) => {
     /ответ\s+сеньор/i,
     /сеньор\s+ответ/i,
     /^\*\*ответ\s+senior/i,
-    /^\*\*senior/i
-  ]
+    /^\*\*senior/i,
+  ];
 
   // Проверяем текст элемента
   for (const pattern of seniorPatterns) {
     if (pattern.test(text) || pattern.test(html)) {
-      return true
+      return true;
     }
   }
 
@@ -508,7 +630,7 @@ const isSeniorMarker = (element) => {
   if (element.tagName === 'STRONG' || element.tagName === 'B') {
     for (const pattern of seniorPatterns) {
       if (pattern.test(text)) {
-        return true
+        return true;
       }
     }
   }
@@ -517,30 +639,26 @@ const isSeniorMarker = (element) => {
   if (['H3', 'H4', 'H5', 'H6'].includes(element.tagName)) {
     for (const pattern of seniorPatterns) {
       if (pattern.test(text)) {
-        return true
+        return true;
       }
     }
   }
 
-  return false
-}
+  return false;
+};
 
 // Проверка, является ли элемент маркером английского ответа
-const isAnswerEnMarker = (element) => {
-  const text = (element.textContent || '').toLowerCase().trim()
-  const html = (element.innerHTML || '').toLowerCase()
+const isAnswerEnMarker = element => {
+  const text = (element.textContent || '').toLowerCase().trim();
+  const html = (element.innerHTML || '').toLowerCase();
 
   // Проверяем различные варианты маркеров
-  const answerEnPatterns = [
-    /answer\s+en/i,
-    /^\*\*answer\s+en:\*\*/i,
-    /answer\s+en:/i
-  ]
+  const answerEnPatterns = [/answer\s+en/i, /^\*\*answer\s+en:\*\*/i, /answer\s+en:/i];
 
   // Проверяем текст элемента
   for (const pattern of answerEnPatterns) {
     if (pattern.test(text) || pattern.test(html)) {
-      return true
+      return true;
     }
   }
 
@@ -548,7 +666,7 @@ const isAnswerEnMarker = (element) => {
   if (element.tagName === 'STRONG' || element.tagName === 'B') {
     for (const pattern of answerEnPatterns) {
       if (pattern.test(text)) {
-        return true
+        return true;
       }
     }
   }
@@ -557,109 +675,114 @@ const isAnswerEnMarker = (element) => {
   if (['H3', 'H4', 'H5', 'H6'].includes(element.tagName)) {
     for (const pattern of answerEnPatterns) {
       if (pattern.test(text)) {
-        return true
+        return true;
       }
     }
   }
 
-  return false
-}
+  return false;
+};
 
 // Проверка, содержит ли элемент русский текст в жирном формате (новый русский раздел)
-const isRussianSectionMarker = (element) => {
+const isRussianSectionMarker = element => {
   // Проверяем жирный текст (strong/b) на наличие кириллицы
-  const strongElements = element.querySelectorAll('strong, b')
+  const strongElements = element.querySelectorAll('strong, b');
   for (const strong of strongElements) {
-    const text = strong.textContent || ''
+    const text = strong.textContent || '';
     // Проверяем наличие кириллицы
     if (/[а-яё]/i.test(text)) {
       // Исключаем маркеры "Ответ", "Ответ Senior"
-      const lowerText = text.toLowerCase()
+      const lowerText = text.toLowerCase();
       if (!lowerText.includes('ответ') && !lowerText.includes('answer en')) {
-        return true
+        return true;
       }
     }
   }
 
   // Также проверяем сам элемент, если это strong/b
   if (element.tagName === 'STRONG' || element.tagName === 'B') {
-    const text = element.textContent || ''
+    const text = element.textContent || '';
     if (/[а-яё]/i.test(text)) {
-      const lowerText = text.toLowerCase()
+      const lowerText = text.toLowerCase();
       if (!lowerText.includes('ответ') && !lowerText.includes('answer en')) {
-        return true
+        return true;
       }
     }
   }
 
-  return false
-}
+  return false;
+};
 
 // Оборачивание ответов в аккордеоны
-const wrapAnswersInAccordions = (html) => {
+const wrapAnswersInAccordions = html => {
   // Создаем временный контейнер для работы с DOM
-  const tempDiv = document.createElement('div')
-  tempDiv.innerHTML = html
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
 
   // Находим все h3 элементы (вопросы)
-  const h3Elements = Array.from(tempDiv.querySelectorAll('h3'))
+  const h3Elements = Array.from(tempDiv.querySelectorAll('h3'));
 
   // Обрабатываем каждый вопрос
-  h3Elements.forEach((h3) => {
-    const text = h3.textContent || ''
+  h3Elements.forEach(h3 => {
+    const text = h3.textContent || '';
     // Проверяем, что это вопрос (начинается с числа и точки)
-    if (!/^\d+\.\s+/.test(text.trim())) return
+    if (!/^\d+\.\s+/.test(text.trim())) return;
 
     // Находим все элементы после h3 до следующего h3 или конца
-    const allElements = []
-    let currentElement = h3.nextElementSibling
+    const allElements = [];
+    let currentElement = h3.nextElementSibling;
 
     while (currentElement) {
       // Если встретили следующий вопрос, останавливаемся
-      if (currentElement.tagName === 'H3' && /^\d+\.\s+/.test((currentElement.textContent || '').trim())) {
-        break
+      if (
+        currentElement.tagName === 'H3' &&
+        /^\d+\.\s+/.test((currentElement.textContent || '').trim())
+      ) {
+        break;
       }
 
-      allElements.push(currentElement)
-      currentElement = currentElement.nextElementSibling
+      allElements.push(currentElement);
+      currentElement = currentElement.nextElementSibling;
     }
 
-    if (allElements.length === 0) return
+    if (allElements.length === 0) return;
 
     // Ищем маркеры Answer EN и senior ответа
-    let answerEnMarkerIndex = -1
-    let seniorMarkerIndex = -1
+    let answerEnMarkerIndex = -1;
+    let seniorMarkerIndex = -1;
 
     for (let i = 0; i < allElements.length; i++) {
-      const el = allElements[i]
+      const el = allElements[i];
 
       // Проверяем маркер Answer EN
       if (answerEnMarkerIndex === -1) {
         // Проверяем сам элемент
         if (isAnswerEnMarker(el)) {
-          answerEnMarkerIndex = i
+          answerEnMarkerIndex = i;
         } else {
           // Проверяем содержимое элемента (для параграфов)
-          const innerElements = el.querySelectorAll('strong, b, h3, h4, h5, h6, p')
+          const innerElements = el.querySelectorAll('strong, b, h3, h4, h5, h6, p');
           for (const innerEl of innerElements) {
             if (isAnswerEnMarker(innerEl)) {
-              answerEnMarkerIndex = i
-              break
+              answerEnMarkerIndex = i;
+              break;
             }
           }
 
           // Проверяем текст элемента напрямую (для случаев, когда маркер в начале параграфа)
           if (answerEnMarkerIndex === -1) {
-            const text = (el.textContent || '').toLowerCase().trim()
-            const html = (el.innerHTML || '').toLowerCase()
+            const text = (el.textContent || '').toLowerCase().trim();
+            const html = (el.innerHTML || '').toLowerCase();
 
             // Проверяем различные варианты
-            if (text.includes('answer en:') ||
-                text.startsWith('answer en:') ||
-                /answer\s+en:/i.test(text) ||
-                html.includes('answer en:') ||
-                /<strong>answer\s+en:<\/strong>/i.test(html)) {
-              answerEnMarkerIndex = i
+            if (
+              text.includes('answer en:') ||
+              text.startsWith('answer en:') ||
+              /answer\s+en:/i.test(text) ||
+              html.includes('answer en:') ||
+              /<strong>answer\s+en:<\/strong>/i.test(html)
+            ) {
+              answerEnMarkerIndex = i;
             }
           }
         }
@@ -668,421 +791,410 @@ const wrapAnswersInAccordions = (html) => {
       // Проверяем маркер senior ответа
       if (seniorMarkerIndex === -1) {
         if (isSeniorMarker(el)) {
-          seniorMarkerIndex = i
+          seniorMarkerIndex = i;
         } else {
           // Проверяем содержимое элемента
-          const innerElements = el.querySelectorAll('strong, b, h3, h4, h5, h6, p')
+          const innerElements = el.querySelectorAll('strong, b, h3, h4, h5, h6, p');
           for (const innerEl of innerElements) {
             if (isSeniorMarker(innerEl)) {
-              seniorMarkerIndex = i
-              break
+              seniorMarkerIndex = i;
+              break;
             }
           }
 
           // Проверяем текст элемента напрямую
           if (seniorMarkerIndex === -1) {
-            const text = (el.textContent || '').toLowerCase().trim()
-            if (text.includes('ответ senior') || text.includes('senior ответ') ||
-                text.includes('ответ сеньор') || text.includes('сеньор ответ') ||
-                /^\*\*ответ\s+senior/i.test(text) || /^\*\*senior/i.test(text)) {
-              seniorMarkerIndex = i
+            const text = (el.textContent || '').toLowerCase().trim();
+            if (
+              text.includes('ответ senior') ||
+              text.includes('senior ответ') ||
+              text.includes('ответ сеньор') ||
+              text.includes('сеньор ответ') ||
+              /^\*\*ответ\s+senior/i.test(text) ||
+              /^\*\*senior/i.test(text)
+            ) {
+              seniorMarkerIndex = i;
             }
           }
         }
       }
 
       // Если нашли оба маркера, можно прервать поиск
-      if (answerEnMarkerIndex >= 0 && seniorMarkerIndex >= 0) break
+      if (answerEnMarkerIndex >= 0 && seniorMarkerIndex >= 0) break;
     }
 
     // Определяем конец обычного ответа (минимум из двух маркеров, если они найдены)
-    let regularAnswerEndIndex = allElements.length
+    let regularAnswerEndIndex = allElements.length;
     if (answerEnMarkerIndex >= 0) {
-      regularAnswerEndIndex = Math.min(regularAnswerEndIndex, answerEnMarkerIndex)
+      regularAnswerEndIndex = Math.min(regularAnswerEndIndex, answerEnMarkerIndex);
     }
     if (seniorMarkerIndex >= 0) {
-      regularAnswerEndIndex = Math.min(regularAnswerEndIndex, seniorMarkerIndex)
+      regularAnswerEndIndex = Math.min(regularAnswerEndIndex, seniorMarkerIndex);
     }
 
     // Разделяем элементы на обычный ответ, Answer EN и senior ответ
-    const regularAnswerElements = allElements.slice(0, regularAnswerEndIndex)
+    const regularAnswerElements = allElements.slice(0, regularAnswerEndIndex);
 
     // Находим элементы для блока Answer EN
-    let answerEnElements = []
+    let answerEnElements = [];
     if (answerEnMarkerIndex >= 0) {
       // Блок Answer EN начинается с маркера и заканчивается перед русским разделом, "Ответ Senior:" или перед следующим вопросом
-      let answerEnEndIndex = allElements.length
+      let answerEnEndIndex = allElements.length;
 
       // Если есть senior маркер после Answer EN, блок Answer EN заканчивается перед ним
       if (seniorMarkerIndex >= 0 && seniorMarkerIndex > answerEnMarkerIndex) {
-        answerEnEndIndex = seniorMarkerIndex
+        answerEnEndIndex = seniorMarkerIndex;
       } else {
         // Ищем, где заканчивается блок Answer EN
         for (let i = answerEnMarkerIndex + 1; i < allElements.length; i++) {
-          const el = allElements[i]
-          const text = (el.textContent || '').toLowerCase().trim()
+          const el = allElements[i];
+          const text = (el.textContent || '').toLowerCase().trim();
 
           // Если это следующий вопрос, останавливаемся
           if (el.tagName === 'H3' && /^\d+\.\s+/.test(text)) {
-            answerEnEndIndex = i
-            break
+            answerEnEndIndex = i;
+            break;
           }
 
           // Если это маркер senior (на случай, если он не был найден ранее)
           if (isSeniorMarker(el)) {
-            answerEnEndIndex = i
-            break
+            answerEnEndIndex = i;
+            break;
           }
 
           // Если это русский раздел (например, "Преимущества:"), останавливаемся
           if (isRussianSectionMarker(el)) {
-            answerEnEndIndex = i
-            break
+            answerEnEndIndex = i;
+            break;
           }
         }
       }
 
-      answerEnElements = allElements.slice(answerEnMarkerIndex, answerEnEndIndex)
+      answerEnElements = allElements.slice(answerEnMarkerIndex, answerEnEndIndex);
 
       // Добавляем русские разделы после Answer EN в обычный ответ
       // (элементы от конца Answer EN до начала Senior ответа)
-      if (answerEnEndIndex < allElements.length) {
-        let russianSectionsEndIndex = allElements.length
-
+      // ВАЖНО: Если Senior маркер найден, НЕ добавляем элементы между Answer EN и Senior к обычному ответу,
+      // так как они могут быть частью Senior ответа
+      if (answerEnEndIndex < allElements.length && seniorMarkerIndex === -1) {
         // Если маркер Senior не был найден ранее, ищем его в элементах после Answer EN
-        if (seniorMarkerIndex === -1) {
-          for (let i = answerEnEndIndex; i < allElements.length; i++) {
-            const el = allElements[i]
-            if (isSeniorMarker(el)) {
-              seniorMarkerIndex = i
-              break
-            }
-            // Проверяем содержимое элемента
-            const innerElements = el.querySelectorAll('strong, b, h3, h4, h5, h6, p')
-            for (const innerEl of innerElements) {
-              if (isSeniorMarker(innerEl)) {
-                seniorMarkerIndex = i
-                break
-              }
-            }
-            // Проверяем текст элемента напрямую
-            if (seniorMarkerIndex === -1) {
-              const text = (el.textContent || '').toLowerCase().trim()
-              if (text.includes('ответ senior') || text.includes('senior ответ') ||
-                  text.includes('ответ сеньор') || text.includes('сеньор ответ') ||
-                  /^\*\*ответ\s+senior/i.test(text) || /^\*\*senior/i.test(text)) {
-                seniorMarkerIndex = i
-                break
-              }
-            }
-            if (seniorMarkerIndex >= 0) break
+        for (let i = answerEnEndIndex; i < allElements.length; i++) {
+          const el = allElements[i];
+          if (isSeniorMarker(el)) {
+            seniorMarkerIndex = i;
+            break;
           }
+          // Проверяем содержимое элемента
+          const innerElements = el.querySelectorAll('strong, b, h3, h4, h5, h6, p');
+          for (const innerEl of innerElements) {
+            if (isSeniorMarker(innerEl)) {
+              seniorMarkerIndex = i;
+              break;
+            }
+          }
+          // Проверяем текст элемента напрямую
+          if (seniorMarkerIndex === -1) {
+            const text = (el.textContent || '').toLowerCase().trim();
+            if (
+              text.includes('ответ senior') ||
+              text.includes('senior ответ') ||
+              text.includes('ответ сеньор') ||
+              text.includes('сеньор ответ') ||
+              /^\*\*ответ\s+senior/i.test(text) ||
+              /^\*\*senior/i.test(text)
+            ) {
+              seniorMarkerIndex = i;
+              break;
+            }
+          }
+          if (seniorMarkerIndex >= 0) break;
         }
 
-        if (seniorMarkerIndex >= 0 && seniorMarkerIndex > answerEnEndIndex) {
-          russianSectionsEndIndex = seniorMarkerIndex
+        // Если Senior маркер все еще не найден, добавляем русские разделы к обычному ответу
+        if (seniorMarkerIndex === -1) {
+          const russianSections = allElements.slice(answerEnEndIndex);
+          regularAnswerElements.push(...russianSections);
         }
-
-        // Добавляем русские разделы к обычному ответу
-        const russianSections = allElements.slice(answerEnEndIndex, russianSectionsEndIndex)
-        regularAnswerElements.push(...russianSections)
       }
     }
 
     // Для senior ответа: начинаем с маркера senior
-    let seniorAnswerElements = []
+    let seniorAnswerElements = [];
     if (seniorMarkerIndex >= 0) {
-      seniorAnswerElements = allElements.slice(seniorMarkerIndex)
+      seniorAnswerElements = allElements.slice(seniorMarkerIndex);
     }
 
     // Создаем аккордеон для обычного ответа
     if (regularAnswerElements.length > 0) {
-      const regularAccordion = createAccordion('Показать ответ', regularAnswerElements)
-      h3.insertAdjacentElement('afterend', regularAccordion)
+      const regularAccordion = createAccordion('Показать ответ', regularAnswerElements);
+      h3.insertAdjacentElement('afterend', regularAccordion);
     }
 
     // Создаем аккордеон для Answer EN (если есть)
     if (answerEnElements.length > 0) {
-      const answerEnContentElements = []
-      const firstElement = answerEnElements[0]
+      const answerEnContentElements = [];
+      const firstElement = answerEnElements[0];
 
       // Проверяем, содержит ли первый элемент только маркер или еще и текст
       if (firstElement) {
-        const fullText = firstElement.textContent || ''
-        const markerMatch = fullText.match(/answer\s+en:\s*(.+)/i)
+        const fullText = firstElement.textContent || '';
+        const markerMatch = fullText.match(/answer\s+en:\s*(.+)/i);
 
         if (markerMatch && markerMatch[1] && markerMatch[1].trim()) {
           // Есть текст после маркера - создаем новый элемент с этим текстом
-          const textAfterMarker = markerMatch[1].trim()
-          const newP = document.createElement('p')
-          newP.textContent = textAfterMarker
-          answerEnContentElements.push(newP)
+          const textAfterMarker = markerMatch[1].trim();
+          const newP = document.createElement('p');
+          newP.textContent = textAfterMarker;
+          answerEnContentElements.push(newP);
         } else {
           // Нет текста после маркера в первом элементе - проверяем, есть ли другие элементы
           // Если первый элемент содержит только маркер, пропускаем его
-          const hasOnlyMarker = isAnswerEnMarker(firstElement) ||
-                                (firstElement.querySelector('strong, b') &&
-                                 !fullText.replace(/answer\s+en:\s*/i, '').trim())
+          const hasOnlyMarker =
+            isAnswerEnMarker(firstElement) ||
+            (firstElement.querySelector('strong, b') &&
+              !fullText.replace(/answer\s+en:\s*/i, '').trim());
 
           if (!hasOnlyMarker) {
             // В элементе есть другой контент, добавляем его (без маркера)
-            const cloned = firstElement.cloneNode(true)
-            const strongElements = cloned.querySelectorAll('strong, b')
+            const cloned = firstElement.cloneNode(true);
+            const strongElements = cloned.querySelectorAll('strong, b');
             strongElements.forEach(strong => {
-              const text = (strong.textContent || '').toLowerCase().trim()
+              const text = (strong.textContent || '').toLowerCase().trim();
               if (text.includes('answer en')) {
-                strong.remove()
+                strong.remove();
               }
-            })
+            });
             if (cloned.textContent && cloned.textContent.trim()) {
-              answerEnContentElements.push(cloned)
+              answerEnContentElements.push(cloned);
             }
           }
         }
       }
 
       // Добавляем остальные элементы (начиная со второго, если первый был только маркером)
-      const startIndex = (firstElement && (firstElement.textContent || '').match(/answer\s+en:\s*$/i)) ? 1 : 1
+      const startIndex =
+        firstElement && (firstElement.textContent || '').match(/answer\s+en:\s*$/i) ? 1 : 1;
       for (let i = startIndex; i < answerEnElements.length; i++) {
-        answerEnContentElements.push(answerEnElements[i].cloneNode(true))
+        answerEnContentElements.push(answerEnElements[i].cloneNode(true));
       }
 
       if (answerEnContentElements.length > 0) {
-        const answerEnAccordion = createAccordion('Answer EN', answerEnContentElements, false)
+        const answerEnAccordion = createAccordion('Answer EN', answerEnContentElements, false);
         // Вставляем после обычного аккордеона или после вопроса
-        const insertAfter = regularAnswerElements.length > 0
-          ? h3.nextElementSibling
-          : h3
-        answerEnAccordion.setAttribute('data-type', 'answer-en')
-        insertAfter.insertAdjacentElement('afterend', answerEnAccordion)
+        const insertAfter = regularAnswerElements.length > 0 ? h3.nextElementSibling : h3;
+        answerEnAccordion.setAttribute('data-type', 'answer-en');
+        insertAfter.insertAdjacentElement('afterend', answerEnAccordion);
       }
     }
 
     // Создаем аккордеон для senior ответа
     if (seniorAnswerElements.length > 0) {
       // Исключаем маркер из содержимого
-      const seniorContentElements = seniorAnswerElements.slice(1) // Пропускаем первый элемент (маркер)
+      const seniorContentElements = seniorAnswerElements.slice(1); // Пропускаем первый элемент (маркер)
       if (seniorContentElements.length > 0) {
-        const seniorAccordion = createAccordion('Ответ senior', seniorContentElements, true)
+        const seniorAccordion = createAccordion('Ответ senior', seniorContentElements, true);
         // Вставляем после Answer EN аккордеона, обычного аккордеона или после вопроса
-        let insertAfter = h3
+        let insertAfter = h3;
         if (answerEnElements.length > 0) {
           // Ищем последний аккордеон (Answer EN)
-          const lastAccordion = h3.nextElementSibling
+          const lastAccordion = h3.nextElementSibling;
           if (lastAccordion) {
-            insertAfter = lastAccordion
+            insertAfter = lastAccordion;
           }
         } else if (regularAnswerElements.length > 0) {
-          insertAfter = h3.nextElementSibling
+          insertAfter = h3.nextElementSibling;
         }
-        insertAfter.insertAdjacentElement('afterend', seniorAccordion)
+        insertAfter.insertAdjacentElement('afterend', seniorAccordion);
       }
     }
 
     // Удаляем оригинальные элементы (в обратном порядке)
     allElements.reverse().forEach(el => {
       if (el.parentNode) {
-        el.remove()
+        el.remove();
       }
-    })
-  })
+    });
+  });
 
-  return tempDiv.innerHTML
-}
+  return tempDiv.innerHTML;
+};
 
 // Создание аккордеона с заданным заголовком и элементами
 const createAccordion = (label, elements, isSenior = false) => {
-  const accordionWrapper = document.createElement('div')
-  accordionWrapper.className = 'answer-accordion'
+  const accordionWrapper = document.createElement('div');
+  accordionWrapper.className = 'answer-accordion';
   if (isSenior) {
-    accordionWrapper.setAttribute('data-type', 'senior')
+    accordionWrapper.setAttribute('data-type', 'senior');
   }
 
-  const accordionToggle = document.createElement('button')
-  accordionToggle.className = 'answer-accordion-toggle'
-  accordionToggle.type = 'button'
+  const accordionToggle = document.createElement('button');
+  accordionToggle.className = 'answer-accordion-toggle';
+  accordionToggle.type = 'button';
   accordionToggle.innerHTML = `
     <span class="answer-accordion-icon">▶</span>
     <span class="answer-accordion-label">${label}</span>
-  `
+  `;
 
-  const accordionContent = document.createElement('div')
-  accordionContent.className = 'answer-accordion-content'
+  const accordionContent = document.createElement('div');
+  accordionContent.className = 'answer-accordion-content';
 
-  const accordionInner = document.createElement('div')
-  accordionInner.className = 'answer-accordion-inner'
+  const accordionInner = document.createElement('div');
+  accordionInner.className = 'answer-accordion-inner';
 
   // Клонируем и добавляем все элементы внутрь аккордеона
   elements.forEach(el => {
     // Используем cloneNode(true) для глубокого клонирования со всем HTML
-    const cloned = el.cloneNode(true)
+    const cloned = el.cloneNode(true);
 
     // Убеждаемся, что код внутри сохраняет подсветку
-    const codeBlocks = cloned.querySelectorAll('pre code')
+    const codeBlocks = cloned.querySelectorAll('pre code');
     codeBlocks.forEach(codeBlock => {
       // Проверяем, есть ли уже подсветка
-      const hasHighlight = codeBlock.querySelector('.hljs-keyword, .hljs-string, .hljs-comment, .hljs-number, .hljs-function')
+      const hasHighlight = codeBlock.querySelector(
+        '.hljs-keyword, .hljs-string, .hljs-comment, .hljs-number, .hljs-function'
+      );
 
       if (!hasHighlight) {
         // Получаем исходный текст
-        const originalText = codeBlock.textContent || codeBlock.innerText
+        const originalText = codeBlock.textContent || codeBlock.innerText;
 
         if (originalText && originalText.trim()) {
           try {
             // Определяем язык
-            let language = codeBlock.className.match(/language-(\w+)/)?.[1]
+            let language = codeBlock.className.match(/language-(\w+)/)?.[1];
             if (!language) {
-              const pre = codeBlock.closest('pre')
+              const pre = codeBlock.closest('pre');
               if (pre) {
-                language = pre.className.match(/language-(\w+)/)?.[1]
+                language = pre.className.match(/language-(\w+)/)?.[1];
               }
             }
 
             if (language && hljs.getLanguage(language)) {
-              const highlighted = hljs.highlight(originalText, { language })
-              codeBlock.innerHTML = highlighted.value
-              codeBlock.classList.add('hljs')
+              const highlighted = hljs.highlight(originalText, { language });
+              codeBlock.innerHTML = highlighted.value;
+              codeBlock.classList.add('hljs');
               if (!codeBlock.classList.contains(`language-${language}`)) {
-                codeBlock.classList.add(`language-${language}`)
+                codeBlock.classList.add(`language-${language}`);
               }
             } else {
               // Автоматическое определение
-              const highlighted = hljs.highlightAuto(originalText)
-              codeBlock.innerHTML = highlighted.value
-              codeBlock.classList.add('hljs')
+              const highlighted = hljs.highlightAuto(originalText);
+              codeBlock.innerHTML = highlighted.value;
+              codeBlock.classList.add('hljs');
               if (highlighted.language) {
-                codeBlock.classList.add(`language-${highlighted.language}`)
+                codeBlock.classList.add(`language-${highlighted.language}`);
               }
             }
           } catch (e) {
-            console.warn('Ошибка подсветки при создании аккордеона:', e)
+            console.warn('Ошибка подсветки при создании аккордеона:', e);
           }
         }
       } else {
         // Если подсветка уже есть, убеждаемся что есть класс hljs
         if (!codeBlock.classList.contains('hljs')) {
-          codeBlock.classList.add('hljs')
+          codeBlock.classList.add('hljs');
         }
       }
 
       // Убеждаемся, что у pre есть правильный фон
-      const pre = codeBlock.closest('pre')
+      const pre = codeBlock.closest('pre');
       if (pre) {
-        pre.style.backgroundColor = '#1e1e1e'
+        pre.style.backgroundColor = '#1e1e1e';
       }
-    })
+    });
 
-    accordionInner.appendChild(cloned)
-  })
+    accordionInner.appendChild(cloned);
+  });
 
-  accordionContent.appendChild(accordionInner)
-  accordionWrapper.appendChild(accordionToggle)
-  accordionWrapper.appendChild(accordionContent)
+  accordionContent.appendChild(accordionInner);
+  accordionWrapper.appendChild(accordionToggle);
+  accordionWrapper.appendChild(accordionContent);
 
-  return accordionWrapper
-}
+  return accordionWrapper;
+};
 
 // Инициализация аккордеонов после рендеринга
 const initAccordions = () => {
-  if (!contentRef.value) return
+  if (!contentRef.value) return;
 
-  const accordionToggles = contentRef.value.querySelectorAll('.answer-accordion-toggle')
+  const accordionToggles = contentRef.value.querySelectorAll('.answer-accordion-toggle');
 
   accordionToggles.forEach(toggle => {
     // Убираем старый обработчик, если есть
-    const newToggle = toggle.cloneNode(true)
-    toggle.parentNode.replaceChild(newToggle, toggle)
+    const newToggle = toggle.cloneNode(true);
+    toggle.parentNode.replaceChild(newToggle, toggle);
 
     // Добавляем обработчик клика
     newToggle.addEventListener('click', () => {
-      const accordion = newToggle.closest('.answer-accordion')
-      const content = accordion?.querySelector('.answer-accordion-content')
-      const icon = newToggle.querySelector('.answer-accordion-icon')
+      const accordion = newToggle.closest('.answer-accordion');
+      const content = accordion?.querySelector('.answer-accordion-content');
+      const icon = newToggle.querySelector('.answer-accordion-icon');
 
       if (accordion && content && icon) {
-        const isOpen = accordion.classList.toggle('open')
-        const inner = content.querySelector('.answer-accordion-inner')
+        const isOpen = accordion.classList.toggle('open');
+        const inner = content.querySelector('.answer-accordion-inner');
 
         if (isOpen) {
-          icon.textContent = '▼'
+          icon.textContent = '▼';
           if (inner) {
-            content.style.maxHeight = inner.scrollHeight + 'px'
+            content.style.maxHeight = inner.scrollHeight + 'px';
 
             // Применяем подсветку к коду внутри аккордеона при раскрытии
             setTimeout(() => {
-              const codeBlocks = inner.querySelectorAll('pre code')
+              const codeBlocks = inner.querySelectorAll('pre code');
               codeBlocks.forEach(block => {
-                const hasHighlight = block.querySelector('.hljs-keyword, .hljs-string, .hljs-comment, .hljs-number, .hljs-function')
+                const hasHighlight = block.querySelector(
+                  '.hljs-keyword, .hljs-string, .hljs-comment, .hljs-number, .hljs-function'
+                );
                 if (!hasHighlight && block.textContent) {
                   try {
-                    const language = block.className.match(/language-(\w+)/)?.[1] ||
-                                    block.getAttribute('data-lang') ||
-                                    'javascript'
+                    const language =
+                      block.className.match(/language-(\w+)/)?.[1] ||
+                      block.getAttribute('data-lang') ||
+                      'javascript';
 
                     if (hljs.getLanguage(language)) {
-                      const highlighted = hljs.highlight(block.textContent, { language })
-                      block.innerHTML = highlighted.value
-                      block.classList.add('hljs')
+                      const highlighted = hljs.highlight(block.textContent, { language });
+                      block.innerHTML = highlighted.value;
+                      block.classList.add('hljs');
                     } else {
-                      const highlighted = hljs.highlightAuto(block.textContent)
-                      block.innerHTML = highlighted.value
-                      block.classList.add('hljs')
+                      const highlighted = hljs.highlightAuto(block.textContent);
+                      block.innerHTML = highlighted.value;
+                      block.classList.add('hljs');
                     }
                   } catch (e) {
-                    console.warn('Ошибка подсветки кода в аккордеоне:', e)
+                    console.warn('Ошибка подсветки кода в аккордеоне:', e);
                   }
                 }
-              })
+              });
 
               // Добавляем кнопки копирования, если их нет
-              const preBlocks = inner.querySelectorAll('pre')
+              const preBlocks = inner.querySelectorAll('pre');
               preBlocks.forEach(pre => {
                 if (!pre.querySelector('.copy-code-btn')) {
-                  const copyBtn = document.createElement('button')
-                  copyBtn.className = 'copy-code-btn'
-                  copyBtn.textContent = '📋'
-                  copyBtn.title = 'Копировать код'
-                  pre.style.position = 'relative'
-                  pre.appendChild(copyBtn)
+                  const copyBtn = document.createElement('button');
+                  copyBtn.className = 'copy-code-btn';
+                  copyBtn.textContent = '📋';
+                  copyBtn.title = 'Копировать код';
+                  pre.style.position = 'relative';
+                  pre.appendChild(copyBtn);
                 }
-              })
-            }, 50)
+              });
+            }, 50);
           }
         } else {
-          icon.textContent = '▶'
-          content.style.maxHeight = '0'
+          icon.textContent = '▶';
+          content.style.maxHeight = '0';
         }
       }
-    })
-  })
-}
+    });
+  });
+};
 </script>
 
 <style lang="scss" scoped>
-// Переменные
-$primary-color: #42b883;
-$primary-hover: #35a372;
-$text-dark: #1e1e1e;
-$text-gray: #333;
-$text-light-gray: #555;
-$text-lighter-gray: #666;
-$border-color: #e0e0e0;
-$bg-light: #f5f5f5;
-$bg-white: white;
-$code-bg-dark: #1e1e1e;
-$code-text: #d4d4d4;
-$code-pink: #e83e8c;
-$answer-en-bg: #e6f3ff;
-$answer-en-border: #4da6ff;
-$answer-en-color: #0066cc;
-$senior-bg: #fff5e6;
-$senior-border: #ffd700;
-$senior-color: #cc6600;
-$mono-font: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
-
-// Breakpoints
-$breakpoint-tablet: 1200px;
-$breakpoint-mobile: 768px;
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
 
 .section-view {
   max-width: 1400px;
@@ -1239,6 +1351,46 @@ $breakpoint-mobile: 768px;
   }
 }
 
+.question-management {
+  background: $bg-white;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid $border-color;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 0.75rem;
+
+  @media (max-width: $breakpoint-mobile) {
+    display: none;
+  }
+}
+
+.add-question-btn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: $primary-color;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  &:hover {
+    background: $primary-hover;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(66, 184, 131, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
 .loading {
   display: flex;
   flex-direction: column;
@@ -1259,8 +1411,12 @@ $breakpoint-mobile: 768px;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .error {
@@ -1355,10 +1511,44 @@ $breakpoint-mobile: 768px;
       }
     }
 
+    &.question-header {
+      position: relative;
+    }
+
     @media (max-width: $breakpoint-mobile) {
       font-size: 1.125rem;
       margin: 1.5rem 0 0.75rem 0;
       padding-top: 0.75rem;
+    }
+  }
+
+  :deep(.edit-question-btn) {
+    background: rgba(66, 184, 131, 0.1);
+    border: 1px solid rgba(66, 184, 131, 0.3);
+    border-radius: 6px;
+    padding: 0.375rem 0.625rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    opacity: 0.7;
+    position: absolute;
+    right: 0;
+
+    &:hover {
+      background: rgba(66, 184, 131, 0.2);
+      border-color: $primary-color;
+      opacity: 1;
+      transform: scale(1.05);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    @media (max-width: $breakpoint-mobile) {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
     }
   }
 
@@ -1682,7 +1872,7 @@ $breakpoint-mobile: 768px;
 
   // Скрытие русских ответов в режиме English Only
   &.english-only {
-    :deep(.answer-accordion:not([data-type="answer-en"])) {
+    :deep(.answer-accordion:not([data-type='answer-en'])) {
       display: none !important;
     }
   }
@@ -1691,7 +1881,7 @@ $breakpoint-mobile: 768px;
   :deep(.answer-accordion) {
     margin: 1rem 0 2rem 0;
 
-    &[data-type="answer-en"] {
+    &[data-type='answer-en'] {
       margin-top: 1rem;
 
       .answer-accordion-toggle {
@@ -1715,7 +1905,7 @@ $breakpoint-mobile: 768px;
       }
     }
 
-    &[data-type="senior"] {
+    &[data-type='senior'] {
       margin-top: 1rem;
 
       .answer-accordion-toggle {

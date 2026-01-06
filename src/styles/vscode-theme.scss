@@ -1,3 +1,5 @@
+@use './variables' as *;
+
 /* Кастомная тема VS Code для highlight.js */
 
 /* Базовые цвета для светлого фона - применяем только внутри pre */
@@ -5,7 +7,7 @@ pre .hljs,
 pre code,
 pre code.hljs {
   background: transparent !important;
-  color: #1e1e1e !important;
+  color: $code-text-light !important;
   padding: 0 !important;
   border-radius: 0 !important;
 }
@@ -16,13 +18,13 @@ pre code.hljs {
 .hljs-built_in,
 pre code .hljs-keyword,
 pre code .hljs-selector-tag {
-  color: #d73a49 !important;
+  color: $hljs-keyword !important;
 }
 
 /* Строки */
 .hljs-string,
 pre code .hljs-string {
-  color: #032f62 !important;
+  color: $hljs-string !important;
 }
 
 /* Комментарии */
@@ -30,7 +32,7 @@ pre code .hljs-string {
 .hljs-quote,
 pre code .hljs-comment,
 pre code .hljs-quote {
-  color: #6a737d !important;
+  color: $hljs-comment !important;
   font-style: italic !important;
 }
 
@@ -39,7 +41,7 @@ pre code .hljs-quote {
 .hljs-literal,
 pre code .hljs-number,
 pre code .hljs-literal {
-  color: #005cc5 !important;
+  color: $hljs-number !important;
 }
 
 /* Функции */
@@ -48,7 +50,7 @@ pre code .hljs-literal {
 .hljs-title.function_,
 pre code .hljs-function,
 pre code .hljs-title:not(.hljs-class):not(.hljs-type) {
-  color: #6f42c1 !important;
+  color: $hljs-function !important;
 }
 
 /* Типы */
@@ -57,7 +59,7 @@ pre code .hljs-title:not(.hljs-class):not(.hljs-type) {
 .hljs-title.hljs-class,
 pre code .hljs-type,
 pre code .hljs-class {
-  color: #e36209 !important;
+  color: $hljs-type !important;
 }
 
 /* Переменные */
@@ -65,7 +67,7 @@ pre code .hljs-class {
 .hljs-params,
 pre code .hljs-variable,
 pre code .hljs-params {
-  color: #e36209 !important;
+  color: $hljs-type !important;
 }
 
 /* Свойства */
@@ -73,25 +75,25 @@ pre code .hljs-params {
 .hljs-attr,
 pre code .hljs-property,
 pre code .hljs-attr {
-  color: #005cc5 !important;
+  color: $hljs-property !important;
 }
 
 /* Операторы */
 .hljs-operator,
 pre code .hljs-operator {
-  color: #1e1e1e !important;
+  color: $hljs-operator !important;
 }
 
 /* Регулярные выражения */
 .hljs-regexp,
 pre code .hljs-regexp {
-  color: #032f62 !important;
+  color: $hljs-regexp !important;
 }
 
 /* Метаданные */
 .hljs-meta,
 pre code .hljs-meta {
-  color: #d73a49 !important;
+  color: $hljs-meta !important;
 }
 
 /* Важные - жирный */
