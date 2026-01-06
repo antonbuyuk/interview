@@ -2,7 +2,21 @@
  * Базовый HTTP клиент для работы с API
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+// Формируем базовый URL API
+const getApiUrl = () => {
+  const apiUrl = import.meta.env.VITE_API_URL
+
+  // Если VITE_API_URL не установлена, используем localhost для разработки
+  if (!apiUrl) {
+    return 'http://localhost:3001/api'
+  }
+
+  // Убираем trailing slash и добавляем /api если его нет
+  const baseUrl = apiUrl.replace(/\/$/, '')
+  return baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`
+}
+
+const API_URL = getApiUrl()
 
 async function request(endpoint, options = {}) {
   const url = `${API_URL}${endpoint}`
