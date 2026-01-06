@@ -35,6 +35,14 @@
           <span class="nav-icon">⏱️</span>
           <span class="nav-text">Режим самопроверки</span>
         </router-link>
+        <router-link
+          to="/vocabulary"
+          class="nav-item"
+          :class="{ active: route.path === '/vocabulary' }"
+        >
+          <span class="nav-icon">📖</span>
+          <span class="nav-text">Словарь терминов</span>
+        </router-link>
       </div>
 
       <div class="nav-section">

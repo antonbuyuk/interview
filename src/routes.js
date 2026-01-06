@@ -3,6 +3,7 @@ import SectionView from './views/SectionView.vue'
 import HomeView from './views/HomeView.vue'
 import FlashCardsView from './views/FlashCardsView.vue'
 import PracticeModeView from './views/PracticeModeView.vue'
+import VocabularyView from './views/VocabularyView.vue'
 
 const routes = [
   {
@@ -19,6 +20,11 @@ const routes = [
     path: '/training/practice',
     name: 'practice',
     component: PracticeModeView
+  },
+  {
+    path: '/vocabulary',
+    name: 'vocabulary',
+    component: VocabularyView
   },
   ...sections.map(section => ({
     path: section.path,
