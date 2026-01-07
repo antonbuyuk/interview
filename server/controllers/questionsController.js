@@ -114,6 +114,52 @@ const updateQuestion = async (req, res, next) => {
     const { id } = req.params;
     const { sectionId, number, question, questionRaw, codeBlocks, rawMarkdown } = req.body;
 
+    // Получаем текущий вопрос для проверки изменений
+    const currentQuestion = await prisma.question.findUnique({
+      where: { id },
+    });
+
+    if (!currentQuestion) {
+      return res.status(404).json({ error: 'Question not found' });
+    }
+
+    // Если изменяется раздел или номер, проверяем уникальность
+    if (
+      (sectionId && sectionId !== currentQuestion.sectionId) ||
+      (number !== undefined && number !== currentQuestion.number)
+    ) {
+      const targetSectionId = sectionId || currentQuestion.sectionId;
+      const targetNumber = number !== undefined ? number : currentQuestion.number;
+
+      // Проверяем, существует ли уже вопрос с таким номером в целевом разделе
+      const existing = await prisma.question.findUnique({
+        where: {
+          sectionId_number: {
+            sectionId: targetSectionId,
+            number: targetNumber,
+          },
+        },
+      });
+
+      // Если найден другой вопрос (не текущий) с таким номером в целевом разделе
+      if (existing && existing.id !== id) {
+        return res
+          .status(409)
+          .json({ error: 'Question with this number already exists in this section' });
+      }
+
+      // Проверяем, что раздел существует
+      if (sectionId && sectionId !== currentQuestion.sectionId) {
+        const section = await prisma.section.findUnique({
+          where: { id: sectionId },
+        });
+
+        if (!section) {
+          return res.status(404).json({ error: 'Section not found' });
+        }
+      }
+    }
+
     const updatedQuestion = await prisma.question.update({
       where: { id },
       data: {

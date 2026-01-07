@@ -53,7 +53,6 @@ export function parseQuestions(markdown) {
     let answerRu = null;
     const answerRuMatch = questionSection.match(/\*\*Ответ:\*\*\s*/);
 
-    console.log('answerRuMatch', answerRuMatch);
     if (answerRuMatch) {
       const answerRuStart = questionSection.indexOf(answerRuMatch[0]) + answerRuMatch[0].length;
       let answerRuEnd = questionSection.length;

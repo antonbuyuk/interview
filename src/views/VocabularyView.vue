@@ -79,7 +79,7 @@
             <span class="phrases-label">Примеры словосочетаний:</span>
             <div class="phrases-list">
               <span v-for="(phrase, idx) in term.phrases" :key="idx" class="phrase-tag">
-                {{ phrase }}
+                {{ phrase.phrase }}
               </span>
             </div>
           </div>
@@ -88,7 +88,7 @@
             <span class="examples-label">Примеры использования:</span>
             <ul class="examples-list">
               <li v-for="(example, idx) in term.examples" :key="idx" class="example-item">
-                {{ example }}
+                {{ example.example }}
               </li>
             </ul>
           </div>
