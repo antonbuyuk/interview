@@ -1,7 +1,6 @@
 <template>
   <div class="app">
     <Header />
-    <Sidebar />
     <main class="main-content">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
@@ -70,23 +69,27 @@
       @close="closeAddSectionModal"
       @saved="handleSectionSaved"
     />
+
+    <SecondaryMenu />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import { useRoute } from 'vue-router';
 import Header from './components/Header.vue';
-import Sidebar from './components/Sidebar.vue';
 import AddSectionModal from './components/AddSectionModal.vue';
 import { getSections, deleteSection as deleteSectionApi } from './api/sections';
 import { useAdminAuth } from './composables/useAdminAuth';
+import SecondaryMenu from './components/SecondaryMenu.vue';
+
+const route = useRoute();
 
 const sections = ref([]);
 const sectionsLoading = ref(false);
 const showSectionsModal = ref(false);
 const showAddSectionModal = ref(false);
 const editingSection = ref(null);
-
 const { isAdmin } = useAdminAuth();
 
 const loadSections = async () => {
@@ -198,16 +201,14 @@ body {
 
 .main-content {
   flex: 1;
-  margin-left: 280px;
   padding: 2rem;
-  max-width: calc(100vw - 280px);
+  max-width: 100%;
   position: relative;
+  margin-top: 64px;
 
   @include mobile {
-    margin-left: 0;
-    max-width: 100vw;
-    padding: 0;
-    padding-top: 56px;
+    margin-top: 56px;
+    padding: 1rem;
   }
 }
 

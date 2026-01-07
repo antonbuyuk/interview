@@ -8,7 +8,9 @@
       </router-link>
 
       <div class="nav-section">
-        <h3 class="nav-section-title">Тренировка</h3>
+        <div class="nav-section-header">
+          <h3 class="nav-section-title">Тренировка</h3>
+        </div>
         <router-link
           to="/training/flash-cards"
           class="nav-item"

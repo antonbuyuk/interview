@@ -315,12 +315,7 @@
             {{ deleting ? 'Удаление...' : '🗑️ Удалить вопрос' }}
           </button>
           <button type="button" class="btn-cancel" @click="close">Отмена</button>
-          <button
-            v-if="isAdmin"
-            type="submit"
-            class="btn-submit"
-            :disabled="loading || deleting"
-          >
+          <button v-if="isAdmin" type="submit" class="btn-submit" :disabled="loading || deleting">
             {{ loading ? 'Сохранение...' : editingQuestion ? 'Сохранить' : 'Добавить' }}
           </button>
         </div>
@@ -343,6 +338,7 @@ import {
   updateAnswer,
   deleteAnswer,
   deleteQuestion,
+  getQuestions,
 } from '../api/questions';
 import { getSections } from '../api/sections';
 
@@ -420,6 +416,25 @@ const loadSections = async () => {
   }
 };
 
+// Вычисление следующего номера вопроса для выбранного раздела
+const calculateNextQuestionNumber = async sectionId => {
+  if (!sectionId) {
+    return 1;
+  }
+
+  try {
+    const questions = await getQuestions(sectionId);
+    if (questions.length === 0) {
+      return 1;
+    }
+    const maxNumber = Math.max(...questions.map(q => q.number));
+    return maxNumber + 1;
+  } catch (error) {
+    console.error('Ошибка вычисления следующего номера:', error);
+    return 1;
+  }
+};
+
 onMounted(() => {
   loadSections();
 });
@@ -472,12 +487,20 @@ watch(
       else if (answerSenior) activeTab.value = 'senior';
     } else if (newVal) {
       // Сброс формы для нового вопроса
+      const defaultSectionId = props.defaultSectionId || '';
       formData.value = {
-        sectionId: props.defaultSectionId || '',
+        sectionId: defaultSectionId,
         number: 1,
         question: '',
         questionRaw: '',
       };
+
+      // Вычисляем следующий номер для выбранного раздела
+      if (defaultSectionId) {
+        calculateNextQuestionNumber(defaultSectionId).then(nextNumber => {
+          formData.value.number = nextNumber;
+        });
+      }
 
       // Очищаем редакторы
       if (editorRu.value) {
@@ -491,6 +514,18 @@ watch(
       }
 
       activeTab.value = 'ru';
+    }
+  }
+);
+
+// Отслеживаем изменение раздела для автоматического вычисления номера
+watch(
+  () => formData.value.sectionId,
+  async (newSectionId, oldSectionId) => {
+    // Обновляем номер только при создании нового вопроса (не при редактировании)
+    if (!editingQuestion.value && newSectionId && newSectionId !== oldSectionId) {
+      const nextNumber = await calculateNextQuestionNumber(newSectionId);
+      formData.value.number = nextNumber;
     }
   }
 );
@@ -567,6 +602,7 @@ const handleSubmit = async () => {
     if (editingQuestion.value) {
       // Обновление существующего вопроса
       await updateQuestion(props.question.id, {
+        sectionId: questionData.sectionId,
         number: questionData.number,
         question: questionData.question,
         questionRaw: questionData.questionRaw,

@@ -69,9 +69,11 @@ export function useAdminAuth() {
     // Если статус изменился, это может быть результат авторизации в другой вкладке
     if (wasAdmin !== isAdmin.value) {
       // Можно добавить событие для уведомления компонентов
-      window.dispatchEvent(new CustomEvent('admin-auth-changed', {
-        detail: { isAdmin: isAdmin.value }
-      }));
+      window.dispatchEvent(
+        new CustomEvent('admin-auth-changed', {
+          detail: { isAdmin: isAdmin.value },
+        })
+      );
     }
   }, 1000); // Проверяем каждую секунду
 

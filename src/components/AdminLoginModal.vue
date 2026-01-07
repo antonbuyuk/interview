@@ -24,7 +24,7 @@
         </div>
 
         <div class="form-actions">
-          <button type="button" class="btn-cancel" @click="close" :disabled="isLoading">
+          <button type="button" class="btn-cancel" :disabled="isLoading" @click="close">
             Отмена
           </button>
           <button type="submit" class="btn-submit" :disabled="isLoading">
