@@ -7,7 +7,7 @@
   />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { marked } from 'marked';
 import hljs from 'highlight.js';

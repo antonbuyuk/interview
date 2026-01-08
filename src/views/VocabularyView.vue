@@ -104,14 +104,14 @@
     <!-- Модальное окно для добавления/редактирования термина -->
     <AddTermModal
       :is-open="showAddModal"
-      :term="editingTerm"
+      :term="editingTerm || undefined"
       @close="closeAddModal"
       @saved="handleTermSaved"
     />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { getTerms, deleteTerm as deleteTermApi } from '../api/terms';
 import AddTermModal from '../components/AddTermModal.vue';
@@ -126,13 +126,21 @@ import {
   SpeakerWaveIcon,
 } from '@heroicons/vue/24/outline';
 
-const vocabulary = ref([]);
+interface VocabularyItem {
+  id: string;
+  term: string;
+  translation: string;
+  examples: Array<{ example: string }>;
+  phrases: Array<{ phrase: string }>;
+}
+
+const vocabulary = ref<VocabularyItem[]>([]);
 const loading = ref(true);
 const searchQuery = ref('');
 const sortBy = ref('term');
 const showAddModal = ref(false);
-const editingTerm = ref(null);
-const searchDebounceTimer = ref(null);
+const editingTerm = ref<VocabularyItem | null>(null);
+const searchDebounceTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 
 const { isAdmin } = useAdminAuth();
 const { isSupported, speak } = useTextToSpeech();
@@ -210,7 +218,7 @@ const openAddModal = () => {
   showAddModal.value = true;
 };
 
-const editTerm = term => {
+const editTerm = (term: VocabularyItem) => {
   editingTerm.value = term;
   showAddModal.value = true;
 };
@@ -224,7 +232,7 @@ const handleTermSaved = () => {
   loadTerms();
 };
 
-const deleteTerm = async term => {
+const deleteTerm = async (term: VocabularyItem) => {
   if (!confirm(`Удалить термин "${term.term}"?`)) {
     return;
   }
@@ -234,11 +242,12 @@ const deleteTerm = async term => {
     loadTerms();
   } catch (error) {
     console.error('Ошибка удаления термина:', error);
-    alert('Ошибка удаления: ' + (error.message || 'Неизвестная ошибка'));
+    const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+    alert('Ошибка удаления: ' + errorMessage);
   }
 };
 
-const speakTerm = termText => {
+const speakTerm = (termText: string) => {
   speak(termText, { lang: 'en-GB' });
 };
 </script>
@@ -248,8 +257,8 @@ const speakTerm = termText => {
 @use '../styles/mixins' as *;
 
 .vocabulary-view {
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: 60rem;
+  margin-inline: auto;
   padding: 2rem;
 
   @include mobile {
@@ -290,6 +299,7 @@ const speakTerm = termText => {
 
 .header-content {
   @include flex-between;
+  flex-direction: column;
   flex-wrap: wrap;
   gap: 1rem;
 

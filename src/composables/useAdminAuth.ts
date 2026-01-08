@@ -1,20 +1,30 @@
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, type ComputedRef } from 'vue';
 import { api } from '../api/client';
+import type { LoginRequest, LoginResponse } from '../types/api';
 
 const STORAGE_KEY = 'is_auth_admin';
+
+interface UseAdminAuthReturn {
+  isAdmin: ComputedRef<boolean>;
+  isLoading: ComputedRef<boolean>;
+  error: ComputedRef<string | null>;
+  login: (password: string) => Promise<{ success: boolean; error?: string }>;
+  logout: () => void;
+  checkAuthStatus: () => boolean;
+}
 
 /**
  * Composable для работы с авторизацией администратора
  */
-export function useAdminAuth() {
+export function useAdminAuth(): UseAdminAuthReturn {
   const isAdmin = ref(false);
   const isLoading = ref(false);
-  const error = ref(null);
+  const error = ref<string | null>(null);
 
   /**
    * Проверяет наличие токена в localStorage
    */
-  const checkAuthStatus = () => {
+  const checkAuthStatus = (): boolean => {
     const stored = localStorage.getItem(STORAGE_KEY);
     isAdmin.value = stored === 'true';
     return isAdmin.value;
@@ -23,7 +33,7 @@ export function useAdminAuth() {
   /**
    * Сохраняет токен авторизации в localStorage
    */
-  const saveAuthToken = () => {
+  const saveAuthToken = (): void => {
     localStorage.setItem(STORAGE_KEY, 'true');
     isAdmin.value = true;
     // Уведомляем другие вкладки об изменении
@@ -37,7 +47,7 @@ export function useAdminAuth() {
   /**
    * Удаляет токен авторизации из localStorage
    */
-  const removeAuthToken = () => {
+  const removeAuthToken = (): void => {
     localStorage.removeItem(STORAGE_KEY);
     isAdmin.value = false;
     // Уведомляем другие вкладки об изменении
@@ -51,14 +61,15 @@ export function useAdminAuth() {
   /**
    * Обработчик события изменения авторизации (для синхронизации между вкладками)
    */
-  const handleAuthChange = event => {
-    isAdmin.value = event.detail.isAdmin;
+  const handleAuthChange = (event: Event): void => {
+    const customEvent = event as CustomEvent<{ isAdmin: boolean }>;
+    isAdmin.value = customEvent.detail.isAdmin;
   };
 
   /**
    * Обработчик события storage (для синхронизации между вкладками)
    */
-  const handleStorageChange = event => {
+  const handleStorageChange = (event: StorageEvent): void => {
     if (event.key === STORAGE_KEY) {
       checkAuthStatus();
     }
@@ -67,12 +78,12 @@ export function useAdminAuth() {
   /**
    * Авторизация администратора
    */
-  const login = async password => {
+  const login = async (password: string): Promise<{ success: boolean; error?: string }> => {
     isLoading.value = true;
     error.value = null;
 
     try {
-      const response = await api.post('/admin/login', { password });
+      const response = await api.post<LoginResponse>('/admin/login', { password } as LoginRequest);
 
       if (response.success) {
         // Сохраняем токен в localStorage
@@ -82,8 +93,9 @@ export function useAdminAuth() {
         throw new Error('Login failed');
       }
     } catch (err) {
-      error.value = err.message || 'Ошибка авторизации';
-      return { success: false, error: error.value };
+      const errorMessage = err instanceof Error ? err.message : 'Ошибка авторизации';
+      error.value = errorMessage;
+      return { success: false, error: errorMessage };
     } finally {
       isLoading.value = false;
     }
@@ -92,7 +104,7 @@ export function useAdminAuth() {
   /**
    * Выход из системы администратора
    */
-  const logout = () => {
+  const logout = (): void => {
     removeAuthToken();
   };
 

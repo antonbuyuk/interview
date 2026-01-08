@@ -41,7 +41,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTextSelection } from '../composables/useTextSelection';

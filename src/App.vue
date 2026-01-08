@@ -68,7 +68,7 @@
     <!-- Модальное окно для добавления/редактирования раздела -->
     <AddSectionModal
       :is-open="showAddSectionModal"
-      :section="editingSection"
+      :section="editingSection || undefined"
       @close="closeAddSectionModal"
       @saved="handleSectionSaved"
     />
@@ -76,7 +76,7 @@
     <!-- Модальное окно для добавления/редактирования термина -->
     <AddTermModal
       :is-open="showAddTermModal"
-      :term="editingTerm"
+      :term="editingTerm || undefined"
       :initial-term="initialTerm"
       @close="closeAddTermModal"
       @saved="handleTermSaved"
@@ -85,8 +85,8 @@
     <!-- Модальное окно для добавления/редактирования вопросов -->
     <AddQuestionModal
       :is-open="showQuestionModal"
-      :question="editingQuestion"
-      :default-section-id="currentSectionId"
+      :question="editingQuestion || undefined"
+      :default-section-id="currentSectionId || undefined"
       :is-admin="isAdmin"
       @close="closeQuestionModal"
       @saved="handleQuestionSaved"
@@ -100,13 +100,13 @@
     />
 
     <!-- Tooltip для терминов из словаря -->
-    <TermTooltip :term="hoveredTerm" :position="tooltipPosition" @close="handleTermTooltipClose" />
+    <TermTooltip :term="hoveredTerm || undefined" :position="tooltipPosition" @close="handleTermTooltipClose" />
 
     <SecondaryMenu />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import Header from './components/Header.vue';
 import AddSectionModal from './components/AddSectionModal.vue';
@@ -119,20 +119,21 @@ import { useAdminAuth } from './composables/useAdminAuth';
 import { useDictionaryHighlight } from './composables/useDictionaryHighlight';
 import SecondaryMenu from './components/SecondaryMenu.vue';
 import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import type { Section, Question, Term } from './types/api';
 
-const sections = ref([]);
+const sections = ref<Section[]>([]);
 const sectionsLoading = ref(false);
 const showSectionsModal = ref(false);
 const showAddSectionModal = ref(false);
-const editingSection = ref(null);
+const editingSection = ref<Section | null>(null);
 const showAddTermModal = ref(false);
-const editingTerm = ref(null);
+const editingTerm = ref<Term | null>(null);
 const initialTerm = ref('');
-const hoveredTerm = ref(null);
+const hoveredTerm = ref<Term | null>(null);
 const tooltipPosition = ref({ x: 0, y: 0 });
 const showQuestionModal = ref(false);
-const editingQuestion = ref(null);
-const currentSectionId = ref(null);
+const editingQuestion = ref<Question | null>(null);
+const currentSectionId = ref<string | null>(null);
 const { isAdmin } = useAdminAuth();
 const { loadDictionary, findTermById } = useDictionaryHighlight();
 
@@ -142,7 +143,8 @@ const loadSections = async () => {
     sections.value = await getSections();
   } catch (error) {
     console.error('Ошибка загрузки разделов:', error);
-    alert('Ошибка загрузки разделов: ' + (error.message || 'Неизвестная ошибка'));
+    const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+    alert('Ошибка загрузки разделов: ' + errorMessage);
   } finally {
     sectionsLoading.value = false;
   }
@@ -170,14 +172,14 @@ const closeAddSectionModal = () => {
   editingSection.value = null;
 };
 
-const editSection = section => {
+const editSection = (section: Section) => {
   editingSection.value = section;
   showAddSectionModal.value = true;
   showSectionsModal.value = false;
 };
 
-const deleteSection = async section => {
-  if (section._count?.questions > 0) {
+const deleteSection = async (section: Section) => {
+  if (section._count?.questions && section._count.questions > 0) {
     alert(
       'Невозможно удалить раздел с существующими вопросами. Сначала удалите или переместите вопросы.'
     );
@@ -196,7 +198,11 @@ const deleteSection = async section => {
     window.dispatchEvent(new CustomEvent('sections-updated'));
   } catch (error) {
     console.error('Ошибка удаления раздела:', error);
-    const errorMessage = error.message || error.error || 'Неизвестная ошибка';
+    const errorMessage =
+      (error instanceof Error && error.message) ||
+      (typeof error === 'object' && error !== null && 'error' in error && typeof error.error === 'string'
+        ? error.error
+        : 'Неизвестная ошибка');
     alert(`Ошибка удаления: ${errorMessage}`);
   }
 };
@@ -217,7 +223,7 @@ const handleOpenAddTerm = () => {
   }
 };
 
-const handleAddToDictionaryFromSelection = selectedText => {
+const handleAddToDictionaryFromSelection = (selectedText: string) => {
   if (isAdmin.value && selectedText) {
     editingTerm.value = null;
     initialTerm.value = selectedText.trim();
@@ -239,7 +245,7 @@ const handleTermSaved = () => {
   window.dispatchEvent(new CustomEvent('terms-updated'));
 };
 
-const handleTermHover = event => {
+const handleTermHover = (event: { term?: { id: string }; position?: { x: number; y: number } }) => {
   if (!event || !event.term) {
     hoveredTerm.value = null;
     return;
@@ -266,9 +272,10 @@ const handleOpenAddQuestion = () => {
   }
 };
 
-const handleEditQuestion = event => {
-  if (isAdmin.value && event.detail?.question) {
-    editingQuestion.value = event.detail.question;
+const handleEditQuestion = (event: Event) => {
+  const customEvent = event as CustomEvent<{ question: Question }>;
+  if (isAdmin.value && customEvent.detail?.question) {
+    editingQuestion.value = customEvent.detail.question;
     showQuestionModal.value = true;
   }
 };
@@ -292,12 +299,13 @@ const handleQuestionDeleted = () => {
   window.dispatchEvent(new CustomEvent('questions-need-reload'));
 };
 
-const handleCurrentSectionUpdated = event => {
+const handleCurrentSectionUpdated = (event: Event) => {
+  const customEvent = event as CustomEvent<{ sectionId?: string; section?: Section }>;
   // Получаем UUID раздела из события (приоритет sectionId, затем section.id)
-  if (event.detail?.sectionId) {
-    currentSectionId.value = event.detail.sectionId;
-  } else if (event.detail?.section?.id) {
-    currentSectionId.value = event.detail.section.id;
+  if (customEvent.detail?.sectionId) {
+    currentSectionId.value = customEvent.detail.sectionId;
+  } else if (customEvent.detail?.section?.id) {
+    currentSectionId.value = customEvent.detail.section.id;
   }
 };
 
@@ -316,7 +324,10 @@ onMounted(() => {
   // Слушаем событие обновления текущего раздела
   window.addEventListener('current-section-updated', handleCurrentSectionUpdated);
   // Слушаем событие hover на термине
-  window.addEventListener('term-hover', e => handleTermHover(e.detail));
+  window.addEventListener('term-hover', (e: Event) => {
+    const customEvent = e as CustomEvent<{ term?: { id: string }; position?: { x: number; y: number } }>;
+    handleTermHover(customEvent.detail || {});
+  });
   // Слушаем обновление словаря для перезагрузки
   window.addEventListener('terms-updated', () => {
     const { refreshDictionary } = useDictionaryHighlight();
@@ -330,7 +341,10 @@ onUnmounted(() => {
   window.removeEventListener('open-add-question', handleOpenAddQuestion);
   window.removeEventListener('edit-question', handleEditQuestion);
   window.removeEventListener('current-section-updated', handleCurrentSectionUpdated);
-  window.removeEventListener('term-hover', e => handleTermHover(e.detail));
+  window.removeEventListener('term-hover', (e: Event) => {
+    const customEvent = e as CustomEvent<{ term?: { id: string }; position?: { x: number; y: number } }>;
+    handleTermHover(customEvent.detail || {});
+  });
 });
 </script>
 

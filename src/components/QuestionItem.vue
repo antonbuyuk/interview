@@ -37,7 +37,7 @@
   </article>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import CodeBlock from './CodeBlock.vue';
 import AnswerAccordion from './AnswerAccordion.vue';

@@ -2,10 +2,29 @@
  * Утилита для парсинга вопросов из markdown файлов
  */
 
+export interface ParsedQuestion {
+  id: string;
+  number: number;
+  question: string;
+  questionRaw: string;
+  answerRu: string | null;
+  answerEn: string | null;
+  answerSenior: string | null;
+  codeBlocks: Array<{ language: string; code: string }>;
+  rawMarkdown: string;
+}
+
+export interface ParsedQuestionForTraining extends ParsedQuestion {
+  sectionId: string;
+  hasAnswerEn: boolean;
+  hasAnswerRu: boolean;
+  hasAnswerSenior: boolean;
+}
+
 /**
  * Проверяет, является ли раздел русским разделом (жирный текст с кириллицей)
  */
-const isRussianSectionMarker = text => {
+const isRussianSectionMarker = (text: string): boolean => {
   const match = text.match(/\*\*([^*]+):\*\*/);
   if (!match) return false;
   const headerText = match[1];
@@ -19,16 +38,14 @@ const isRussianSectionMarker = text => {
 
 /**
  * Парсит markdown и извлекает структурированные данные о вопросах
- * @param {string} markdown - содержимое markdown файла
- * @returns {Array} массив объектов с данными о вопросах
  */
-export function parseQuestions(markdown) {
-  const questions = [];
+export function parseQuestions(markdown: string): ParsedQuestion[] {
+  const questions: ParsedQuestion[] = [];
   const questionRegex = /^###\s+\d+\.\s+(.+)$/gm;
 
   // Находим все вопросы
-  const questionMatches = [];
-  let match;
+  const questionMatches: Array<{ text: string; index: number; fullMatch: string }> = [];
+  let match: RegExpExecArray | null;
   questionRegex.lastIndex = 0;
 
   while ((match = questionRegex.exec(markdown)) !== null) {
@@ -50,7 +67,7 @@ export function parseQuestions(markdown) {
     const cleanQuestionText = qMatch.text.replace(/\*\*/g, '').replace(/`/g, '').trim();
 
     // Ищем русский ответ
-    let answerRu = null;
+    let answerRu: string | null = null;
     const answerRuMatch = questionSection.match(/\*\*Ответ:\*\*\s*/);
 
     if (answerRuMatch) {
@@ -75,7 +92,7 @@ export function parseQuestions(markdown) {
     }
 
     // Ищем Answer EN
-    let answerEn = null;
+    let answerEn: string | null = null;
     const answerEnMatch = questionSection.match(/\*\*Answer EN:\*\*\s*/);
     if (answerEnMatch) {
       const answerEnStart = questionSection.indexOf(answerEnMatch[0]) + answerEnMatch[0].length;
@@ -89,7 +106,7 @@ export function parseQuestions(markdown) {
         // Ищем русские разделы
         const sectionRegex = /\*\*[^*]+:\*\*/g;
         sectionRegex.lastIndex = answerEnStart;
-        let sectionMatch;
+        let sectionMatch: RegExpExecArray | null;
         while ((sectionMatch = sectionRegex.exec(questionSection)) !== null) {
           if (sectionMatch.index < answerEnStart) continue;
           if (isRussianSectionMarker(sectionMatch[0])) {
@@ -106,7 +123,7 @@ export function parseQuestions(markdown) {
     }
 
     // Ищем Senior ответ
-    let answerSenior = null;
+    let answerSenior: string | null = null;
     const seniorMatch = questionSection.match(/\*\*Ответ Senior:\*\*\s*/);
     if (seniorMatch) {
       const seniorStart = questionSection.indexOf(seniorMatch[0]) + seniorMatch[0].length;
@@ -118,9 +135,9 @@ export function parseQuestions(markdown) {
     }
 
     // Извлекаем блоки кода из всего вопроса
-    const codeBlocks = [];
+    const codeBlocks: Array<{ language: string; code: string }> = [];
     const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
-    let codeMatch;
+    let codeMatch: RegExpExecArray | null;
     while ((codeMatch = codeBlockRegex.exec(questionSection)) !== null) {
       codeBlocks.push({
         language: codeMatch[1] || '',
@@ -146,11 +163,11 @@ export function parseQuestions(markdown) {
 
 /**
  * Парсит вопросы из markdown для использования в режиме тренировки
- * @param {string} markdown - содержимое markdown файла
- * @param {string} sectionId - ID раздела
- * @returns {Array} массив объектов с данными для тренировки
  */
-export function parseQuestionsForTraining(markdown, sectionId) {
+export function parseQuestionsForTraining(
+  markdown: string,
+  sectionId: string
+): ParsedQuestionForTraining[] {
   const questions = parseQuestions(markdown);
   return questions.map(q => ({
     ...q,

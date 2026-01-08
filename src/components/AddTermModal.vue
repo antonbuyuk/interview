@@ -61,7 +61,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { ref, watch, computed } from 'vue';
 import { createTerm, updateTerm, getTermSuggestions } from '../api/terms';
@@ -89,7 +89,7 @@ const formData = ref({
 
 const examplesText = ref('');
 const phrasesText = ref('');
-const debounceTimer = ref(null);
+const debounceTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 const hasUserEdited = ref({
   translation: false,
   phrases: false,
@@ -107,8 +107,8 @@ watch(
         term: props.term.term,
         translation: props.term.translation,
       };
-      examplesText.value = (props.term.examples || []).map(e => e.example || e).join('\n');
-      phrasesText.value = (props.term.phrases || []).map(p => p.phrase || p).join(', ');
+      examplesText.value = (props.term.examples || []).map((e: { example?: string } | string) => (typeof e === 'object' && e !== null && 'example' in e ? e.example : e)).join('\n');
+      phrasesText.value = (props.term.phrases || []).map((p: { phrase?: string } | string) => (typeof p === 'object' && p !== null && 'phrase' in p ? p.phrase : p)).join(', ');
       // Сбрасываем флаги редактирования при редактировании существующего термина
       hasUserEdited.value = {
         translation: true,

@@ -37,7 +37,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { getSections } from '../api/sections';
 import { PlusIcon } from '@heroicons/vue/24/outline';

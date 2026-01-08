@@ -1,15 +1,32 @@
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, type Ref } from 'vue';
+
+interface MenuPosition {
+  x: number;
+  y: number;
+}
+
+interface SelectionResult {
+  text: string;
+  range: Range;
+}
+
+interface UseTextSelectionReturn {
+  selectedText: Ref<string>;
+  showMenu: Ref<boolean>;
+  menuPosition: Ref<MenuPosition>;
+  clearSelection: () => void;
+}
 
 /**
  * Composable для отслеживания выделения текста и показа контекстного меню
  */
-export function useTextSelection() {
+export function useTextSelection(): UseTextSelectionReturn {
   const selectedText = ref('');
   const showMenu = ref(false);
-  const menuPosition = ref({ x: 0, y: 0 });
-  const selectionRange = ref(null);
+  const menuPosition = ref<MenuPosition>({ x: 0, y: 0 });
+  const selectionRange = ref<Range | null>(null);
 
-  const getSelectedText = () => {
+  const getSelectedText = (): SelectionResult | null => {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) {
       return null;
@@ -25,10 +42,16 @@ export function useTextSelection() {
     const container = range.commonAncestorContainer;
 
     // Игнорируем выделение внутри блоков кода (pre, code)
-    let node = container.nodeType === Node.TEXT_NODE ? container.parentElement : container;
+    let node: Node | null =
+      container.nodeType === Node.TEXT_NODE
+        ? (container as Text).parentElement
+        : (container as Element);
     while (node && node !== document.body) {
-      if (node.tagName === 'PRE' || node.tagName === 'CODE') {
-        return null;
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as Element;
+        if (element.tagName === 'PRE' || element.tagName === 'CODE') {
+          return null;
+        }
       }
       node = node.parentElement;
     }
@@ -39,9 +62,9 @@ export function useTextSelection() {
     };
   };
 
-  const handleMouseUp = event => {
+  const handleMouseUp = (event: MouseEvent): void => {
     // Игнорируем выделение в input, textarea и других интерактивных элементах
-    const target = event.target;
+    const target = event.target as HTMLElement;
     if (
       target.tagName === 'INPUT' ||
       target.tagName === 'TEXTAREA' ||
@@ -102,9 +125,10 @@ export function useTextSelection() {
     showMenu.value = true;
   };
 
-  const handleClick = event => {
+  const handleClick = (event: MouseEvent): void => {
     // Не закрываем меню при клике на само меню
-    if (event.target.closest('.text-selection-menu')) {
+    const target = event.target as HTMLElement;
+    if (target.closest('.text-selection-menu')) {
       return;
     }
 
@@ -118,7 +142,7 @@ export function useTextSelection() {
     }
   };
 
-  const clearSelection = () => {
+  const clearSelection = (): void => {
     const selection = window.getSelection();
     if (selection) {
       selection.removeAllRanges();

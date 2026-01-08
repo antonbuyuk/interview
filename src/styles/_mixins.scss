@@ -37,7 +37,8 @@
   background: $bg-white;
   @include rounded-md;
   padding: 2rem;
-  width: 90%;
+  width: 100%;
+  max-width: 60rem;
   max-height: 90vh;
   overflow-y: auto;
 
@@ -224,10 +225,10 @@
 // ============================================
 
 @mixin card {
-  background: $bg-white;
   @include rounded-md;
-  padding: 1.5rem;
   @include shadow-sm;
+  background: $bg-white;
+  padding: 1.5rem;
   border: 1px solid $border-color;
   transition: all 0.3s ease;
 

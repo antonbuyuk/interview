@@ -1,29 +1,54 @@
-import { ref, computed, onUnmounted } from 'vue';
+import { ref, computed, onUnmounted, type ComputedRef, type Ref } from 'vue';
 import { useTrainingMode } from './useTrainingMode';
+
+interface SpeakOptions {
+  lang?: string;
+  rate?: number;
+  pitch?: number;
+  voice?: SpeechSynthesisVoice | null;
+}
+
+interface UseTextToSpeechReturn {
+  isSupported: Ref<boolean>;
+  isSpeaking: Ref<boolean>;
+  availableVoices: ComputedRef<SpeechSynthesisVoice[]>;
+  selectedVoice: ComputedRef<SpeechSynthesisVoice | null>;
+  speak: (text: string, options?: SpeakOptions) => void;
+  speakQuestion: (questionText: string) => void;
+  speakAnswer: (answerText: string) => void;
+  stop: () => void;
+  pause: () => void;
+  resume: () => void;
+  loadVoices: () => void;
+  setVoice: (voice: SpeechSynthesisVoice | null) => void;
+}
 
 /**
  * Composable для работы с Text-to-Speech API
  */
-export function useTextToSpeech() {
+export function useTextToSpeech(): UseTextToSpeechReturn {
   const { ttsRate, ttsPitch } = useTrainingMode();
 
   const isSupported = ref(false);
   const isSpeaking = ref(false);
-  const currentUtterance = ref(null);
-  const availableVoices = ref([]);
-  const selectedVoice = ref(null);
+  const currentUtterance = ref<SpeechSynthesisUtterance | null>(null);
+  const availableVoices = ref<SpeechSynthesisVoice[]>([]);
+  const selectedVoice = ref<SpeechSynthesisVoice | null>(null);
 
   // Проверяем поддержку Web Speech API
-  const checkSupport = () => {
-    isSupported.value = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+  const checkSupport = (): void => {
+    isSupported.value =
+      typeof window !== 'undefined' &&
+      'speechSynthesis' in window &&
+      'SpeechSynthesisUtterance' in window;
     if (isSupported.value) {
       loadVoices();
     }
   };
 
   // Загружаем доступные голоса
-  const loadVoices = () => {
-    if (!isSupported.value) return;
+  const loadVoices = (): void => {
+    if (!isSupported.value || typeof window === 'undefined' || !window.speechSynthesis) return;
 
     const voices = window.speechSynthesis.getVoices();
     availableVoices.value = voices;
@@ -31,7 +56,8 @@ export function useTextToSpeech() {
     // Пытаемся найти качественный британский английский голос
     if (!selectedVoice.value && voices.length > 0) {
       // Приоритет: en-GB голоса с качественными синтезаторами
-      const preferredVoices = [
+      type VoicePredicate = (voice: SpeechSynthesisVoice) => boolean;
+      const preferredVoices: VoicePredicate[] = [
         // Google TTS голоса (обычно высокого качества)
         voice => voice.lang === 'en-GB' && voice.name.toLowerCase().includes('google'),
         // Microsoft голоса
@@ -45,13 +71,13 @@ export function useTextToSpeech() {
         voice => voice.lang.includes('en'),
       ];
 
-      let foundVoice = null;
+      let foundVoice: SpeechSynthesisVoice | undefined = undefined;
       for (const check of preferredVoices) {
         foundVoice = voices.find(check);
         if (foundVoice) break;
       }
 
-      selectedVoice.value = foundVoice || voices[0];
+      selectedVoice.value = foundVoice || voices[0] || null;
     }
   };
 
@@ -67,12 +93,14 @@ export function useTextToSpeech() {
 
   /**
    * Озвучивает текст
-   * @param {string} text - текст для озвучивания
-   * @param {Object} options - опции (lang, rate, pitch, voice)
    */
-  const speak = (text, options = {}) => {
+  const speak = (text: string, options: SpeakOptions = {}): void => {
     if (!isSupported.value) {
       console.warn('Text-to-Speech не поддерживается');
+      return;
+    }
+
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
       return;
     }
 
@@ -135,7 +163,7 @@ export function useTextToSpeech() {
       currentUtterance.value = null;
     };
 
-    utterance.onerror = event => {
+    utterance.onerror = (event: SpeechSynthesisErrorEvent) => {
       console.error('Ошибка TTS:', event.error);
       isSpeaking.value = false;
       currentUtterance.value = null;
@@ -148,8 +176,8 @@ export function useTextToSpeech() {
   /**
    * Останавливает текущее воспроизведение
    */
-  const stop = () => {
-    if (window.speechSynthesis && isSpeaking.value) {
+  const stop = (): void => {
+    if (typeof window !== 'undefined' && window.speechSynthesis && isSpeaking.value) {
       window.speechSynthesis.cancel();
       isSpeaking.value = false;
       currentUtterance.value = null;
@@ -159,8 +187,8 @@ export function useTextToSpeech() {
   /**
    * Приостанавливает воспроизведение
    */
-  const pause = () => {
-    if (window.speechSynthesis && isSpeaking.value) {
+  const pause = (): void => {
+    if (typeof window !== 'undefined' && window.speechSynthesis && isSpeaking.value) {
       window.speechSynthesis.pause();
     }
   };
@@ -168,8 +196,8 @@ export function useTextToSpeech() {
   /**
    * Возобновляет воспроизведение
    */
-  const resume = () => {
-    if (window.speechSynthesis && !isSpeaking.value) {
+  const resume = (): void => {
+    if (typeof window !== 'undefined' && window.speechSynthesis && !isSpeaking.value) {
       window.speechSynthesis.resume();
       isSpeaking.value = true;
     }
@@ -178,14 +206,14 @@ export function useTextToSpeech() {
   /**
    * Озвучивает вопрос
    */
-  const speakQuestion = questionText => {
+  const speakQuestion = (questionText: string): void => {
     speak(questionText, { lang: 'en-GB' });
   };
 
   /**
    * Озвучивает ответ
    */
-  const speakAnswer = answerText => {
+  const speakAnswer = (answerText: string): void => {
     speak(answerText, { lang: 'en-GB' });
   };
 
@@ -209,7 +237,7 @@ export function useTextToSpeech() {
     pause,
     resume,
     loadVoices,
-    setVoice: voice => {
+    setVoice: (voice: SpeechSynthesisVoice | null) => {
       selectedVoice.value = voice;
     },
   };

@@ -182,7 +182,7 @@
   </header>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAdminAuth } from '../composables/useAdminAuth';

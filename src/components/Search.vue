@@ -96,7 +96,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { getSections } from '../api/sections.js';

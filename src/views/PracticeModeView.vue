@@ -160,7 +160,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { marked } from 'marked';
 import { useTrainingMode } from '../composables/useTrainingMode';

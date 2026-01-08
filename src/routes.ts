@@ -1,9 +1,10 @@
+import type { RouteRecordRaw } from 'vue-router';
 import HomeView from './views/HomeView.vue';
 import FlashCardsView from './views/FlashCardsView.vue';
 import PracticeModeView from './views/PracticeModeView.vue';
 import VocabularyView from './views/VocabularyView.vue';
 
-const routes = [
+const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'home',

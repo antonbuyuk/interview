@@ -16,7 +16,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import MarkdownContent from './MarkdownContent.vue';
 import { ChevronRightIcon } from '@heroicons/vue/24/outline';

@@ -38,7 +38,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import QuestionNav from '../components/QuestionNav.vue';
@@ -48,24 +48,27 @@ import { useAdminAuth } from '../composables/useAdminAuth';
 import { getQuestions } from '../api/questions';
 import { getSectionById } from '../api/sections';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
+import type { Section, Question } from '../types/api';
 // Используем темную тему и переопределим цвета для VS Code стиля
 import '../styles/code.scss';
 import '../styles/highlight-fix.scss';
 
-const props = defineProps({
-  section: {
-    type: Object,
-    required: true,
-  },
-});
+interface QuestionNavItem {
+  id: string;
+  text: string;
+}
+
+const props = defineProps<{
+  section: Section;
+}>();
 
 const route = useRoute();
 const loading = ref(true);
-const error = ref(null);
-const questions = ref([]);
+const error = ref<string | null>(null);
+const questions = ref<QuestionNavItem[]>([]);
 const filterOpen = ref(false);
-const fullQuestionsData = ref([]); // Полные данные вопросов для редактирования
-const currentSectionId = ref(null); // UUID текущего раздела
+const fullQuestionsData = ref<Question[]>([]); // Полные данные вопросов для редактирования
+const currentSectionId = ref<string | null>(null); // UUID текущего раздела
 
 // Admin auth
 const { isAdmin } = useAdminAuth();
@@ -78,12 +81,13 @@ const closeFilter = () => {
 };
 
 // Обработчик открытия/закрытия фильтра
-const handleToggleFilter = event => {
-  filterOpen.value = event.detail.open;
+const handleToggleFilter = (event: Event) => {
+  const customEvent = event as CustomEvent<{ open: boolean }>;
+  filterOpen.value = customEvent.detail.open;
 };
 
 // Метод для открытия редактирования вопроса
-const openEditQuestion = question => {
+const openEditQuestion = (question: Question) => {
   // Эмитим глобальное событие для открытия модалки редактирования
   const event = new CustomEvent('edit-question', {
     detail: { question },
@@ -147,7 +151,8 @@ const loadContent = async () => {
       }
     }
   } catch (err) {
-    error.value = err.message || 'Ошибка загрузки контента';
+    const errorMessage = err instanceof Error ? err.message : 'Ошибка загрузки контента';
+    error.value = errorMessage;
     console.error('Ошибка загрузки контента:', err);
   } finally {
     loading.value = false;
@@ -179,7 +184,7 @@ watch(
 );
 
 // Функция для прокрутки к вопросу
-const scrollToQuestion = questionId => {
+const scrollToQuestion = (questionId: string) => {
   const attemptScroll = () => {
     const element = document.getElementById(questionId);
     if (element) {

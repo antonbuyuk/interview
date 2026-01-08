@@ -11,7 +11,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { getSectionById } from '../api/sections.js';

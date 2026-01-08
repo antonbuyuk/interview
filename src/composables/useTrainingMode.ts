@@ -1,8 +1,19 @@
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, type ComputedRef } from 'vue';
 import { parseQuestionsForTraining } from '../utils/questionParser';
 
 const STORAGE_KEY = 'training-mode-settings';
-const DEFAULT_SETTINGS = {
+
+interface TrainingSettings {
+  englishOnly: boolean;
+  ttsRate: number;
+  ttsPitch: number;
+  ttsVoice: SpeechSynthesisVoice | null;
+  flashCardAutoFlip: boolean;
+  flashCardDuration: number;
+  practiceTimerDuration: number;
+}
+
+const DEFAULT_SETTINGS: TrainingSettings = {
   englishOnly: false,
   ttsRate: 1.0,
   ttsPitch: 1.0,
@@ -12,17 +23,46 @@ const DEFAULT_SETTINGS = {
   practiceTimerDuration: 2,
 };
 
+interface ParsedQuestion {
+  id: string;
+  number: number;
+  question: string;
+  questionRaw: string;
+  answerRu: string | null;
+  answerEn: string | null;
+  answerSenior: string | null;
+  codeBlocks: Array<{ language: string; code: string }>;
+  rawMarkdown: string;
+  sectionId: string;
+  hasAnswerEn: boolean;
+  hasAnswerRu: boolean;
+  hasAnswerSenior: boolean;
+}
+
+interface UseTrainingModeReturn {
+  englishOnly: ComputedRef<boolean>;
+  ttsRate: ComputedRef<number>;
+  ttsPitch: ComputedRef<number>;
+  flashCardDuration: ComputedRef<number>;
+  practiceTimerDuration: ComputedRef<number>;
+  settings: ComputedRef<TrainingSettings>;
+  extractQuestionData: (markdown: string, sectionId: string) => ParsedQuestion[];
+  resetSettings: () => void;
+  saveSettings: () => void;
+  loadSettings: () => void;
+}
+
 // Глобальное состояние
-const settings = ref({
+const settings = ref<TrainingSettings>({
   ...DEFAULT_SETTINGS,
 });
 
 // Загружаем настройки из localStorage
-const loadSettings = () => {
+const loadSettings = (): void => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      const parsed = JSON.parse(stored);
+      const parsed = JSON.parse(stored) as Partial<TrainingSettings>;
       settings.value = { ...DEFAULT_SETTINGS, ...parsed };
     }
   } catch (error) {
@@ -31,7 +71,7 @@ const loadSettings = () => {
 };
 
 // Сохраняем настройки в localStorage
-const saveSettings = () => {
+const saveSettings = (): void => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings.value));
   } catch (error) {
@@ -54,38 +94,38 @@ watch(
 /**
  * Composable для управления режимами обучения
  */
-export function useTrainingMode() {
+export function useTrainingMode(): UseTrainingModeReturn {
   const englishOnly = computed({
     get: () => settings.value.englishOnly,
-    set: value => {
+    set: (value: boolean) => {
       settings.value.englishOnly = value;
     },
   });
 
   const ttsRate = computed({
     get: () => settings.value.ttsRate,
-    set: value => {
+    set: (value: number) => {
       settings.value.ttsRate = value;
     },
   });
 
   const ttsPitch = computed({
     get: () => settings.value.ttsPitch,
-    set: value => {
+    set: (value: number) => {
       settings.value.ttsPitch = value;
     },
   });
 
   const flashCardDuration = computed({
     get: () => settings.value.flashCardDuration,
-    set: value => {
+    set: (value: number) => {
       settings.value.flashCardDuration = value;
     },
   });
 
   const practiceTimerDuration = computed({
     get: () => settings.value.practiceTimerDuration,
-    set: value => {
+    set: (value: number) => {
       settings.value.practiceTimerDuration = value;
     },
   });
@@ -93,14 +133,14 @@ export function useTrainingMode() {
   /**
    * Извлекает структурированные данные о вопросах из markdown
    */
-  const extractQuestionData = (markdown, sectionId) => {
+  const extractQuestionData = (markdown: string, sectionId: string): ParsedQuestion[] => {
     return parseQuestionsForTraining(markdown, sectionId);
   };
 
   /**
    * Сбрасывает настройки к значениям по умолчанию
    */
-  const resetSettings = () => {
+  const resetSettings = (): void => {
     settings.value = { ...DEFAULT_SETTINGS };
     saveSettings();
   };

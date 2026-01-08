@@ -1,21 +1,33 @@
-import { ref, computed } from 'vue';
+import { ref, computed, type ComputedRef } from 'vue';
 import { getTerms } from '../api/terms';
+import type { Term } from '../types/api';
+
+interface UseDictionaryHighlightReturn {
+  terms: ComputedRef<Term[]>;
+  loading: ComputedRef<boolean>;
+  loadDictionary: () => Promise<void>;
+  refreshDictionary: () => Promise<void>;
+  findTerm: (word: string) => Term | null;
+  findTermById: (id: string) => Term | null;
+  highlightTermsInHTML: (html: string) => string;
+  highlightTermsInText: (text: string) => string;
+}
 
 // Глобальное состояние словаря (синглтон)
-const terms = ref([]);
+const terms = ref<Term[]>([]);
 const loading = ref(false);
-const termsMap = ref(new Map()); // Map для быстрого поиска: lowercase термин -> объект термина
-const termsByIdMap = ref(new Map()); // Map для поиска по ID: id -> объект термина
+const termsMap = ref(new Map<string, Term>()); // Map для быстрого поиска: lowercase термин -> объект термина
+const termsByIdMap = ref(new Map<string, Term>()); // Map для поиска по ID: id -> объект термина
 
 /**
  * Composable для работы со словарем терминов и подсветкой
  * Использует глобальное состояние для всех компонентов
  */
-export function useDictionaryHighlight() {
+export function useDictionaryHighlight(): UseDictionaryHighlightReturn {
   /**
    * Загружает весь словарь терминов (один раз глобально)
    */
-  const loadDictionary = async () => {
+  const loadDictionary = async (): Promise<void> => {
     if (terms.value.length > 0) {
       return; // Уже загружено
     }
@@ -26,9 +38,9 @@ export function useDictionaryHighlight() {
       terms.value = allTerms;
 
       // Создаем Map для быстрого поиска по имени
-      const nameMap = new Map();
+      const nameMap = new Map<string, Term>();
       // Создаем Map для быстрого поиска по ID
-      const idMap = new Map();
+      const idMap = new Map<string, Term>();
 
       allTerms.forEach(term => {
         const key = term.term.toLowerCase().trim();
@@ -50,10 +62,8 @@ export function useDictionaryHighlight() {
 
   /**
    * Находит термин по ID (использует уже загруженные данные)
-   * @param {string} id - ID термина
-   * @returns {Object|null} Объект термина или null
    */
-  const findTermById = id => {
+  const findTermById = (id: string): Term | null => {
     if (!id) {
       return null;
     }
@@ -62,10 +72,8 @@ export function useDictionaryHighlight() {
 
   /**
    * Проверяет, является ли слово термином из словаря
-   * @param {string} word - Слово для проверки
-   * @returns {Object|null} Объект термина или null
    */
-  const findTerm = word => {
+  const findTerm = (word: string): Term | null => {
     if (!word || typeof word !== 'string') {
       return null;
     }
@@ -76,10 +84,8 @@ export function useDictionaryHighlight() {
 
   /**
    * Обрабатывает HTML и добавляет подсветку терминам
-   * @param {string} html - HTML строка
-   * @returns {string} HTML с подсветкой
    */
-  const highlightTermsInHTML = html => {
+  const highlightTermsInHTML = (html: string): string => {
     if (!html || typeof html !== 'string' || termsMap.value.size === 0) {
       return html;
     }
@@ -93,8 +99,14 @@ export function useDictionaryHighlight() {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
 
+    interface WordItem {
+      type: 'text' | 'term';
+      content: string;
+      term?: Term;
+    }
+
     // Функция для обработки текстовых узлов
-    const processTextNode = node => {
+    const processTextNode = (node: Text): void => {
       const text = node.textContent;
       if (!text || text.trim().length === 0) {
         return;
@@ -102,9 +114,9 @@ export function useDictionaryHighlight() {
 
       // Регулярное выражение для поиска слов (учитывает пунктуацию)
       const wordRegex = /\b([a-zA-Z][a-zA-Z0-9]*)\b/g;
-      const words = [];
+      const words: WordItem[] = [];
       let lastIndex = 0;
-      let match;
+      let match: RegExpExecArray | null;
 
       while ((match = wordRegex.exec(text)) !== null) {
         const word = match[1];
@@ -143,7 +155,7 @@ export function useDictionaryHighlight() {
         const fragment = document.createDocumentFragment();
 
         words.forEach(item => {
-          if (item.type === 'term') {
+          if (item.type === 'term' && item.term) {
             const span = document.createElement('span');
             span.className = 'dictionary-term';
             span.setAttribute('data-term', item.term.term);
@@ -155,18 +167,20 @@ export function useDictionaryHighlight() {
           }
         });
 
-        node.parentNode.replaceChild(fragment, node);
+        if (node.parentNode) {
+          node.parentNode.replaceChild(fragment, node);
+        }
       }
     };
 
     // Рекурсивно обрабатываем все текстовые узлы
     const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT, {
-      acceptNode: node => {
+      acceptNode: (node: Node) => {
         // Пропускаем узлы внутри code, pre, script, style
         let parent = node.parentElement;
         while (parent && parent !== tempDiv) {
           const tagName = parent.tagName?.toLowerCase();
-          if (['code', 'pre', 'script', 'style'].includes(tagName)) {
+          if (tagName && ['code', 'pre', 'script', 'style'].includes(tagName)) {
             return NodeFilter.FILTER_REJECT;
           }
           parent = parent.parentElement;
@@ -175,10 +189,12 @@ export function useDictionaryHighlight() {
       },
     });
 
-    const textNodes = [];
-    let node;
+    const textNodes: Text[] = [];
+    let node: Node | null;
     while ((node = walker.nextNode())) {
-      textNodes.push(node);
+      if (node.nodeType === Node.TEXT_NODE) {
+        textNodes.push(node as Text);
+      }
     }
 
     // Обрабатываем текстовые узлы в обратном порядке, чтобы не нарушить индексы
@@ -189,10 +205,8 @@ export function useDictionaryHighlight() {
 
   /**
    * Обрабатывает простой текст и возвращает HTML с подсветкой
-   * @param {string} text - Текст для обработки
-   * @returns {string} HTML с подсветкой
    */
-  const highlightTermsInText = text => {
+  const highlightTermsInText = (text: string): string => {
     if (!text || typeof text !== 'string' || termsMap.value.size === 0) {
       return text;
     }
@@ -204,7 +218,7 @@ export function useDictionaryHighlight() {
     const wordRegex = /\b([a-zA-Z][a-zA-Z0-9]*)\b/g;
     let result = '';
     let lastIndex = 0;
-    let match;
+    let match: RegExpExecArray | null;
 
     while ((match = wordRegex.exec(text)) !== null) {
       const word = match[1];
@@ -230,7 +244,7 @@ export function useDictionaryHighlight() {
   /**
    * Обновляет словарь (например, после добавления нового термина)
    */
-  const refreshDictionary = async () => {
+  const refreshDictionary = async (): Promise<void> => {
     terms.value = [];
     termsMap.value = new Map();
     termsByIdMap.value = new Map();
