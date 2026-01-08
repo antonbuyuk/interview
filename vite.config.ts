@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { fileURLToPath, URL } from 'node:url';
 import { readFileSync, writeFileSync } from 'fs';
@@ -9,7 +9,7 @@ import { join } from 'path';
 const base = process.env.NODE_ENV === 'production' || process.env.CI ? '/interview/' : '/';
 
 // Плагин для копирования index.html в 404.html после сборки
-const copy404Plugin = () => {
+const copy404Plugin = (): Plugin => {
   let outDir = 'dist';
 
   return {
@@ -26,7 +26,8 @@ const copy404Plugin = () => {
         writeFileSync(notFoundPath, indexContent, 'utf-8');
         console.log('✓ Copied index.html to 404.html');
       } catch (error) {
-        console.warn('Could not copy index.html to 404.html:', error.message);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.warn('Could not copy index.html to 404.html:', errorMessage);
       }
     },
   };

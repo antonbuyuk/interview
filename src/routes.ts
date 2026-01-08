@@ -1,11 +1,10 @@
-import { sections } from './data/sections.js';
-import SectionView from './views/SectionView.vue';
+import type { RouteRecordRaw } from 'vue-router';
 import HomeView from './views/HomeView.vue';
 import FlashCardsView from './views/FlashCardsView.vue';
 import PracticeModeView from './views/PracticeModeView.vue';
 import VocabularyView from './views/VocabularyView.vue';
 
-const routes = [
+const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'home',
@@ -26,12 +25,6 @@ const routes = [
     name: 'vocabulary',
     component: VocabularyView,
   },
-  ...sections.map(section => ({
-    path: section.path,
-    name: section.id,
-    component: SectionView,
-    props: { section },
-  })),
 ];
 
 export default routes;

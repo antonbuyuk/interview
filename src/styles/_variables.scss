@@ -33,7 +33,7 @@ $code-pink: #e83e8c;
 // Highlight.js цвета (GitHub стиль)
 $hljs-comment: #6a737d;
 $hljs-keyword: #d73a49;
-$hljs-string: #032f62;
+$hljs-string: #22863a;
 $hljs-number: #005cc5;
 $hljs-function: #6f42c1;
 $hljs-type: #e36209;
@@ -70,6 +70,11 @@ $senior-hover-bg: #ffe6cc;
 $senior-hover-border: #ffb84d;
 $senior-hover-color: #b35900;
 
+// success
+$success-bg: #e6f3ff;
+$success-border: #4da6ff;
+$success-color: #0066cc;
+
 // ============================================
 // Шрифты
 // ============================================
@@ -97,3 +102,7 @@ $success-color: #42b883;
 
 // Предупреждения
 $warning-color: #ffd700;
+
+$shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.15);
+$shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.15);

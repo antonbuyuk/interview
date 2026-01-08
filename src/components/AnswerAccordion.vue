@@ -16,7 +16,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import MarkdownContent from './MarkdownContent.vue';
 import { ChevronRightIcon } from '@heroicons/vue/24/outline';
@@ -85,6 +85,7 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 @use '../styles/variables' as *;
+@use '../styles/mixins' as *;
 
 .answer {
   &-accordion {
@@ -167,7 +168,7 @@ onMounted(() => {
       font-size: 0.875rem;
       font-weight: 500;
       color: $text-gray;
-      transition: all 0.2s ease;
+      @include transition(all, 0.2s, ease);
       user-select: none;
       margin: 0;
       font-family: inherit;
@@ -214,7 +215,7 @@ onMounted(() => {
 
     &-inner {
       padding: 1rem 0;
-      border-top: 1px solid #f0f0f0;
+      border-top: 1px solid $border-color;
       margin-top: 0.5rem;
 
       // Подсветка кода внутри аккордеонов
@@ -226,52 +227,6 @@ onMounted(() => {
           background: transparent !important;
           color: $code-text !important;
         }
-      }
-
-      :deep(.hljs-keyword) {
-        color: #569cd6 !important;
-      }
-
-      :deep(.hljs-string) {
-        color: #ce9178 !important;
-      }
-
-      :deep(.hljs-comment) {
-        color: #6a9955 !important;
-        font-style: italic !important;
-      }
-
-      :deep(.hljs-number),
-      :deep(.hljs-literal) {
-        color: #b5cea8 !important;
-      }
-
-      :deep(.hljs-function),
-      :deep(.hljs-title:not(.hljs-class):not(.hljs-type)) {
-        color: #dcdcaa !important;
-      }
-
-      :deep(.hljs-type),
-      :deep(.hljs-class) {
-        color: #4ec9b0 !important;
-      }
-
-      :deep(.hljs-variable),
-      :deep(.hljs-params) {
-        color: #9cdcfe !important;
-      }
-
-      :deep(.hljs-property),
-      :deep(.hljs-attr) {
-        color: #92c5f7 !important;
-      }
-
-      :deep(.hljs-built_in) {
-        color: #569cd6 !important;
-      }
-
-      :deep(.hljs-regexp) {
-        color: #d16969 !important;
       }
     }
   }

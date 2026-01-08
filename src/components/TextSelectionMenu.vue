@@ -8,14 +8,8 @@
     }"
     @click.stop
   >
-    <!-- Индикатор загрузки -->
-    <div v-if="checkingTerm" class="menu-loading">
-      <div class="spinner"></div>
-      <span>Проверка...</span>
-    </div>
-
     <!-- Карточка термина, если найден -->
-    <div v-else-if="foundTerm" class="term-card">
+    <div v-if="!checkingTerm && foundTerm" class="term-card">
       <div class="term-card-header">
         <h3 class="term-title">{{ foundTerm.term }}</h3>
       </div>
@@ -26,7 +20,9 @@
         </div>
         <div v-if="foundTerm.examples && foundTerm.examples.length > 0" class="examples-preview">
           <span class="examples-label">Пример:</span>
-          <span class="example-text">{{ foundTerm.examples[0].example || foundTerm.examples[0] }}</span>
+          <span class="example-text">{{
+            foundTerm.examples[0].example || foundTerm.examples[0]
+          }}</span>
         </div>
       </div>
       <div class="term-card-footer">
@@ -45,7 +41,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTextSelection } from '../composables/useTextSelection';
@@ -69,7 +65,7 @@ const checkingTerm = ref(false);
 const checkDebounceTimer = ref(null);
 
 // Проверка существования термина с debounce
-const checkTermExists = async (termText) => {
+const checkTermExists = async termText => {
   if (!termText || termText.trim().length < 2) {
     foundTerm.value = null;
     return;
@@ -106,7 +102,7 @@ const checkTermExists = async (termText) => {
 // Watcher на selectedText для проверки термина
 watch(
   () => selectedText.value,
-  (newText) => {
+  newText => {
     if (newText) {
       checkTermExists(newText);
     } else {
@@ -165,15 +161,15 @@ const shouldShowMenu = computed(() => props.isAdmin && showMenu.value && selecte
   padding: 0.75rem 1rem;
   background: white;
   border: 1px solid $border-color;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  @include rounded-md;
+  @include shadow-lg;
   font-size: 0.875rem;
   color: $text-gray;
 
   .spinner {
     width: 16px;
     height: 16px;
-    border: 2px solid #f0f0f0;
+    border: 2px solid $border-color;
     border-top-color: $primary-color;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
@@ -193,13 +189,13 @@ const shouldShowMenu = computed(() => props.isAdmin && showMenu.value && selecte
   padding: 0.5rem 1rem;
   background: white;
   border: 1px solid $border-color;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  @include rounded-md;
+  @include shadow-lg;
   cursor: pointer;
   font-size: 0.9375rem;
   font-weight: 500;
   color: $text-dark;
-  transition: all 0.2s ease;
+  @include transition(all, 0.2s, ease);
   white-space: nowrap;
 
   &:hover {
@@ -207,7 +203,7 @@ const shouldShowMenu = computed(() => props.isAdmin && showMenu.value && selecte
     color: white;
     border-color: $primary-color;
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(66, 184, 131, 0.3);
+    @include shadow-hover;
   }
 
   &:active {
@@ -218,14 +214,14 @@ const shouldShowMenu = computed(() => props.isAdmin && showMenu.value && selecte
 .term-card {
   background: white;
   border: 1px solid $border-color;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  @include rounded-md;
+  @include shadow-lg;
   overflow: hidden;
 }
 
 .term-card-header {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid $border-color;
   background: $bg-light;
 }
 
@@ -269,7 +265,7 @@ const shouldShowMenu = computed(() => props.isAdmin && showMenu.value && selecte
   flex-direction: column;
   gap: 0.25rem;
   padding-top: 0.5rem;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid $border-color;
 }
 
 .examples-label {
@@ -289,7 +285,7 @@ const shouldShowMenu = computed(() => props.isAdmin && showMenu.value && selecte
 
 .term-card-footer {
   padding: 0.5rem 1rem;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid $border-color;
   background: $bg-light;
 }
 
@@ -303,16 +299,16 @@ const shouldShowMenu = computed(() => props.isAdmin && showMenu.value && selecte
   background: $primary-color;
   color: white;
   border: none;
-  border-radius: 6px;
+  @include rounded-md;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  @include transition(all, 0.2s, ease);
 
   &:hover {
-    background: #35a372;
+    background: $primary-hover;
     transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(66, 184, 131, 0.3);
+    @include shadow-hover;
   }
 
   &:active {

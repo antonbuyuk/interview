@@ -19,7 +19,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useAdminAuth } from '../composables/useAdminAuth';
 import {
   LockClosedIcon,
@@ -62,7 +62,7 @@ const openLoginModal = () => {
   z-index: 100;
   gap: 1rem;
   background-color: white;
-  border-radius: 8px;
+  @include rounded-md;
   padding: 1rem;
   box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
 

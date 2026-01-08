@@ -23,7 +23,7 @@
   </nav>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 
 defineProps({
@@ -111,7 +111,7 @@ onUnmounted(() => {
   top: 2rem !important;
   align-self: start;
   background: white;
-  border-radius: 8px;
+  @include rounded-md;
   padding: 1rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid #e0e0e0;
@@ -128,7 +128,7 @@ onUnmounted(() => {
   position: relative !important;
   top: 0 !important;
   max-height: 400px;
-  border-radius: 8px;
+  @include rounded-md;
   margin-bottom: 1rem;
 }
 
@@ -173,7 +173,7 @@ onUnmounted(() => {
   text-decoration: none;
   color: #333;
   border-radius: 4px;
-  transition: all 0.2s;
+  @include transition;
   border-left: 2px solid transparent;
 }
 
@@ -254,7 +254,7 @@ onUnmounted(() => {
   .question-nav {
     min-width: auto;
     padding: 0.75rem;
-    border-radius: 8px;
+    @include rounded-md;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   }
 

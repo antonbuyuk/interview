@@ -36,10 +36,7 @@ async function translateQuestions() {
     // Получаем все вопросы, у которых нет questionEn
     const questions = await prisma.question.findMany({
       where: {
-        OR: [
-          { questionEn: null },
-          { questionEn: '' },
-        ],
+        OR: [{ questionEn: null }, { questionEn: '' }],
       },
       orderBy: [{ sectionId: 'asc' }, { number: 'asc' }],
     });
@@ -61,7 +58,9 @@ async function translateQuestions() {
 
       // Пропускаем вопросы без questionRaw
       if (!question.questionRaw || question.questionRaw.trim() === '') {
-        console.log(`${progress} ⏭ Вопрос #${question.number} (ID: ${question.id}) - пропущен (нет questionRaw)`);
+        console.log(
+          `${progress} ⏭ Вопрос #${question.number} (ID: ${question.id}) - пропущен (нет questionRaw)`
+        );
         skippedCount++;
         continue;
       }
@@ -91,7 +90,10 @@ async function translateQuestions() {
           await delay(5000);
         }
       } catch (error) {
-        console.error(`${progress} ❌ Ошибка при переводе вопроса #${question.number} (ID: ${question.id}):`, error.message);
+        console.error(
+          `${progress} ❌ Ошибка при переводе вопроса #${question.number} (ID: ${question.id}):`,
+          error.message
+        );
         errorCount++;
 
         // Увеличиваем задержку после ошибки (особенно для rate limit)

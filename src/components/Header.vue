@@ -23,7 +23,6 @@
                 :to="section.path"
                 class="dropdown-item"
                 :class="{ active: isSectionActive(section.path) }"
-                @click="hideSectionsDropdown"
               >
                 <span class="section-title">{{ section.title }}</span>
               </router-link>
@@ -43,7 +42,6 @@
                 to="/training/flash-cards"
                 class="dropdown-item"
                 :class="{ active: route.path === '/training/flash-cards' }"
-                @click="hideTrainingDropdown"
               >
                 <RectangleStackIcon class="nav-icon" />
                 <span>Флэш-карточки</span>
@@ -97,18 +95,6 @@
         @click="toggleEnglishOnly"
       >
         en
-      </button>
-
-      <!-- Text-to-Speech Toggle -->
-      <button
-        class="header-icon-btn"
-        :class="{ active: ttsEnabled }"
-        aria-label="Text-to-Speech"
-        :title="ttsEnabled ? 'Выключить озвучку' : 'Включить озвучку'"
-        @click="toggleTTS"
-      >
-        <MicrophoneIcon v-if="!ttsEnabled" class="icon-btn" />
-        <MicrophoneIconSolid v-else class="icon-btn" />
       </button>
 
       <!-- Фильтр вопросов (только на странице раздела) -->
@@ -196,7 +182,7 @@
   </header>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAdminAuth } from '../composables/useAdminAuth';
@@ -210,17 +196,13 @@ import {
   ClockIcon,
   BookOpenIcon,
   Bars3Icon,
-  MicrophoneIcon,
   ClipboardDocumentListIcon,
   Cog6ToothIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline';
-import { MicrophoneIcon as MicrophoneIconSolid } from '@heroicons/vue/24/solid';
 
 const route = useRoute();
 const isMobile = ref(false);
-const showSectionsDropdown = ref(false);
-const showTrainingDropdown = ref(false);
 const showUserMenu = ref(false);
 const filterOpen = ref(false);
 const mobileMenuOpen = ref(false);
@@ -231,40 +213,10 @@ const currentSection = ref(null);
 const currentQuestions = ref([]);
 
 const { isAdmin } = useAdminAuth();
-const { englishOnly, ttsEnabled } = useTrainingMode();
+const { englishOnly } = useTrainingMode();
 
 const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768;
-};
-
-let sectionsDropdownTimeout = null;
-
-const hideSectionsDropdown = () => {
-  sectionsDropdownTimeout = setTimeout(() => {
-    showSectionsDropdown.value = false;
-  }, 150);
-};
-
-const cancelHideSectionsDropdown = () => {
-  if (sectionsDropdownTimeout) {
-    clearTimeout(sectionsDropdownTimeout);
-    sectionsDropdownTimeout = null;
-  }
-};
-
-let trainingDropdownTimeout = null;
-
-const hideTrainingDropdown = () => {
-  trainingDropdownTimeout = setTimeout(() => {
-    showTrainingDropdown.value = false;
-  }, 150);
-};
-
-const cancelHideTrainingDropdown = () => {
-  if (trainingDropdownTimeout) {
-    clearTimeout(trainingDropdownTimeout);
-    trainingDropdownTimeout = null;
-  }
 };
 
 const hideUserMenu = () => {
@@ -281,10 +233,6 @@ const handleUserMenuClickOutside = event => {
 
 const toggleEnglishOnly = () => {
   englishOnly.value = !englishOnly.value;
-};
-
-const toggleTTS = () => {
-  ttsEnabled.value = !ttsEnabled.value;
 };
 
 const toggleFilter = () => {
@@ -412,7 +360,7 @@ onUnmounted(() => {
   background: $bg-white;
   color: $text-dark;
   z-index: 102;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  @include shadow-md;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -543,8 +491,8 @@ onUnmounted(() => {
   max-height: 500px;
   background: $bg-white;
   border: 1px solid $border-color;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  @include rounded-md;
+  @include shadow-lg;
   z-index: 1000;
   overflow: hidden;
   display: flex;
@@ -706,7 +654,7 @@ onUnmounted(() => {
   font-size: 0.625rem;
   font-weight: 600;
   padding: 0.125rem 0.25rem;
-  border-radius: 8px;
+  @include rounded-md;
   min-width: 16px;
   text-align: center;
   line-height: 1.2;
@@ -787,7 +735,7 @@ onUnmounted(() => {
   width: 280px;
   height: calc(100vh - 56px);
   background: $bg-white;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  @include shadow-md;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -893,7 +841,7 @@ onUnmounted(() => {
 // Transitions
 .dropdown-enter-active,
 .dropdown-leave-active {
-  transition: all 0.2s ease;
+  @include transition(all, 0.2s, ease);
   opacity: 1;
   transform: translateY(0);
 }

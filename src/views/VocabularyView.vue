@@ -41,9 +41,8 @@
     </div>
 
     <!-- Карточки терминов -->
-    <div v-if="loading" class="loading-state">
-      <div class="spinner"></div>
-      <p>Загрузка словаря...</p>
+    <div v-if="loading" class="vocabulary-grid">
+      <Skeleton v-for="n in 8" :key="`skeleton-${n}`" variant="vocabulary-card" />
     </div>
 
     <div v-else-if="filteredTerms.length === 0" class="empty-state">
@@ -53,7 +52,18 @@
     <div v-else class="vocabulary-grid">
       <div v-for="term in filteredTerms" :key="term.id || term.term" class="vocabulary-card">
         <div class="card-header">
-          <h3 class="term-title">{{ term.term }}</h3>
+          <div class="term-header-row">
+            <h3 class="term-title">{{ term.term }}</h3>
+            <button
+              class="play-btn"
+              :class="{ disabled: !isSupported }"
+              :title="isSupported ? 'Воспроизвести термин' : 'Браузер не поддерживает озвучку'"
+              :disabled="!isSupported"
+              @click.stop="speakTerm(term.term)"
+            >
+              <SpeakerWaveIcon class="icon-small" />
+            </button>
+          </div>
           <div v-if="isAdmin" class="card-actions-top">
             <button class="edit-btn" title="Редактировать" @click="editTerm(term)">
               <PencilIcon class="icon-small" />
@@ -94,34 +104,46 @@
     <!-- Модальное окно для добавления/редактирования термина -->
     <AddTermModal
       :is-open="showAddModal"
-      :term="editingTerm"
+      :term="editingTerm || undefined"
       @close="closeAddModal"
       @saved="handleTermSaved"
     />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { getTerms, deleteTerm as deleteTermApi } from '../api/terms';
 import AddTermModal from '../components/AddTermModal.vue';
+import Skeleton from '../components/Skeleton.vue';
 import { useAdminAuth } from '../composables/useAdminAuth';
+import { useTextToSpeech } from '../composables/useTextToSpeech';
 import {
   BookOpenIcon,
   MagnifyingGlassIcon,
   PencilIcon,
   TrashIcon,
+  SpeakerWaveIcon,
 } from '@heroicons/vue/24/outline';
 
-const vocabulary = ref([]);
+interface VocabularyItem {
+  id: string;
+  term: string;
+  translation: string;
+  examples: Array<{ example: string }>;
+  phrases: Array<{ phrase: string }>;
+}
+
+const vocabulary = ref<VocabularyItem[]>([]);
 const loading = ref(true);
 const searchQuery = ref('');
 const sortBy = ref('term');
 const showAddModal = ref(false);
-const editingTerm = ref(null);
-const searchDebounceTimer = ref(null);
+const editingTerm = ref<VocabularyItem | null>(null);
+const searchDebounceTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 
 const { isAdmin } = useAdminAuth();
+const { isSupported, speak } = useTextToSpeech();
 
 // Загружаем словарь через API
 const loadTerms = async () => {
@@ -196,7 +218,7 @@ const openAddModal = () => {
   showAddModal.value = true;
 };
 
-const editTerm = term => {
+const editTerm = (term: VocabularyItem) => {
   editingTerm.value = term;
   showAddModal.value = true;
 };
@@ -210,7 +232,7 @@ const handleTermSaved = () => {
   loadTerms();
 };
 
-const deleteTerm = async term => {
+const deleteTerm = async (term: VocabularyItem) => {
   if (!confirm(`Удалить термин "${term.term}"?`)) {
     return;
   }
@@ -220,8 +242,13 @@ const deleteTerm = async term => {
     loadTerms();
   } catch (error) {
     console.error('Ошибка удаления термина:', error);
-    alert('Ошибка удаления: ' + (error.message || 'Неизвестная ошибка'));
+    const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+    alert('Ошибка удаления: ' + errorMessage);
   }
+};
+
+const speakTerm = (termText: string) => {
+  speak(termText, { lang: 'en-GB' });
 };
 </script>
 
@@ -230,8 +257,8 @@ const deleteTerm = async term => {
 @use '../styles/mixins' as *;
 
 .vocabulary-view {
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: 60rem;
+  margin-inline: auto;
   padding: 2rem;
 
   @include mobile {
@@ -272,6 +299,7 @@ const deleteTerm = async term => {
 
 .header-content {
   @include flex-between;
+  flex-direction: column;
   flex-wrap: wrap;
   gap: 1rem;
 
@@ -417,10 +445,6 @@ const deleteTerm = async term => {
 
 .vocabulary-card {
   @include card;
-
-  &:hover {
-    border-color: $primary-color;
-  }
 }
 
 .card-actions-top {
@@ -471,12 +495,61 @@ const deleteTerm = async term => {
   }
 }
 
+.term-header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
 .term-title {
   font-size: 1.5rem;
   font-weight: 700;
   color: $text-dark;
   margin: 0;
   flex: 1;
+}
+
+.play-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid $border-color;
+  border-radius: 4px;
+  padding: 0.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  @include transition;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $primary-color;
+
+  .icon-small {
+    width: 1rem;
+    height: 1rem;
+    color: inherit;
+  }
+
+  &:hover:not(.disabled) {
+    background: #f0f7ff;
+    border-color: $primary-color;
+    transform: scale(1.05);
+  }
+
+  &:active:not(.disabled) {
+    transform: scale(0.95);
+  }
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    color: $text-lighter-gray;
+
+    &:hover {
+      transform: none;
+      background: rgba(255, 255, 255, 0.9);
+      border-color: $border-color;
+    }
+  }
 }
 
 .card-body {

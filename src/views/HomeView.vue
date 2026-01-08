@@ -1,10 +1,7 @@
 <template>
   <div class="home">
     <div class="home-header">
-      <h1>
-        <RectangleStackIcon class="title-icon" />
-        Шпаргалка: Вопросы для собеседования Frontend Developer
-      </h1>
+      <h1>Шпаргалка: Вопросы для собеседования Frontend Developer</h1>
       <p class="description">
         Подборка вопросов и ответов для подготовки к собеседованиям на позицию Frontend Developer
       </p>
@@ -15,38 +12,48 @@
     </div>
 
     <div class="sections-grid">
-      <router-link
-        v-for="section in sections"
-        :key="section.id"
-        :to="section.path"
-        class="section-card"
-      >
-        <div class="card-header">
-          <h3>{{ section.title }}</h3>
-          <span v-if="section._count" class="question-count-badge">
-            {{ section._count.questions || 0 }} вопросов
-          </span>
-        </div>
-        <div class="card-footer">
-          <span class="card-link">Перейти →</span>
-        </div>
-      </router-link>
+      <template v-if="loading">
+        <Skeleton v-for="n in 4" :key="`skeleton-${n}`" variant="section-card" />
+      </template>
+      <template v-else>
+        <router-link
+          v-for="section in sections"
+          :key="section.id"
+          :to="section.path"
+          class="section-card"
+        >
+          <div class="card-header">
+            <h3>{{ section.title }}</h3>
+            <span v-if="section._count" class="question-count-badge">
+              {{ section._count.questions || 0 }} вопросов
+            </span>
+          </div>
+          <div class="card-footer">
+            <span class="card-link">Перейти →</span>
+          </div>
+        </router-link>
+      </template>
     </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { getSections } from '../api/sections';
-import { PlusIcon, RectangleStackIcon } from '@heroicons/vue/24/outline';
+import { PlusIcon } from '@heroicons/vue/24/outline';
+import Skeleton from '../components/Skeleton.vue';
 
 const sections = ref([]);
+const loading = ref(true);
 
 const loadSections = async () => {
   try {
+    loading.value = true;
     sections.value = await getSections();
   } catch (error) {
     console.error('Ошибка загрузки разделов:', error);
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -67,7 +74,10 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
 .home {
   max-width: 1200px;
   margin: 0 auto;
@@ -120,12 +130,12 @@ onUnmounted(() => {
 
 .section-card {
   background: white;
-  border-radius: 8px;
+  @include rounded-md;
   padding: 1.5rem;
   text-decoration: none;
   color: inherit;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  @include transition(all, 0.3s, ease);
+  @include shadow-sm;
   border: 1px solid #e0e0e0;
   display: flex;
   flex-direction: column;
@@ -135,8 +145,7 @@ onUnmounted(() => {
 
 .section-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-  border-color: #42b883;
+  @include shadow-xl;
 }
 
 .card-header h3 {
@@ -168,7 +177,7 @@ onUnmounted(() => {
   font-size: 0.9375rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  @include transition(all, 0.2s, ease);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -185,7 +194,7 @@ onUnmounted(() => {
   &:hover {
     background: #35a372;
     transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(66, 184, 131, 0.3);
+    @include shadow-hover;
   }
 
   &:active {

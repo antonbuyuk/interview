@@ -2,20 +2,30 @@
  * Утилита для извлечения технических терминов из Markdown файлов
  */
 
-import { sections } from '../data/sections.js';
+import { getSections } from '../api/sections';
+import type { Section } from '../types/api';
+
+interface VocabularyTerm {
+  term: string;
+  translation: string;
+  category: string;
+  categoryTitle: string;
+  examples: string[];
+  phrases: string[];
+  source: string;
+  categories?: string[];
+}
 
 /**
  * Извлекает технические термины из текста
- * @param {string} text - текст для анализа
- * @returns {Set<string>} - множество найденных терминов
  */
-function extractTerms(text) {
-  const terms = new Set();
+function extractTerms(text: string): Set<string> {
+  const terms = new Set<string>();
 
   // Удаляем блоки кода для отдельной обработки
   const codeBlockRegex = /```[\s\S]*?```/g;
-  const codeBlocks = [];
-  let codeMatch;
+  const codeBlocks: string[] = [];
+  let codeMatch: RegExpExecArray | null;
   while ((codeMatch = codeBlockRegex.exec(text)) !== null) {
     codeBlocks.push(codeMatch[0]);
   }
@@ -23,7 +33,7 @@ function extractTerms(text) {
 
   // 1. PascalCase и camelCase слова (минимум 2 символа, начинается с заглавной или camelCase)
   const pascalCaseRegex = /\b([A-Z][a-z]+(?:[A-Z][a-z]*)*)\b/g;
-  let match;
+  let match: RegExpExecArray | null;
   while ((match = pascalCaseRegex.exec(textWithoutCode)) !== null) {
     const term = match[1];
     // Исключаем слишком короткие и общие слова
@@ -46,7 +56,7 @@ function extractTerms(text) {
     // Ищем технические словосочетания
     const phraseRegex =
       /\b([a-z]+(?:\s+[a-z]+){1,2})\s+(?:is|are|can|allows?|provides?|supports?|uses?|works?|helps?|enables?)/gi;
-    let phraseMatch;
+    let phraseMatch: RegExpExecArray | null;
     while ((phraseMatch = phraseRegex.exec(answerText)) !== null) {
       const phrase = phraseMatch[1].trim();
       if (phrase.length >= 5 && !isCommonPhrase(phrase)) {
@@ -128,7 +138,7 @@ function extractTerms(text) {
 /**
  * Проверяет, является ли слово общим (не техническим)
  */
-function isCommonWord(word) {
+function isCommonWord(word: string): boolean {
   const commonWords = [
     'The',
     'This',
@@ -187,7 +197,7 @@ function isCommonWord(word) {
 /**
  * Проверяет, является ли фраза общей (не технической)
  */
-function isCommonPhrase(phrase) {
+function isCommonPhrase(phrase: string): boolean {
   const commonPhrases = [
     'is a',
     'is the',
@@ -205,17 +215,14 @@ function isCommonPhrase(phrase) {
 
 /**
  * Извлекает примеры использования термина из контекста
- * @param {string} text - текст для поиска
- * @param {string} term - искомый термин
- * @returns {string[]} - массив примеров
  */
-function extractExamples(text, term) {
-  const examples = [];
+function extractExamples(text: string, term: string): string[] {
+  const examples: string[] = [];
   const regex = new RegExp(
     `([^.!?]*${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^.!?]*[.!?])`,
     'gi'
   );
-  let match;
+  let match: RegExpExecArray | null;
   let count = 0;
   while ((match = regex.exec(text)) !== null && count < 3) {
     const example = match[1].trim();
@@ -229,12 +236,9 @@ function extractExamples(text, term) {
 
 /**
  * Извлекает словосочетания с термином
- * @param {string} text - текст для поиска
- * @param {string} term - искомый термин
- * @returns {string[]} - массив словосочетаний
  */
-function extractPhrases(text, term) {
-  const phrases = new Set();
+function extractPhrases(text: string, term: string): string[] {
+  const phrases = new Set<string>();
   // Ищем словосочетания вида "term + noun" или "adjective + term"
   const patterns = [
     new RegExp(`\\b(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+[a-z]+)\\b`, 'gi'),
@@ -242,7 +246,7 @@ function extractPhrases(text, term) {
   ];
 
   patterns.forEach(pattern => {
-    let match;
+    let match: RegExpExecArray | null;
     let count = 0;
     while ((match = pattern.exec(text)) !== null && count < 5) {
       const phrase = match[1].trim();
@@ -258,10 +262,18 @@ function extractPhrases(text, term) {
 
 /**
  * Основная функция для извлечения словаря из всех Markdown файлов
- * @returns {Promise<Array>} - массив объектов словаря
  */
-export async function extractVocabularyFromMarkdown() {
-  const termMap = new Map(); // Для объединения дубликатов
+export async function extractVocabularyFromMarkdown(): Promise<VocabularyTerm[]> {
+  const termMap = new Map<string, VocabularyTerm>(); // Для объединения дубликатов
+
+  // Загружаем разделы из БД
+  let sections: Section[];
+  try {
+    sections = await getSections();
+  } catch (error) {
+    console.error('Ошибка загрузки разделов:', error);
+    return [];
+  }
 
   // Проходим по всем секциям
   for (const section of sections) {
@@ -287,7 +299,7 @@ export async function extractVocabularyFromMarkdown() {
           termMap.set(key, {
             term: term,
             translation: '', // Будет заполнено вручную или через словарь
-            category: section.id,
+            category: section.sectionId,
             categoryTitle: section.title,
             examples: examples,
             phrases: phrases,
@@ -295,7 +307,7 @@ export async function extractVocabularyFromMarkdown() {
           });
         } else {
           // Объединяем данные из разных секций
-          const existing = termMap.get(key);
+          const existing = termMap.get(key)!;
           if (!existing.examples.length && examples.length) {
             existing.examples = examples;
           }
@@ -306,8 +318,8 @@ export async function extractVocabularyFromMarkdown() {
           if (!existing.categories) {
             existing.categories = [existing.category];
           }
-          if (!existing.categories.includes(section.id)) {
-            existing.categories.push(section.id);
+          if (!existing.categories.includes(section.sectionId)) {
+            existing.categories.push(section.sectionId);
           }
         }
       });
@@ -322,9 +334,8 @@ export async function extractVocabularyFromMarkdown() {
 
 /**
  * Создает базовый словарь с популярными терминами frontend разработки
- * @returns {Array} - массив объектов словаря
  */
-export function getDefaultVocabulary() {
+export function getDefaultVocabulary(): VocabularyTerm[] {
   return [
     {
       term: 'TypeScript',
@@ -333,6 +344,7 @@ export function getDefaultVocabulary() {
       categoryTitle: 'TypeScript',
       examples: ['TypeScript is a superset of JavaScript that adds static typing.'],
       phrases: ['TypeScript compiler', 'TypeScript types', 'TypeScript interface'],
+      source: '',
     },
     {
       term: 'JavaScript',
@@ -341,6 +353,7 @@ export function getDefaultVocabulary() {
       categoryTitle: 'JavaScript / TypeScript',
       examples: ['JavaScript is a dynamic programming language.'],
       phrases: ['JavaScript engine', 'JavaScript runtime', 'JavaScript framework'],
+      source: '',
     },
     {
       term: 'Vue',
@@ -349,6 +362,7 @@ export function getDefaultVocabulary() {
       categoryTitle: 'Vue.js',
       examples: ['Vue is a progressive JavaScript framework.'],
       phrases: ['Vue component', 'Vue instance', 'Vue directive'],
+      source: '',
     },
     {
       term: 'React',
@@ -357,6 +371,7 @@ export function getDefaultVocabulary() {
       categoryTitle: 'Общие вопросы',
       examples: ['React is a JavaScript library for building user interfaces.'],
       phrases: ['React component', 'React hook', 'React state'],
+      source: '',
     },
     {
       term: 'API',
@@ -365,6 +380,7 @@ export function getDefaultVocabulary() {
       categoryTitle: 'HTTP / API',
       examples: ['REST API provides a way to access web services.'],
       phrases: ['REST API', 'GraphQL API', 'API endpoint', 'API response'],
+      source: '',
     },
     {
       term: 'DOM',
@@ -373,6 +389,7 @@ export function getDefaultVocabulary() {
       categoryTitle: 'Общие вопросы',
       examples: ['DOM represents the structure of HTML documents.'],
       phrases: ['DOM manipulation', 'DOM element', 'virtual DOM'],
+      source: '',
     },
     {
       term: 'closure',
@@ -381,6 +398,7 @@ export function getDefaultVocabulary() {
       categoryTitle: 'JavaScript / TypeScript',
       examples: ['A closure is a function that has access to variables from its outer scope.'],
       phrases: ['closure scope', 'closure variable', 'closure function'],
+      source: '',
     },
     {
       term: 'hoisting',
@@ -391,6 +409,7 @@ export function getDefaultVocabulary() {
         'Hoisting is a JavaScript mechanism where variables and function declarations are moved to the top.',
       ],
       phrases: ['variable hoisting', 'function hoisting', 'hoisting behavior'],
+      source: '',
     },
     {
       term: 'reactive',
@@ -399,6 +418,7 @@ export function getDefaultVocabulary() {
       categoryTitle: 'Vue.js',
       examples: ['Vue uses a reactive system to track data changes.'],
       phrases: ['reactive data', 'reactive property', 'reactive system'],
+      source: '',
     },
     {
       term: 'component',
@@ -407,6 +427,7 @@ export function getDefaultVocabulary() {
       categoryTitle: 'Vue.js',
       examples: ['A component is a reusable Vue instance.'],
       phrases: ['Vue component', 'component lifecycle', 'component props'],
+      source: '',
     },
   ];
 }

@@ -21,14 +21,15 @@ export default [
     files: ['src/**/*.{js,ts,vue}'],
     plugins: {
       prettier,
+      '@typescript-eslint': tseslint,
     },
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
-      parser: tsparser,
       parserOptions: {
         ecmaVersion: 2022,
         sourceType: 'module',
+        parser: tsparser,
       },
       globals: {
         console: 'readonly',
@@ -39,6 +40,13 @@ export default [
         module: 'readonly',
         require: 'readonly',
         exports: 'readonly',
+        RequestInit: 'readonly',
+        HeadersInit: 'readonly',
+        RequestCredentials: 'readonly',
+        fetch: 'readonly',
+        localStorage: 'readonly',
+        window: 'readonly',
+        document: 'readonly',
       },
     },
     rules: {
@@ -69,6 +77,19 @@ export default [
       parserOptions: {
         ecmaVersion: 2022,
         sourceType: 'module',
+      },
+      globals: {
+        RequestInit: 'readonly',
+        HeadersInit: 'readonly',
+        RequestCredentials: 'readonly',
+        fetch: 'readonly',
+        localStorage: 'readonly',
+        window: 'readonly',
+        document: 'readonly',
+        SpeechSynthesisVoice: 'readonly',
+        SpeechSynthesisUtterance: 'readonly',
+        SpeechSynthesis: 'readonly',
+        SpeechSynthesisErrorEvent: 'readonly',
       },
     },
     rules: {

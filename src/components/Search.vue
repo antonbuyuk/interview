@@ -96,17 +96,12 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
+<script setup lang="ts">
+import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { getSections } from '../api/sections.js';
 import { getQuestions } from '../api/questions.js';
-import {
-  MagnifyingGlassIcon,
-  MicrophoneIcon,
-  StopIcon,
-  XMarkIcon,
-} from '@heroicons/vue/24/outline';
+import { MagnifyingGlassIcon, MicrophoneIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { StopIcon as StopIconSolid } from '@heroicons/vue/24/solid';
 
 const props = defineProps({
@@ -552,7 +547,10 @@ watch(
 );
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
 .search-container {
   position: relative;
   z-index: 11;
@@ -568,15 +566,15 @@ watch(
   width: 100%;
   padding: 0.625rem 2.5rem 0.625rem 2rem;
   background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
+  border: 1px solid $border-color;
+  @include rounded-md;
   color: #333;
   font-size: 0.875rem;
-  transition: all 0.2s;
+  @include transition;
 }
 
 .search-input.recording {
-  border-color: #e74c3c;
+  border-color: $error-color;
   box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
 }
 
@@ -592,13 +590,13 @@ watch(
 
 .search-input:focus {
   outline: none;
-  border-color: #42b883;
+  border-color: $primary-color;
   background: white;
-  box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.1);
+  @include shadow-focus;
 }
 
 .search-input::placeholder {
-  color: #999;
+  color: $text-light-gray;
 }
 
 .search-icon {
@@ -606,7 +604,7 @@ watch(
   left: 0.625rem;
   width: 0.875rem;
   height: 0.875rem;
-  color: #999;
+  color: $text-light-gray;
   pointer-events: none;
 }
 
@@ -615,7 +613,7 @@ watch(
   right: 0.4rem;
   background: transparent;
   border: none;
-  color: #999;
+  color: $text-light-gray;
   cursor: pointer;
   font-size: 1rem;
   width: 24px;
@@ -624,7 +622,7 @@ watch(
   align-items: center;
   justify-content: center;
   border-radius: 4px;
-  transition: all 0.2s;
+  @include transition;
   z-index: 5;
 
   .icon-small {
@@ -635,18 +633,18 @@ watch(
 }
 
 .voice-btn:hover {
-  background: #f5f5f5;
+  background: $bg-light;
   color: #42b883;
 }
 
 .voice-btn.recording {
-  color: #e74c3c;
+  color: $error-color;
   animation: pulse 1.5s ease-in-out infinite;
 }
 
 .voice-btn.recording:hover {
-  background: #fee;
-  color: #c0392b;
+  background: $error-bg;
+  color: $error-color;
 }
 
 @keyframes pulse {
@@ -666,7 +664,7 @@ watch(
   right: 0.4rem;
   background: transparent;
   border: none;
-  color: #999;
+  color: $text-light-gray;
   cursor: pointer;
   font-size: 1rem;
   width: 20px;
@@ -675,7 +673,7 @@ watch(
   align-items: center;
   justify-content: center;
   border-radius: 4px;
-  transition: all 0.2s;
+  @include transition;
   z-index: 5;
 
   .icon-small {
@@ -686,7 +684,7 @@ watch(
 }
 
 .clear-btn:hover {
-  background: #f5f5f5;
+  background: $bg-light;
   color: #333;
 }
 
@@ -699,18 +697,18 @@ watch(
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  background: #fee;
-  border: 1px solid #e74c3c;
+  background: $error-bg;
+  border: 1px solid $error-color;
   border-radius: 6px;
   font-size: 0.8125rem;
-  color: #c0392b;
+  color: $error-color;
   z-index: 1101;
 }
 
 .recording-dot {
   width: 8px;
   height: 8px;
-  background: #e74c3c;
+  background: $error-color;
   border-radius: 50%;
   animation: blink 1s ease-in-out infinite;
 }
@@ -732,14 +730,14 @@ watch(
 .search-results {
   position: absolute;
   top: calc(100% + 0.5rem);
-  left: 0;
   right: 0;
   max-height: 400px;
   overflow-y: auto;
   background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid $border-color;
+  min-width: 25rem;
+  @include rounded-md;
+  @include shadow-lg;
   z-index: 1100 !important;
 }
 
@@ -780,7 +778,7 @@ watch(
   padding: 0.5rem 0.75rem;
   text-decoration: none;
   color: #333;
-  transition: all 0.2s;
+  @include transition;
   border-bottom: 1px solid #f0f0f0;
 }
 
@@ -830,9 +828,9 @@ watch(
   padding: 1.5rem;
   background: white;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  @include rounded-md;
   text-align: center;
-  color: #999;
+  color: $text-light-gray;
   font-size: 0.875rem;
   z-index: 1100 !important;
 }
@@ -845,17 +843,17 @@ watch(
 
 .search-results::-webkit-scrollbar-track,
 .results-list::-webkit-scrollbar-track {
-  background: #f5f5f5;
+  background: $bg-light;
 }
 
 .search-results::-webkit-scrollbar-thumb,
 .results-list::-webkit-scrollbar-thumb {
-  background: #ddd;
+  background: $border-color;
   border-radius: 3px;
 }
 
 .search-results::-webkit-scrollbar-thumb:hover,
 .results-list::-webkit-scrollbar-thumb:hover {
-  background: #bbb;
+  background: $text-light-gray;
 }
 </style>

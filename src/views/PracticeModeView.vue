@@ -14,7 +14,7 @@
         <label class="setting-label">Выберите раздел:</label>
         <select v-model="selectedSection" class="setting-select">
           <option value="all">Все разделы</option>
-          <option v-for="section in sections" :key="section.id" :value="section.id">
+          <option v-for="section in sections" :key="section.id" :value="section.sectionId">
             {{ section.title }}
           </option>
         </select>
@@ -69,7 +69,7 @@
         <div class="question-header">
           <div class="question-label">Вопрос</div>
           <button
-            v-if="ttsEnabled && isSupported"
+            v-if="isSupported"
             class="tts-btn"
             title="Озвучить вопрос"
             @click="speakQuestion(currentQuestion.question)"
@@ -106,7 +106,7 @@
         <div class="answer-header">
           <div class="answer-label">Answer EN (эталонный ответ):</div>
           <button
-            v-if="ttsEnabled && isSupported && currentQuestion.answerEn"
+            v-if="isSupported && currentQuestion.answerEn"
             class="tts-btn"
             title="Озвучить ответ"
             @click="speakAnswer(currentQuestion.answerEn)"
@@ -160,17 +160,16 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, watch, onUnmounted } from 'vue';
+<script setup lang="ts">
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { marked } from 'marked';
 import { useTrainingMode } from '../composables/useTrainingMode';
 import { useTextToSpeech } from '../composables/useTextToSpeech';
 import { getQuestions } from '../api/questions';
-import { getSectionById } from '../api/sections';
-import { sections } from '../data/sections.js';
+import { getSections, getSectionById } from '../api/sections';
 import { ClockIcon, StopIcon, ArrowPathIcon } from '@heroicons/vue/24/outline';
 
-const { practiceTimerDuration, ttsEnabled } = useTrainingMode();
+const { practiceTimerDuration } = useTrainingMode();
 const { isSupported, speakQuestion, speakAnswer, stop: stopTTS } = useTextToSpeech();
 
 const loading = ref(false);
@@ -183,6 +182,7 @@ const showCorrectAnswer = ref(false);
 const userAnswer = ref('');
 const allQuestions = ref([]);
 const timeLeft = ref(0);
+const sections = ref([]);
 
 let timerInterval = null;
 
@@ -192,6 +192,14 @@ const filteredQuestions = computed(() => {
   }
   return allQuestions.value.filter(q => q.sectionId === selectedSection.value);
 });
+
+const loadSections = async () => {
+  try {
+    sections.value = await getSections();
+  } catch (error) {
+    console.error('Ошибка загрузки разделов:', error);
+  }
+};
 
 const currentQuestion = computed(() => {
   if (filteredQuestions.value.length === 0) return null;
@@ -262,13 +270,13 @@ const loadQuestions = async () => {
   try {
     const sectionsToLoad =
       selectedSection.value === 'all'
-        ? sections
-        : sections.filter(s => s.id === selectedSection.value);
+        ? sections.value
+        : sections.value.filter(s => s.sectionId === selectedSection.value);
 
     for (const section of sectionsToLoad) {
       try {
         // Получаем раздел из БД по sectionId
-        const dbSection = await getSectionById(section.id);
+        const dbSection = await getSectionById(section.sectionId);
 
         // Загружаем вопросы через API
         const questions = await getQuestions(dbSection.id);
@@ -289,7 +297,7 @@ const loadQuestions = async () => {
               answerEn: answerEn ? answerEn.content : null,
               answerRu: q.answers.find(a => a.type === 'ru')?.content || null,
               answerSenior: q.answers.find(a => a.type === 'senior')?.content || null,
-              sectionId: section.id,
+              sectionId: section.sectionId,
               hasAnswerEn: !!answerEn,
               hasAnswerRu: !!q.answers.find(a => a.type === 'ru'),
               hasAnswerSenior: !!q.answers.find(a => a.type === 'senior'),
@@ -332,12 +340,7 @@ const startPractice = async () => {
 const showAnswer = () => {
   showCorrectAnswer.value = !showCorrectAnswer.value;
   // Автоматическое озвучивание правильного ответа
-  if (
-    showCorrectAnswer.value &&
-    ttsEnabled.value &&
-    isSupported.value &&
-    currentQuestion.value?.answerEn
-  ) {
+  if (showCorrectAnswer.value && isSupported.value && currentQuestion.value?.answerEn) {
     setTimeout(() => {
       speakAnswer(currentQuestion.value.answerEn);
     }, 200);
@@ -357,7 +360,7 @@ const nextQuestion = () => {
     }
 
     // Автоматическое озвучивание вопроса
-    if (ttsEnabled.value && isSupported.value && currentQuestion.value?.question) {
+    if (isSupported.value && currentQuestion.value?.question) {
       setTimeout(() => {
         speakQuestion(currentQuestion.value.question);
       }, 200);
@@ -376,7 +379,7 @@ const previousQuestion = () => {
     }
 
     // Автоматическое озвучивание вопроса
-    if (ttsEnabled.value && isSupported.value && currentQuestion.value?.question) {
+    if (isSupported.value && currentQuestion.value?.question) {
       setTimeout(() => {
         speakQuestion(currentQuestion.value.question);
       }, 200);
@@ -410,6 +413,10 @@ watch(practiceTimerDuration, () => {
   if (started.value && practiceTimerDuration.value > 0) {
     startTimer();
   }
+});
+
+onMounted(() => {
+  loadSections();
 });
 
 onUnmounted(() => {
@@ -530,7 +537,7 @@ onUnmounted(() => {
   background: $primary-color;
   color: white;
   border: none;
-  border-radius: 8px;
+  @include rounded-md;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -589,7 +596,7 @@ onUnmounted(() => {
   text-align: center;
   padding: 1rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 8px;
+  @include rounded-md;
   color: white;
 
   &.timer-warning {
@@ -628,7 +635,7 @@ onUnmounted(() => {
 
 .question-card {
   background: $bg-light;
-  border-radius: 8px;
+  @include rounded-md;
   padding: 1.5rem;
   margin-bottom: 2rem;
   border-left: 4px solid $primary-color;
@@ -661,7 +668,7 @@ onUnmounted(() => {
   justify-content: center;
   cursor: pointer;
   font-size: 1rem;
-  transition: all 0.2s;
+  @include transition;
   color: $text-gray;
 
   &:hover {
@@ -715,7 +722,7 @@ onUnmounted(() => {
   width: 100%;
   padding: 1rem;
   border: 2px solid $border-color;
-  border-radius: 8px;
+  @include rounded-md;
   font-size: 0.9375rem;
   line-height: 1.6;
   font-family: inherit;
@@ -741,7 +748,7 @@ onUnmounted(() => {
 .correct-answer-card {
   background: #e6f3ff;
   border: 2px solid #4da6ff;
-  border-radius: 8px;
+  @include rounded-md;
   padding: 1.5rem;
   margin-bottom: 2rem;
   position: relative;
@@ -800,7 +807,7 @@ onUnmounted(() => {
   border-radius: 6px;
   font-size: 0.9375rem;
   cursor: pointer;
-  transition: all 0.2s;
+  @include transition;
   flex: 1;
 
   &:hover:not(:disabled) {
@@ -842,7 +849,7 @@ onUnmounted(() => {
   border-radius: 6px;
   font-size: 0.9375rem;
   cursor: pointer;
-  transition: all 0.2s;
+  @include transition;
   display: flex;
   align-items: center;
   justify-content: center;

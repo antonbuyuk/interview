@@ -350,7 +350,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
@@ -695,7 +695,9 @@ const handleAutoTranslate = async () => {
   } catch (error) {
     console.error('Ошибка перевода:', error);
     if (error.response?.status === 429) {
-      alert('Сервис перевода временно недоступен из-за большого количества запросов. Пожалуйста, попробуйте позже.');
+      alert(
+        'Сервис перевода временно недоступен из-за большого количества запросов. Пожалуйста, попробуйте позже.'
+      );
     } else {
       alert('Ошибка перевода: ' + (error.message || 'Неизвестная ошибка'));
     }

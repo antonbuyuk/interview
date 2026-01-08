@@ -182,7 +182,7 @@
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  @include transition;
   border-bottom: 2px solid transparent;
   white-space: nowrap;
   position: relative;
@@ -247,7 +247,7 @@
   font-size: 0.9rem;
   cursor: pointer;
   border-radius: 4px;
-  transition: all 0.2s;
+  @include transition;
   display: flex;
   align-items: center;
   justify-content: center;

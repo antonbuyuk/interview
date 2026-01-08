@@ -68,7 +68,7 @@
     <!-- Модальное окно для добавления/редактирования раздела -->
     <AddSectionModal
       :is-open="showAddSectionModal"
-      :section="editingSection"
+      :section="editingSection || undefined"
       @close="closeAddSectionModal"
       @saved="handleSectionSaved"
     />
@@ -76,10 +76,21 @@
     <!-- Модальное окно для добавления/редактирования термина -->
     <AddTermModal
       :is-open="showAddTermModal"
-      :term="editingTerm"
+      :term="editingTerm || undefined"
       :initial-term="initialTerm"
       @close="closeAddTermModal"
       @saved="handleTermSaved"
+    />
+
+    <!-- Модальное окно для добавления/редактирования вопросов -->
+    <AddQuestionModal
+      :is-open="showQuestionModal"
+      :question="editingQuestion || undefined"
+      :default-section-id="currentSectionId || undefined"
+      :is-admin="isAdmin"
+      @close="closeQuestionModal"
+      @saved="handleQuestionSaved"
+      @deleted="handleQuestionDeleted"
     />
 
     <!-- Контекстное меню для выделенного текста -->
@@ -89,17 +100,18 @@
     />
 
     <!-- Tooltip для терминов из словаря -->
-    <TermTooltip :term="hoveredTerm" :position="tooltipPosition" @close="handleTermTooltipClose" />
+    <TermTooltip :term="hoveredTerm || undefined" :position="tooltipPosition" @close="handleTermTooltipClose" />
 
     <SecondaryMenu />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import Header from './components/Header.vue';
 import AddSectionModal from './components/AddSectionModal.vue';
 import AddTermModal from './components/AddTermModal.vue';
+import AddQuestionModal from './components/AddQuestionModal.vue';
 import TextSelectionMenu from './components/TextSelectionMenu.vue';
 import TermTooltip from './components/TermTooltip.vue';
 import { getSections, deleteSection as deleteSectionApi } from './api/sections';
@@ -107,17 +119,21 @@ import { useAdminAuth } from './composables/useAdminAuth';
 import { useDictionaryHighlight } from './composables/useDictionaryHighlight';
 import SecondaryMenu from './components/SecondaryMenu.vue';
 import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import type { Section, Question, Term } from './types/api';
 
-const sections = ref([]);
+const sections = ref<Section[]>([]);
 const sectionsLoading = ref(false);
 const showSectionsModal = ref(false);
 const showAddSectionModal = ref(false);
-const editingSection = ref(null);
+const editingSection = ref<Section | null>(null);
 const showAddTermModal = ref(false);
-const editingTerm = ref(null);
+const editingTerm = ref<Term | null>(null);
 const initialTerm = ref('');
-const hoveredTerm = ref(null);
+const hoveredTerm = ref<Term | null>(null);
 const tooltipPosition = ref({ x: 0, y: 0 });
+const showQuestionModal = ref(false);
+const editingQuestion = ref<Question | null>(null);
+const currentSectionId = ref<string | null>(null);
 const { isAdmin } = useAdminAuth();
 const { loadDictionary, findTermById } = useDictionaryHighlight();
 
@@ -127,7 +143,8 @@ const loadSections = async () => {
     sections.value = await getSections();
   } catch (error) {
     console.error('Ошибка загрузки разделов:', error);
-    alert('Ошибка загрузки разделов: ' + (error.message || 'Неизвестная ошибка'));
+    const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+    alert('Ошибка загрузки разделов: ' + errorMessage);
   } finally {
     sectionsLoading.value = false;
   }
@@ -155,14 +172,14 @@ const closeAddSectionModal = () => {
   editingSection.value = null;
 };
 
-const editSection = section => {
+const editSection = (section: Section) => {
   editingSection.value = section;
   showAddSectionModal.value = true;
   showSectionsModal.value = false;
 };
 
-const deleteSection = async section => {
-  if (section._count?.questions > 0) {
+const deleteSection = async (section: Section) => {
+  if (section._count?.questions && section._count.questions > 0) {
     alert(
       'Невозможно удалить раздел с существующими вопросами. Сначала удалите или переместите вопросы.'
     );
@@ -181,7 +198,11 @@ const deleteSection = async section => {
     window.dispatchEvent(new CustomEvent('sections-updated'));
   } catch (error) {
     console.error('Ошибка удаления раздела:', error);
-    const errorMessage = error.message || error.error || 'Неизвестная ошибка';
+    const errorMessage =
+      (error instanceof Error && error.message) ||
+      (typeof error === 'object' && error !== null && 'error' in error && typeof error.error === 'string'
+        ? error.error
+        : 'Неизвестная ошибка');
     alert(`Ошибка удаления: ${errorMessage}`);
   }
 };
@@ -202,7 +223,7 @@ const handleOpenAddTerm = () => {
   }
 };
 
-const handleAddToDictionaryFromSelection = selectedText => {
+const handleAddToDictionaryFromSelection = (selectedText: string) => {
   if (isAdmin.value && selectedText) {
     editingTerm.value = null;
     initialTerm.value = selectedText.trim();
@@ -224,7 +245,7 @@ const handleTermSaved = () => {
   window.dispatchEvent(new CustomEvent('terms-updated'));
 };
 
-const handleTermHover = event => {
+const handleTermHover = (event: { term?: { id: string }; position?: { x: number; y: number } }) => {
   if (!event || !event.term) {
     hoveredTerm.value = null;
     return;
@@ -244,6 +265,50 @@ const handleTermTooltipClose = () => {
   hoveredTerm.value = null;
 };
 
+const handleOpenAddQuestion = () => {
+  if (isAdmin.value) {
+    editingQuestion.value = null;
+    showQuestionModal.value = true;
+  }
+};
+
+const handleEditQuestion = (event: Event) => {
+  const customEvent = event as CustomEvent<{ question: Question }>;
+  if (isAdmin.value && customEvent.detail?.question) {
+    editingQuestion.value = customEvent.detail.question;
+    showQuestionModal.value = true;
+  }
+};
+
+const closeQuestionModal = () => {
+  showQuestionModal.value = false;
+  editingQuestion.value = null;
+};
+
+const handleQuestionSaved = () => {
+  showQuestionModal.value = false;
+  editingQuestion.value = null;
+  // Эмитим событие для обновления контента в SectionView
+  window.dispatchEvent(new CustomEvent('questions-need-reload'));
+};
+
+const handleQuestionDeleted = () => {
+  showQuestionModal.value = false;
+  editingQuestion.value = null;
+  // Эмитим событие для обновления контента в SectionView
+  window.dispatchEvent(new CustomEvent('questions-need-reload'));
+};
+
+const handleCurrentSectionUpdated = (event: Event) => {
+  const customEvent = event as CustomEvent<{ sectionId?: string; section?: Section }>;
+  // Получаем UUID раздела из события (приоритет sectionId, затем section.id)
+  if (customEvent.detail?.sectionId) {
+    currentSectionId.value = customEvent.detail.sectionId;
+  } else if (customEvent.detail?.section?.id) {
+    currentSectionId.value = customEvent.detail.section.id;
+  }
+};
+
 onMounted(() => {
   // Загружаем словарь один раз при старте приложения
   loadDictionary();
@@ -252,8 +317,17 @@ onMounted(() => {
   window.addEventListener('open-manage-sections', handleOpenManageSections);
   // Слушаем событие открытия добавления термина из SecondaryMenu
   window.addEventListener('open-add-term', handleOpenAddTerm);
+  // Слушаем событие открытия добавления вопроса из SecondaryMenu
+  window.addEventListener('open-add-question', handleOpenAddQuestion);
+  // Слушаем событие редактирования вопроса
+  window.addEventListener('edit-question', handleEditQuestion);
+  // Слушаем событие обновления текущего раздела
+  window.addEventListener('current-section-updated', handleCurrentSectionUpdated);
   // Слушаем событие hover на термине
-  window.addEventListener('term-hover', e => handleTermHover(e.detail));
+  window.addEventListener('term-hover', (e: Event) => {
+    const customEvent = e as CustomEvent<{ term?: { id: string }; position?: { x: number; y: number } }>;
+    handleTermHover(customEvent.detail || {});
+  });
   // Слушаем обновление словаря для перезагрузки
   window.addEventListener('terms-updated', () => {
     const { refreshDictionary } = useDictionaryHighlight();
@@ -264,19 +338,28 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('open-manage-sections', handleOpenManageSections);
   window.removeEventListener('open-add-term', handleOpenAddTerm);
-  window.removeEventListener('term-hover', e => handleTermHover(e.detail));
+  window.removeEventListener('open-add-question', handleOpenAddQuestion);
+  window.removeEventListener('edit-question', handleEditQuestion);
+  window.removeEventListener('current-section-updated', handleCurrentSectionUpdated);
+  window.removeEventListener('term-hover', (e: Event) => {
+    const customEvent = e as CustomEvent<{ term?: { id: string }; position?: { x: number; y: number } }>;
+    handleTermHover(customEvent.detail || {});
+  });
 });
 </script>
 
 <style lang="scss" scoped>
+@use '../src/styles/_mixins' as *;
+@use '../src/styles/_variables' as *;
+
 .action-btn {
   padding: 0.5rem;
   background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
+  border: 1px solid $border-color;
+  @include rounded-md;
   cursor: pointer;
   font-size: 1rem;
-  transition: all 0.2s ease;
+  @include transition(all, 0.2s, ease);
   width: 36px;
   height: 36px;
   display: flex;
@@ -290,8 +373,8 @@ onUnmounted(() => {
   }
 
   &:hover:not(:disabled) {
-    border-color: #42b883;
-    background: #f0f7ff;
+    border-color: $primary-color;
+    background: $bg-light;
   }
 
   &:disabled {
@@ -300,8 +383,8 @@ onUnmounted(() => {
   }
 
   &.delete-btn:hover:not(:disabled) {
-    border-color: #e74c3c;
-    background: #fee;
+    border-color: $error-color;
+    background: $error-bg;
   }
 }
 </style>

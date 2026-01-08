@@ -14,7 +14,7 @@
         <label class="setting-label">Выберите раздел:</label>
         <select v-model="selectedSection" class="setting-select">
           <option value="all">Все разделы</option>
-          <option v-for="section in sections" :key="section.id" :value="section.id">
+          <option v-for="section in sections" :key="section.id" :value="section.sectionId">
             {{ section.title }}
           </option>
         </select>
@@ -66,7 +66,7 @@
             <div class="card-header">
               <div class="card-label">Вопрос</div>
               <button
-                v-if="ttsEnabled && isSupported"
+                v-if="isSupported"
                 class="tts-btn"
                 title="Озвучить вопрос"
                 @click.stop="speakQuestion(currentQuestion.question)"
@@ -80,7 +80,7 @@
             <div class="card-header">
               <div class="card-label">Answer EN</div>
               <button
-                v-if="ttsEnabled && isSupported && currentQuestion.answerEn"
+                v-if="isSupported && currentQuestion.answerEn"
                 class="tts-btn"
                 title="Озвучить ответ"
                 @click.stop="speakAnswer(currentQuestion.answerEn)"
@@ -145,17 +145,16 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, watch, onUnmounted } from 'vue';
+<script setup lang="ts">
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { marked } from 'marked';
 import { useTrainingMode } from '../composables/useTrainingMode';
 import { useTextToSpeech } from '../composables/useTextToSpeech';
 import { getQuestions } from '../api/questions';
-import { getSectionById } from '../api/sections';
-import { sections } from '../data/sections.js';
+import { getSections, getSectionById } from '../api/sections';
 import { RectangleStackIcon, StopIcon, ArrowPathIcon } from '@heroicons/vue/24/outline';
 
-const { flashCardDuration, ttsEnabled } = useTrainingMode();
+const { flashCardDuration } = useTrainingMode();
 const { isSupported, speakQuestion, speakAnswer, stop: stopTTS } = useTextToSpeech();
 
 const loading = ref(false);
@@ -167,6 +166,7 @@ const shuffleQuestions = ref(true);
 const currentIndex = ref(0);
 const showAnswer = ref(false);
 const allQuestions = ref([]);
+const sections = ref([]);
 
 let autoFlipTimer = null;
 
@@ -176,6 +176,14 @@ const filteredQuestions = computed(() => {
   }
   return allQuestions.value.filter(q => q.sectionId === selectedSection.value);
 });
+
+const loadSections = async () => {
+  try {
+    sections.value = await getSections();
+  } catch (error) {
+    console.error('Ошибка загрузки разделов:', error);
+  }
+};
 
 const currentQuestion = computed(() => {
   if (filteredQuestions.value.length === 0) return null;
@@ -206,7 +214,7 @@ const toggleCard = () => {
   }
 
   // Автоматическое озвучивание
-  if (ttsEnabled.value && isSupported.value) {
+  if (isSupported.value) {
     if (showAnswer.value && currentQuestion.value?.answerEn) {
       speakAnswer(currentQuestion.value.answerEn);
     } else if (!showAnswer.value && currentQuestion.value?.question) {
@@ -228,7 +236,7 @@ const nextQuestion = () => {
     }
 
     // Автоматическое озвучивание вопроса
-    if (ttsEnabled.value && isSupported.value && currentQuestion.value?.question) {
+    if (isSupported.value && currentQuestion.value?.question) {
       setTimeout(() => {
         speakQuestion(currentQuestion.value.question);
       }, 200);
@@ -244,7 +252,7 @@ const previousQuestion = () => {
     clearAutoFlip();
 
     // Автоматическое озвучивание вопроса
-    if (ttsEnabled.value && isSupported.value && currentQuestion.value?.question) {
+    if (isSupported.value && currentQuestion.value?.question) {
       setTimeout(() => {
         speakQuestion(currentQuestion.value.question);
       }, 200);
@@ -294,13 +302,13 @@ const loadQuestions = async () => {
   try {
     const sectionsToLoad =
       selectedSection.value === 'all'
-        ? sections
-        : sections.filter(s => s.id === selectedSection.value);
+        ? sections.value
+        : sections.value.filter(s => s.sectionId === selectedSection.value);
 
     for (const section of sectionsToLoad) {
       try {
         // Получаем раздел из БД по sectionId
-        const dbSection = await getSectionById(section.id);
+        const dbSection = await getSectionById(section.sectionId);
 
         // Загружаем вопросы через API
         const questions = await getQuestions(dbSection.id);
@@ -321,7 +329,7 @@ const loadQuestions = async () => {
               answerEn: answerEn ? answerEn.content : null,
               answerRu: q.answers.find(a => a.type === 'ru')?.content || null,
               answerSenior: q.answers.find(a => a.type === 'senior')?.content || null,
-              sectionId: section.id,
+              sectionId: section.sectionId,
               hasAnswerEn: !!answerEn,
               hasAnswerRu: !!q.answers.find(a => a.type === 'ru'),
               hasAnswerSenior: !!q.answers.find(a => a.type === 'senior'),
@@ -390,6 +398,10 @@ watch(flashCardDuration, () => {
   }
 });
 
+onMounted(() => {
+  loadSections();
+});
+
 onUnmounted(() => {
   clearAutoFlip();
   stopTTS();
@@ -446,7 +458,7 @@ onUnmounted(() => {
   background: $bg-white;
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  @include shadow-md;
   margin-bottom: 2rem;
 
   @media (max-width: $breakpoint-mobile) {
@@ -488,7 +500,7 @@ onUnmounted(() => {
   &:focus {
     outline: none;
     border-color: $primary-color;
-    box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.1);
+    @include shadow-focus;
   }
 }
 
@@ -503,7 +515,7 @@ onUnmounted(() => {
   background: $primary-color;
   color: white;
   border: none;
-  border-radius: 8px;
+  @include rounded-md;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -523,7 +535,7 @@ onUnmounted(() => {
   background: $bg-white;
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  @include shadow-md;
 
   @media (max-width: $breakpoint-mobile) {
     padding: 1.5rem;
@@ -565,11 +577,11 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  @include shadow-lg;
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    @include shadow-xl;
   }
 
   @media (max-width: $breakpoint-mobile) {
@@ -612,7 +624,7 @@ onUnmounted(() => {
   justify-content: center;
   cursor: pointer;
   font-size: 1rem;
-  transition: all 0.2s;
+  @include transition;
   color: white;
   backdrop-filter: blur(10px);
 
@@ -708,7 +720,7 @@ onUnmounted(() => {
 
   :deep(pre) {
     background: rgba(0, 0, 0, 0.3);
-    border-radius: 8px;
+    @include rounded-md;
     padding: 1rem;
     margin: 1rem 0;
     overflow-x: auto;
@@ -724,56 +736,6 @@ onUnmounted(() => {
       white-space: pre;
       color: rgba(255, 255, 255, 0.95);
       font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
-    }
-
-    // Стили для подсветки синтаксиса
-    :deep(.hljs-keyword),
-    :deep(.hljs-selector-tag) {
-      color: #569cd6;
-    }
-
-    :deep(.hljs-string),
-    :deep(.hljs-meta .hljs-meta-string) {
-      color: #ce9178;
-    }
-
-    :deep(.hljs-comment),
-    :deep(.hljs-quote) {
-      color: #6a9955;
-      font-style: italic;
-    }
-
-    :deep(.hljs-number),
-    :deep(.hljs-literal) {
-      color: #b5cea8;
-    }
-
-    :deep(.hljs-function),
-    :deep(.hljs-title) {
-      color: #dcdcaa;
-    }
-
-    :deep(.hljs-type),
-    :deep(.hljs-class) {
-      color: #4ec9b0;
-    }
-
-    :deep(.hljs-variable),
-    :deep(.hljs-params) {
-      color: #9cdcfe;
-    }
-
-    :deep(.hljs-property),
-    :deep(.hljs-attr) {
-      color: #92c5f7;
-    }
-
-    :deep(.hljs-built_in) {
-      color: #569cd6;
-    }
-
-    :deep(.hljs-regexp) {
-      color: #d16969;
     }
   }
 
@@ -855,7 +817,7 @@ onUnmounted(() => {
   border-radius: 6px;
   font-size: 0.9375rem;
   cursor: pointer;
-  transition: all 0.2s;
+  @include transition;
   flex: 1;
 
   &:hover:not(:disabled) {
@@ -908,7 +870,7 @@ onUnmounted(() => {
     flex-shrink: 0;
   }
   cursor: pointer;
-  transition: all 0.2s;
+  @include transition;
 
   &:hover {
     background: #e9ecef;
@@ -924,7 +886,7 @@ onUnmounted(() => {
   padding: 3rem 2rem;
   background: $bg-white;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  @include shadow-md;
 }
 
 .spinner {

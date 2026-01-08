@@ -38,7 +38,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { ref, watch } from 'vue';
 import { useAdminAuth } from '../composables/useAdminAuth';
@@ -50,7 +50,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'success']);
 
-const { login, isLoading: authLoading, error: authError } = useAdminAuth();
+const { login } = useAdminAuth();
 const password = ref('');
 const error = ref(null);
 const isLoading = ref(false);
@@ -101,10 +101,10 @@ watch(
 
 .error-message {
   padding: 0.75rem;
-  background: #fee;
-  border: 1px solid #e74c3c;
+  background: $error-bg;
+  border: 1px solid $error-color;
   border-radius: 6px;
-  color: #e74c3c;
+  color: $error-color;
   font-size: 0.875rem;
   margin-bottom: 1rem;
 }
@@ -113,7 +113,7 @@ watch(
   input[type='password'] {
     width: 100%;
     padding: 0.75rem;
-    border: 1px solid #e0e0e0;
+    border: 1px solid $border-color;
     border-radius: 6px;
     font-size: 0.9375rem;
     transition: border-color 0.2s ease;
@@ -124,7 +124,7 @@ watch(
     }
 
     &:disabled {
-      background: #f5f5f5;
+      background: $bg-light;
       cursor: not-allowed;
     }
   }

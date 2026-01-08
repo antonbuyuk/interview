@@ -11,29 +11,20 @@
   </article>
 </template>
 
-<script setup>
-import { ref } from 'vue';
+<script setup lang="ts">
 import { useTrainingMode } from '../composables/useTrainingMode';
 import QuestionItem from './QuestionItem.vue';
 
 defineProps({
-  questions: {
-    type: Array,
-    required: true,
-    default: () => [],
-  },
-  isAdmin: {
-    type: Boolean,
-    default: false,
-  },
+  questions: { type: Array as () => any[], default: () => [] },
+  isAdmin: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['edit-question']);
 
-const contentRef = ref(null);
 const { englishOnly } = useTrainingMode();
 
-const handleEditQuestion = question => {
+const handleEditQuestion = (question: any) => {
   emit('edit-question', question);
 };
 </script>
