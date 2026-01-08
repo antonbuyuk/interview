@@ -1,7 +1,7 @@
 <template>
   <div class="answer-accordion" :class="{ open: isOpen, [`is-answer-${type}`]: true }">
     <button class="answer-accordion-toggle" type="button" :aria-expanded="isOpen" @click="toggle">
-      <span class="answer-accordion-icon">▶</span>
+      <ChevronRightIcon class="answer-accordion-icon" />
       <span class="answer-accordion-label">{{ label }}</span>
     </button>
     <div
@@ -19,6 +19,7 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import MarkdownContent from './MarkdownContent.vue';
+import { ChevronRightIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
   type: {
@@ -196,7 +197,9 @@ onMounted(() => {
       display: inline-block;
       transition: transform 0.3s ease;
       color: $text-lighter-gray;
-      font-size: 0.75rem;
+      width: 0.75rem;
+      height: 0.75rem;
+      flex-shrink: 0;
     }
 
     &-label {

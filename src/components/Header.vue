@@ -34,7 +34,7 @@
                   title="Управление разделами"
                   @click="openManageSections"
                 >
-                  ⚙️
+                  <Cog6ToothIcon class="icon-small" />
                 </button>
               </div>
               <div class="dropdown-list">
@@ -83,7 +83,7 @@
                   :class="{ active: route.path === '/training/flash-cards' }"
                   @click="hideTrainingDropdown"
                 >
-                  <span class="nav-icon">🎴</span>
+                  <RectangleStackIcon class="nav-icon" />
                   <span>Флэш-карточки</span>
                 </router-link>
                 <router-link
@@ -92,7 +92,7 @@
                   :class="{ active: route.path === '/training/practice' }"
                   @click="hideTrainingDropdown"
                 >
-                  <span class="nav-icon">⏱️</span>
+                  <ClockIcon class="nav-icon" />
                   <span>Режим самопроверки</span>
                 </router-link>
                 <router-link
@@ -101,7 +101,7 @@
                   :class="{ active: route.path === '/vocabulary' }"
                   @click="hideTrainingDropdown"
                 >
-                  <span class="nav-icon">📖</span>
+                  <BookOpenIcon class="nav-icon" />
                   <span>Словарь терминов</span>
                 </router-link>
               </div>
@@ -117,7 +117,7 @@
         aria-label="Открыть меню"
         @click="toggleMobileMenu"
       >
-        <span class="menu-icon">☰</span>
+        <Bars3Icon class="menu-icon" />
       </button>
     </div>
 
@@ -135,7 +135,7 @@
         :title="englishOnly ? 'Показать русский текст' : 'Только английский'"
         @click="toggleEnglishOnly"
       >
-        EN
+        en
       </button>
 
       <!-- Text-to-Speech Toggle -->
@@ -146,7 +146,8 @@
         :title="ttsEnabled ? 'Выключить озвучку' : 'Включить озвучку'"
         @click="toggleTTS"
       >
-        🎤
+        <MicrophoneIcon v-if="!ttsEnabled" class="icon-btn" />
+        <MicrophoneIconSolid v-else class="icon-btn" />
       </button>
 
       <!-- Фильтр вопросов (только на странице раздела) -->
@@ -158,7 +159,7 @@
         title="Навигация по вопросам"
         @click="toggleFilter"
       >
-        📋
+        <ClipboardDocumentListIcon class="icon-btn" />
         <span v-if="questionsCount > 0" class="filter-count">{{ questionsCount }}</span>
       </button>
     </div>
@@ -169,11 +170,13 @@
         <div class="mobile-menu" @click.stop>
           <div class="mobile-menu-header">
             <h3>Меню</h3>
-            <button class="close-btn" @click="closeMobileMenu">×</button>
+            <button class="close-btn" @click="closeMobileMenu">
+              <XMarkIcon class="icon-small" />
+            </button>
           </div>
           <nav class="mobile-nav">
             <router-link to="/" class="mobile-nav-item" @click="closeMobileMenu">
-              <span class="nav-icon">🏠</span>
+              <HomeIcon class="nav-icon" />
               <span>Главная</span>
             </router-link>
             <div class="mobile-nav-section">
@@ -183,15 +186,15 @@
                 class="mobile-nav-item"
                 @click="closeMobileMenu"
               >
-                <span class="nav-icon">🎴</span>
+                <RectangleStackIcon class="nav-icon" />
                 <span>Флэш-карточки</span>
               </router-link>
               <router-link to="/training/practice" class="mobile-nav-item" @click="closeMobileMenu">
-                <span class="nav-icon">⏱️</span>
+                <ClockIcon class="nav-icon" />
                 <span>Режим самопроверки</span>
               </router-link>
               <router-link to="/vocabulary" class="mobile-nav-item" @click="closeMobileMenu">
-                <span class="nav-icon">📖</span>
+                <BookOpenIcon class="nav-icon" />
                 <span>Словарь терминов</span>
               </router-link>
             </div>
@@ -204,7 +207,7 @@
                   title="Управление разделами"
                   @click="openManageSections"
                 >
-                  ⚙️
+                  <Cog6ToothIcon class="icon-small" />
                 </button>
               </div>
               <router-link
@@ -239,6 +242,18 @@ import { useTrainingMode } from '../composables/useTrainingMode';
 import { getSections } from '../api/sections';
 import AdminLoginModal from './AdminLoginModal.vue';
 import Search from './Search.vue';
+import {
+  HomeIcon,
+  RectangleStackIcon,
+  ClockIcon,
+  BookOpenIcon,
+  Bars3Icon,
+  MicrophoneIcon,
+  ClipboardDocumentListIcon,
+  Cog6ToothIcon,
+  XMarkIcon,
+} from '@heroicons/vue/24/outline';
+import { MicrophoneIcon as MicrophoneIconSolid } from '@heroicons/vue/24/solid';
 
 const route = useRoute();
 const isMobile = ref(false);
@@ -567,6 +582,15 @@ onUnmounted(() => {
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   @include transition;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .icon-small {
+    width: 1rem;
+    height: 1rem;
+    color: inherit;
+  }
 
   &:hover {
     background: $bg-white;
@@ -615,7 +639,9 @@ onUnmounted(() => {
   }
 
   .nav-icon {
-    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+    color: inherit;
   }
 }
 
@@ -645,6 +671,12 @@ onUnmounted(() => {
   border-radius: 6px;
   @include transition;
 
+  .icon-btn {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: inherit;
+  }
+
   &:hover {
     background: $bg-light;
     color: $primary-color;
@@ -663,6 +695,11 @@ onUnmounted(() => {
     width: 36px;
     height: 36px;
     font-size: 1rem;
+
+    .icon-btn {
+      width: 1.125rem;
+      height: 1.125rem;
+    }
   }
 }
 
@@ -723,6 +760,12 @@ onUnmounted(() => {
   @include flex-center;
   width: 40px;
   height: 40px;
+
+  .menu-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: inherit;
+  }
 
   &:hover {
     background: $bg-light;
@@ -787,6 +830,12 @@ onUnmounted(() => {
   border-radius: 6px;
   @include transition;
 
+  .icon-small {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: inherit;
+  }
+
   &:hover {
     background: $bg-white;
     color: $text-gray;
@@ -820,7 +869,9 @@ onUnmounted(() => {
   }
 
   .nav-icon {
-    font-size: 1.125rem;
+    width: 1.125rem;
+    height: 1.125rem;
+    color: inherit;
   }
 }
 

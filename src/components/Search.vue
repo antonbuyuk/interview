@@ -12,14 +12,14 @@
         @focus="isFocused = true"
         @blur="handleBlur"
       />
-      <span class="search-icon">🔍</span>
+      <MagnifyingGlassIcon class="search-icon" />
       <button
         v-if="!isRecording && !searchQuery"
         class="voice-btn"
         title="Голосовой поиск"
         @click="startVoiceSearch"
       >
-        🎤
+        <MicrophoneIcon class="icon-small" />
       </button>
       <button
         v-if="isRecording"
@@ -27,7 +27,7 @@
         title="Остановить запись"
         @click="stopVoiceSearch"
       >
-        ⏹
+        <StopIconSolid class="icon-small" />
       </button>
       <button
         v-if="searchQuery && !isRecording"
@@ -35,7 +35,7 @@
         title="Очистить поиск"
         @click="clearSearch"
       >
-        ✕
+        <XMarkIcon class="icon-small" />
       </button>
       <div v-if="isRecording" class="recording-indicator">
         <span class="recording-dot"></span>
@@ -101,6 +101,13 @@ import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { getSections } from '../api/sections.js';
 import { getQuestions } from '../api/questions.js';
+import {
+  MagnifyingGlassIcon,
+  MicrophoneIcon,
+  StopIcon,
+  XMarkIcon,
+} from '@heroicons/vue/24/outline';
+import { StopIcon as StopIconSolid } from '@heroicons/vue/24/solid';
 
 const props = defineProps({
   currentSection: {
@@ -597,7 +604,9 @@ watch(
 .search-icon {
   position: absolute;
   left: 0.625rem;
-  font-size: 0.875rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  color: #999;
   pointer-events: none;
 }
 
@@ -617,6 +626,12 @@ watch(
   border-radius: 4px;
   transition: all 0.2s;
   z-index: 5;
+
+  .icon-small {
+    width: 1rem;
+    height: 1rem;
+    color: inherit;
+  }
 }
 
 .voice-btn:hover {
@@ -662,6 +677,12 @@ watch(
   border-radius: 4px;
   transition: all 0.2s;
   z-index: 5;
+
+  .icon-small {
+    width: 0.875rem;
+    height: 0.875rem;
+    color: inherit;
+  }
 }
 
 .clear-btn:hover {

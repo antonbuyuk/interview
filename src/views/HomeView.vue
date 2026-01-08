@@ -6,7 +6,8 @@
         Подборка вопросов и ответов для подготовки к собеседованиям на позицию Frontend Developer
       </p>
       <button class="manage-sections-btn" @click="openManageSections">
-        ➕ Управление разделами
+        <PlusIcon class="icon-inline" />
+        Управление разделами
       </button>
     </div>
 
@@ -34,6 +35,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { getSections } from '../api/sections';
+import { PlusIcon } from '@heroicons/vue/24/outline';
 
 const sections = ref([]);
 
@@ -144,6 +146,18 @@ onUnmounted(() => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  margin-right: auto;
+
+  .icon-inline {
+    width: 1.125rem;
+    height: 1.125rem;
+    color: inherit;
+  }
 
   &:hover {
     background: #35a372;

@@ -3,7 +3,9 @@
     <div class="modal-content" @click.stop>
       <div class="modal-header">
         <h2>{{ editingQuestion ? 'Редактировать вопрос' : 'Добавить вопрос' }}</h2>
-        <button class="close-btn" @click="close">×</button>
+        <button class="close-btn" @click="close">
+          <XMarkIcon class="icon-small" />
+        </button>
       </div>
 
       <form class="modal-form" @submit.prevent="handleSubmit">
@@ -312,7 +314,11 @@
             :disabled="loading || deleting"
             @click="handleDelete"
           >
-            {{ deleting ? 'Удаление...' : '🗑️ Удалить вопрос' }}
+            <template v-if="!deleting">
+              <TrashIcon class="icon-inline" />
+              Удалить вопрос
+            </template>
+            <template v-else>Удаление...</template>
           </button>
           <button type="button" class="btn-cancel" @click="close">Отмена</button>
           <button v-if="isAdmin" type="submit" class="btn-submit" :disabled="loading || deleting">
@@ -341,6 +347,7 @@ import {
   getQuestions,
 } from '../api/questions';
 import { getSections } from '../api/sections';
+import { TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 
 // Инициализация Turndown для конвертации HTML в Markdown
 const turndownService = new TurndownService({

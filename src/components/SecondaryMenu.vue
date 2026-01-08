@@ -2,18 +2,18 @@
   <div class="secondary-menu">
     <!-- Если не авторизован -->
     <button v-if="!isAdmin" class="secondary-menu-item" title="Авторизация" @click="openLoginModal">
-      <span class="nav-icon">🔐</span>
+      <LockClosedIcon class="nav-icon" />
     </button>
 
     <template v-else>
       <button class="secondary-menu-item" title="Добавить вопрос" @click="openAddQuestion">
-        <span class="nav-icon">➕</span>
+        <QuestionMarkCircleIcon class="nav-icon" />
       </button>
       <button class="secondary-menu-item" title="Настройка раздела" @click="openManageSections">
-        <span class="nav-icon">⚙️</span>
+        <Cog6ToothIcon class="nav-icon" />
       </button>
       <button class="secondary-menu-item" title="Добавить термин" @click="openAddTerm">
-        <span class="nav-icon">📖</span>
+        <BookOpenIcon class="nav-icon" />
       </button>
     </template>
   </div>
@@ -21,6 +21,12 @@
 
 <script setup>
 import { useAdminAuth } from '../composables/useAdminAuth';
+import {
+  LockClosedIcon,
+  QuestionMarkCircleIcon,
+  Cog6ToothIcon,
+  BookOpenIcon,
+} from '@heroicons/vue/24/outline';
 
 const { isAdmin } = useAdminAuth();
 
@@ -69,6 +75,12 @@ const openAddTerm = () => {
     cursor: pointer;
     border-radius: 6px;
     @include transition;
+
+    .nav-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+      color: inherit;
+    }
 
     &:hover {
       background: #f0f0f0;

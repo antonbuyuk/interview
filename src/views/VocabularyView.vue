@@ -3,7 +3,10 @@
     <div class="vocabulary-header">
       <div class="header-content">
         <div>
-          <h1>📖 Словарь технических терминов</h1>
+          <h1>
+            <BookOpenIcon class="title-icon" />
+            Словарь технических терминов
+          </h1>
           <p class="subtitle">Английские термины с переводом и примерами использования</p>
         </div>
         <button v-if="isAdmin" class="add-btn" @click="openAddModal">+ Добавить термин</button>
@@ -19,7 +22,7 @@
           placeholder="Поиск по термину или переводу..."
           class="search-input"
         />
-        <span class="search-icon">🔍</span>
+        <MagnifyingGlassIcon class="search-icon" />
       </div>
 
       <div class="filters-container">
@@ -52,8 +55,12 @@
         <div class="card-header">
           <h3 class="term-title">{{ term.term }}</h3>
           <div v-if="isAdmin" class="card-actions-top">
-            <button class="edit-btn" title="Редактировать" @click="editTerm(term)">✏️</button>
-            <button class="delete-btn" title="Удалить" @click="deleteTerm(term)">🗑️</button>
+            <button class="edit-btn" title="Редактировать" @click="editTerm(term)">
+              <PencilIcon class="icon-small" />
+            </button>
+            <button class="delete-btn" title="Удалить" @click="deleteTerm(term)">
+              <TrashIcon class="icon-small" />
+            </button>
           </div>
         </div>
 
@@ -99,6 +106,12 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { getTerms, deleteTerm as deleteTermApi } from '../api/terms';
 import AddTermModal from '../components/AddTermModal.vue';
 import { useAdminAuth } from '../composables/useAdminAuth';
+import {
+  BookOpenIcon,
+  MagnifyingGlassIcon,
+  PencilIcon,
+  TrashIcon,
+} from '@heroicons/vue/24/outline';
 
 const vocabulary = ref([]);
 const loading = ref(true);
@@ -234,9 +247,24 @@ const deleteTerm = async term => {
     font-weight: 700;
     margin-bottom: 0.5rem;
     color: $text-dark;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    .title-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      color: $primary-color;
+      flex-shrink: 0;
+    }
 
     @include mobile {
       font-size: 2rem;
+
+      .title-icon {
+        width: 2rem;
+        height: 2rem;
+      }
     }
   }
 }
@@ -292,7 +320,10 @@ const deleteTerm = async term => {
   left: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 1.125rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: $text-lighter-gray;
+  pointer-events: none;
 }
 
 .filters-container {
@@ -406,6 +437,15 @@ const deleteTerm = async term => {
   cursor: pointer;
   font-size: 1rem;
   @include transition;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .icon-small {
+    width: 1rem;
+    height: 1rem;
+    color: inherit;
+  }
 }
 
 .edit-btn:hover {

@@ -13,7 +13,7 @@
         title="Редактировать вопрос"
         @click="handleEdit"
       >
-        ✏️
+        <PencilIcon class="icon-small" />
       </button>
     </div>
 
@@ -39,6 +39,7 @@
 import { computed } from 'vue';
 import CodeBlock from './CodeBlock.vue';
 import AnswerAccordion from './AnswerAccordion.vue';
+import { PencilIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
   question: {
@@ -126,6 +127,15 @@ const handleEdit = () => {
   transition: all 0.2s ease;
   flex-shrink: 0;
   opacity: 0.7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .icon-small {
+    width: 0.875rem;
+    height: 0.875rem;
+    color: inherit;
+  }
 
   &:hover {
     background: rgba(66, 184, 131, 0.2);
@@ -141,6 +151,11 @@ const handleEdit = () => {
   @media (max-width: $breakpoint-mobile) {
     padding: 0.25rem 0.5rem;
     font-size: 0.75rem;
+
+    .icon-small {
+      width: 0.75rem;
+      height: 0.75rem;
+    }
   }
 }
 

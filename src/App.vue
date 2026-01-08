@@ -14,12 +14,15 @@
       <div class="modal-content sections-modal" @click.stop>
         <div class="modal-header">
           <h2>Управление разделами</h2>
-          <button class="close-btn" @click="closeSectionsModal">×</button>
+          <button class="close-btn" @click="closeSectionsModal">
+            <XMarkIcon class="icon-small" />
+          </button>
         </div>
 
         <div class="modal-body">
           <button v-if="isAdmin" class="add-section-btn" @click="openAddSectionModal">
-            ➕ Добавить раздел
+            <PlusIcon class="icon-inline" />
+            Добавить раздел
           </button>
 
           <div v-if="sectionsLoading" class="loading-state">
@@ -45,7 +48,7 @@
                   title="Редактировать"
                   @click="editSection(section)"
                 >
-                  ✏️
+                  <PencilIcon class="icon-small" />
                 </button>
                 <button
                   class="action-btn delete-btn"
@@ -53,7 +56,7 @@
                   :disabled="section._count?.questions > 0"
                   @click="deleteSection(section)"
                 >
-                  🗑️
+                  <TrashIcon class="icon-small" />
                 </button>
               </div>
             </div>
@@ -96,6 +99,12 @@ import TextSelectionMenu from './components/TextSelectionMenu.vue';
 import { getSections, deleteSection as deleteSectionApi } from './api/sections';
 import { useAdminAuth } from './composables/useAdminAuth';
 import SecondaryMenu from './components/SecondaryMenu.vue';
+import {
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  XMarkIcon,
+} from '@heroicons/vue/24/outline';
 
 const route = useRoute();
 
@@ -295,6 +304,16 @@ body {
   cursor: pointer;
   margin-bottom: 1.5rem;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  .icon-inline {
+    width: 1.125rem;
+    height: 1.125rem;
+    color: inherit;
+  }
 
   &:hover {
     background: #35a372;
@@ -361,6 +380,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+
+  .icon-small {
+    width: 1rem;
+    height: 1rem;
+    color: inherit;
+  }
 
   &:hover:not(:disabled) {
     border-color: #42b883;

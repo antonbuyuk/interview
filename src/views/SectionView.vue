@@ -36,7 +36,9 @@
       <div class="filter-modal" @click.stop>
         <div class="filter-modal-header">
           <h3>Навигация по вопросам</h3>
-          <button class="filter-close-btn" aria-label="Закрыть" @click="closeFilter">×</button>
+          <button class="filter-close-btn" aria-label="Закрыть" @click="closeFilter">
+            <XMarkIcon class="icon-small" />
+          </button>
         </div>
         <div class="filter-modal-content">
           <QuestionNav :questions="questions" :is-admin="isAdmin" class="mobile-filter" />
@@ -55,6 +57,7 @@ import QuestionContent from '../components/QuestionContent.vue';
 import { useAdminAuth } from '../composables/useAdminAuth';
 import { getQuestions } from '../api/questions';
 import { getSectionById } from '../api/sections';
+import { XMarkIcon } from '@heroicons/vue/24/outline';
 // Используем темную тему и переопределим цвета для VS Code стиля
 import 'highlight.js/styles/github-dark.css';
 import '../styles/code.scss';
@@ -430,6 +433,18 @@ watch(
   background: transparent;
   border: none;
   color: $text-lighter-gray;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+
+  .icon-small {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: inherit;
+  }
   font-size: 1.5rem;
   cursor: pointer;
   width: 32px;

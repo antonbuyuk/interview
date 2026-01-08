@@ -3,7 +3,9 @@
     <div class="modal-content" @click.stop>
       <div class="modal-header">
         <h2>{{ editingSection ? 'Редактировать раздел' : 'Добавить раздел' }}</h2>
-        <button class="close-btn" @click="close">×</button>
+        <button class="close-btn" @click="close">
+          <XMarkIcon class="icon-small" />
+        </button>
       </div>
 
       <form class="modal-form" @submit.prevent="handleSubmit">
@@ -65,6 +67,7 @@
 </template>
 
 <script setup>
+import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { ref, watch, computed } from 'vue';
 import { createSection, updateSection } from '../api/sections';
 

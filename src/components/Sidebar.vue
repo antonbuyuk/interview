@@ -3,7 +3,7 @@
   <aside class="sidebar" :class="{ open: isOpen }">
     <nav class="nav">
       <router-link to="/" class="nav-item" :class="{ active: route.path === '/' }">
-        <span class="nav-icon">🏠</span>
+        <HomeIcon class="nav-icon" />
         <span class="nav-text">Главная</span>
       </router-link>
 
@@ -16,7 +16,7 @@
           class="nav-item"
           :class="{ active: route.path === '/training/flash-cards' }"
         >
-          <span class="nav-icon">🎴</span>
+          <RectangleStackIcon class="nav-icon" />
           <span class="nav-text">Флэш-карточки</span>
         </router-link>
         <router-link
@@ -24,7 +24,7 @@
           class="nav-item"
           :class="{ active: route.path === '/training/practice' }"
         >
-          <span class="nav-icon">⏱️</span>
+          <ClockIcon class="nav-icon" />
           <span class="nav-text">Режим самопроверки</span>
         </router-link>
         <router-link
@@ -32,7 +32,7 @@
           class="nav-item"
           :class="{ active: route.path === '/vocabulary' }"
         >
-          <span class="nav-icon">📖</span>
+          <BookOpenIcon class="nav-icon" />
           <span class="nav-text">Словарь терминов</span>
         </router-link>
       </div>
@@ -46,7 +46,7 @@
             title="Управление разделами"
             @click.stop="openManageSections"
           >
-            ⚙️
+            <Cog6ToothIcon class="icon-small" />
           </button>
         </div>
         <SectionDropdown v-for="section in sections" :key="section.id" :section="section" />
@@ -61,6 +61,13 @@ import { useRoute } from 'vue-router';
 import { getSections } from '../api/sections';
 import SectionDropdown from './SectionDropdown.vue';
 import { useAdminAuth } from '../composables/useAdminAuth';
+import {
+  HomeIcon,
+  RectangleStackIcon,
+  ClockIcon,
+  BookOpenIcon,
+  Cog6ToothIcon,
+} from '@heroicons/vue/24/outline';
 
 const route = useRoute();
 const isOpen = ref(false);
@@ -205,7 +212,10 @@ watch(
 
 .nav-icon {
   margin-right: 0.75rem;
-  font-size: 1.125rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: inherit;
+  flex-shrink: 0;
 }
 
 .nav-text {
@@ -246,6 +256,15 @@ watch(
   border-radius: 4px;
   transition: all 0.2s ease;
   opacity: 0.7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .icon-small {
+    width: 1rem;
+    height: 1rem;
+    color: inherit;
+  }
 
   &:hover {
     opacity: 1;

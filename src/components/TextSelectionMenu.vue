@@ -9,7 +9,7 @@
     @click.stop
   >
     <button class="menu-button" @click="handleAddToDictionary">
-      <span class="menu-icon">📖</span>
+      <BookOpenIcon class="menu-icon" />
       <span class="menu-text">Добавить в словарь</span>
     </button>
   </div>
@@ -18,6 +18,7 @@
 <script setup>
 import { computed } from 'vue';
 import { useTextSelection } from '../composables/useTextSelection';
+import { BookOpenIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
   isAdmin: {
@@ -83,7 +84,10 @@ const shouldShowMenu = computed(() => props.isAdmin && showMenu.value && selecte
 }
 
 .menu-icon {
-  font-size: 1.125rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: inherit;
+  flex-shrink: 0;
 }
 
 .menu-text {
