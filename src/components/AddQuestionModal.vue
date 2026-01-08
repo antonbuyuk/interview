@@ -31,6 +31,26 @@
             rows="3"
             required
             placeholder="Введите текст вопроса"
+            @input="formData.questionRaw = formData.question"
+          />
+        </div>
+
+        <div class="form-group">
+          <div class="form-group-header">
+            <label>Вопрос на английском (Question in English):</label>
+            <button
+              type="button"
+              class="btn-translate"
+              :disabled="!formData.questionRaw || translating"
+              @click="handleAutoTranslate"
+            >
+              {{ translating ? 'Перевод...' : 'Перевести автоматически' }}
+            </button>
+          </div>
+          <textarea
+            v-model="formData.questionEn"
+            rows="3"
+            placeholder="Введите текст вопроса на английском (необязательно)"
           />
         </div>
 
@@ -345,6 +365,7 @@ import {
   deleteAnswer,
   deleteQuestion,
   getQuestions,
+  translateText,
 } from '../api/questions';
 import { getSections } from '../api/sections';
 import { TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline';
@@ -366,6 +387,7 @@ const emit = defineEmits(['close', 'saved', 'deleted']);
 
 const loading = ref(false);
 const deleting = ref(false);
+const translating = ref(false);
 const sections = ref([]);
 const sectionsLoading = ref(false);
 const activeTab = ref('ru');
@@ -375,6 +397,7 @@ const formData = ref({
   number: 1,
   question: '',
   questionRaw: '',
+  questionEn: '',
 });
 
 const editingQuestion = computed(() => !!props.question);
@@ -468,6 +491,7 @@ watch(
         number: props.question.number,
         question: props.question.question,
         questionRaw: props.question.questionRaw || props.question.question,
+        questionEn: props.question.questionEn || '',
       };
 
       // Загружаем контент в редакторы (конвертируем markdown в HTML)
@@ -500,6 +524,7 @@ watch(
         number: 1,
         question: '',
         questionRaw: '',
+        questionEn: '',
       };
 
       // Вычисляем следующий номер для выбранного раздела
@@ -577,6 +602,7 @@ const handleSubmit = async () => {
       number: formData.value.number,
       question: formData.value.question,
       questionRaw: formData.value.questionRaw || formData.value.question,
+      questionEn: formData.value.questionEn || null,
       rawMarkdown: formData.value.question,
       answers: [],
     };
@@ -613,6 +639,7 @@ const handleSubmit = async () => {
         number: questionData.number,
         question: questionData.question,
         questionRaw: questionData.questionRaw,
+        questionEn: questionData.questionEn,
         rawMarkdown: questionData.rawMarkdown,
       });
 
@@ -648,6 +675,32 @@ const handleSubmit = async () => {
     alert('Ошибка сохранения: ' + (error.message || 'Неизвестная ошибка'));
   } finally {
     loading.value = false;
+  }
+};
+
+const handleAutoTranslate = async () => {
+  if (!formData.value.questionRaw || formData.value.questionRaw.trim() === '') {
+    alert('Сначала введите текст вопроса на русском языке');
+    return;
+  }
+
+  translating.value = true;
+  try {
+    const result = await translateText(formData.value.questionRaw, 'ru', 'en');
+    if (result.translatedText) {
+      formData.value.questionEn = result.translatedText;
+    } else {
+      alert('Не удалось получить перевод. Попробуйте позже.');
+    }
+  } catch (error) {
+    console.error('Ошибка перевода:', error);
+    if (error.response?.status === 429) {
+      alert('Сервис перевода временно недоступен из-за большого количества запросов. Пожалуйста, попробуйте позже.');
+    } else {
+      alert('Ошибка перевода: ' + (error.message || 'Неизвестная ошибка'));
+    }
+  } finally {
+    translating.value = false;
   }
 };
 

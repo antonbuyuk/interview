@@ -28,6 +28,7 @@ model Question {
   number      Int
   question    String     @db.Text
   questionRaw String     @db.Text
+  questionEn  String?    @db.Text // вопрос на английском
   answers     Answer[]
   codeBlocks  Json?      // массив блоков кода
   rawMarkdown String     @db.Text

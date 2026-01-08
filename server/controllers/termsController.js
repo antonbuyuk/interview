@@ -1,5 +1,5 @@
 const prisma = require('../utils/prisma');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Groq = require('groq-sdk');
 
 /**
  * Вспомогательная функция для задержки
@@ -7,7 +7,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * Выполняет запрос к Gemini API с повторными попытками при временных ошибках
+ * Выполняет запрос к Groq API с повторными попытками при временных ошибках
  * @param {Function} requestFn - Функция, выполняющая запрос к API
  * @param {number} maxRetries - Максимальное количество попыток (по умолчанию 3)
  * @param {number} initialDelay - Начальная задержка в мс (по умолчанию 1000)
@@ -134,6 +134,43 @@ const getTermById = async (req, res, next) => {
 
     res.json(term);
   } catch (error) {
+    next(error);
+  }
+};
+
+const getTermByExactName = async (req, res, next) => {
+  try {
+    const { term: termName } = req.params;
+    console.log('getTermByExactName called with term:', termName);
+
+    if (!termName || termName.trim().length === 0) {
+      return res.status(400).json({ error: 'Term name is required' });
+    }
+
+    const trimmedTerm = termName.trim().toLowerCase();
+
+    // Поиск по точному совпадению (case-insensitive)
+    // Используем findMany и берем первый результат для совместимости
+    const terms = await prisma.term.findMany({
+      where: {
+        term: {
+          equals: trimmedTerm,
+          mode: 'insensitive',
+        },
+      },
+      include: {
+        examples: true,
+        phrases: true,
+      },
+    });
+
+    if (!terms || terms.length === 0) {
+      return res.status(404).json({ error: 'Term not found' });
+    }
+
+    res.json(terms[0]);
+  } catch (error) {
+    console.error('Error in getTermByExactName:', error);
     next(error);
   }
 };
@@ -265,24 +302,16 @@ const getTermSuggestions = async (req, res, next) => {
       return res.status(400).json({ error: 'Term must be at least 2 characters long' });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey || apiKey.trim() === '') {
-      console.error('GEMINI_API_KEY is not set or is empty');
+      console.error('GROQ_API_KEY is not set or is empty');
       return res.status(503).json({
-        error: 'Gemini API key is not configured',
-        message: 'Please set GEMINI_API_KEY environment variable',
+        error: 'Groq API key is not configured',
+        message: 'Please set GROQ_API_KEY environment variable',
       });
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 500,
-        responseMimeType: 'application/json',
-      },
-    });
+    const groq = new Groq({ apiKey });
 
     const prompt = `Ты помощник для создания словаря технических терминов на английском языке.
 
@@ -298,24 +327,34 @@ const getTermSuggestions = async (req, res, next) => {
   "examples": ["пример предложения 1", "пример предложения 2", "пример предложения 3"]
 }`;
 
-    console.log('Sending request to Gemini for term:', term.trim());
+    console.log('Sending request to Groq for term:', term.trim());
 
     // Выполняем запрос с повторными попытками при временных ошибках
     const result = await retryRequest(
       async () => {
-        return await model.generateContent(prompt);
+        return await groq.chat.completions.create({
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          model: 'llama-3.3-70b-versatile',
+          temperature: 0.7,
+          max_tokens: 500,
+          response_format: { type: 'json_object' },
+        });
       },
       3, // максимум 3 попытки
       1000 // начальная задержка 1 секунда
     );
 
-    console.log('Gemini response received');
+    console.log('Groq response received');
 
-    const response = result.response;
-    const content = response.text();
+    const content = result.choices[0]?.message?.content;
 
     if (!content) {
-      return res.status(500).json({ error: 'Failed to get response from Gemini' });
+      return res.status(500).json({ error: 'Failed to get response from Groq' });
     }
 
     // Парсим JSON ответ
@@ -328,7 +367,7 @@ const getTermSuggestions = async (req, res, next) => {
         .trim();
       suggestions = JSON.parse(cleanedContent);
     } catch (parseError) {
-      console.error('Failed to parse Gemini response:', content);
+      console.error('Failed to parse Groq response:', content);
       console.error('Parse error:', parseError.message);
       return res
         .status(500)
@@ -371,7 +410,7 @@ const getTermSuggestions = async (req, res, next) => {
       stack: error.stack,
     });
 
-    // Обработка ошибок Gemini API - проверка API ключа
+    // Обработка ошибок Groq API - проверка API ключа
     if (
       statusCode === 401 ||
       errorMessage.includes('401') ||
@@ -380,9 +419,9 @@ const getTermSuggestions = async (req, res, next) => {
       errorMessage.includes('API key not valid')
     ) {
       return res.status(503).json({
-        error: 'Gemini authentication failed',
+        error: 'Groq authentication failed',
         message:
-          'Invalid API key. Please check GEMINI_API_KEY environment variable and ensure it is correct.',
+          'Invalid API key. Please check GROQ_API_KEY environment variable and ensure it is correct.',
       });
     }
 
@@ -395,16 +434,16 @@ const getTermSuggestions = async (req, res, next) => {
       errorMessage.includes('quota')
     ) {
       return res.status(503).json({
-        error: 'Gemini rate limit exceeded',
+        error: 'Groq rate limit exceeded',
         message: 'Too many requests or quota exceeded. Please try again later.',
       });
     }
 
-    // Обработка ошибок сервера Gemini
+    // Обработка ошибок сервера Groq
     if (statusCode === 500 || statusCode === 502 || statusCode === 503) {
       return res.status(503).json({
-        error: 'Gemini service error',
-        message: `Gemini API returned error ${statusCode}. Please try again later.`,
+        error: 'Groq service error',
+        message: `Groq API returned error ${statusCode}. Please try again later.`,
       });
     }
 
@@ -418,43 +457,35 @@ const getTermSuggestions = async (req, res, next) => {
       errorMessage.includes('fetch failed')
     ) {
       return res.status(503).json({
-        error: 'Gemini connection failed',
+        error: 'Groq connection failed',
         message:
-          'Could not connect to Gemini API. Please check your internet connection and try again.',
+          'Could not connect to Groq API. Please check your internet connection and try again.',
       });
     }
 
     // Обработка ошибок "Error fetching from" - обычно это проблемы с API ключом или сетью
-    if (
-      errorMessage.includes('Error fetching from') ||
-      errorMessage.includes('generativelanguage.googleapis.com')
-    ) {
+    if (errorMessage.includes('Error fetching from')) {
       // Проверяем, установлен ли API ключ
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = process.env.GROQ_API_KEY;
       if (!apiKey || apiKey.trim() === '') {
         return res.status(503).json({
-          error: 'Gemini API key not configured',
-          message:
-            'GEMINI_API_KEY environment variable is not set. Please add it to your .env file.',
+          error: 'Groq API key not configured',
+          message: 'GROQ_API_KEY environment variable is not set. Please add it to your .env file.',
         });
       }
 
       return res.status(503).json({
-        error: 'Gemini service unavailable',
+        error: 'Groq service unavailable',
         message:
-          'Failed to connect to Gemini API. Please check: 1) Your API key is correct, 2) You have internet connection, 3) Gemini service is available.',
+          'Failed to connect to Groq API. Please check: 1) Your API key is correct, 2) You have internet connection, 3) Groq service is available.',
       });
     }
 
-    // Если это ошибка Gemini, но статус неизвестен
-    if (
-      errorMessage.includes('Gemini') ||
-      errorMessage.includes('GoogleGenerativeAI') ||
-      error.constructor.name === 'GoogleGenerativeAIError'
-    ) {
+    // Если это ошибка Groq, но статус неизвестен
+    if (errorMessage.includes('Groq')) {
       return res.status(503).json({
-        error: 'Gemini service unavailable',
-        message: errorMessage || 'An error occurred while communicating with Gemini API',
+        error: 'Groq service unavailable',
+        message: errorMessage || 'An error occurred while communicating with Groq API',
       });
     }
 
@@ -466,6 +497,7 @@ const getTermSuggestions = async (req, res, next) => {
 module.exports = {
   getTerms,
   getTermById,
+  getTermByExactName,
   createTerm,
   updateTerm,
   deleteTerm,

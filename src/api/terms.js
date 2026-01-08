@@ -30,6 +30,25 @@ export async function getTermById(id) {
 }
 
 /**
+ * Получить термин по точному совпадению имени (case-insensitive)
+ * @param {string} term - Название термина
+ * @returns {Promise<Object|null>} Термин или null если не найден
+ */
+export async function getTermByExactName(term) {
+  try {
+    const encodedTerm = encodeURIComponent(term.trim());
+    return await api.get(`/terms/by-name/${encodedTerm}`);
+  } catch (error) {
+    // Если термин не найден (404), возвращаем null
+    if (error.response?.status === 404) {
+      return null;
+    }
+    // Для других ошибок пробрасываем дальше
+    throw error;
+  }
+}
+
+/**
  * Создать термин
  * @param {Object} termData - Данные термина
  * @returns {Promise<Object>}

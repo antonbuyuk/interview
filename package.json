@@ -19,6 +19,7 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "migrate:data": "node scripts/migrate-to-db.js",
+    "translate:questions": "node scripts/translate-questions.js",
     "postinstall": "prisma generate",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -26,12 +27,13 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@google/generative-ai": "^0.21.0",
+    "groq-sdk": "^0.11.0",
     "@heroicons/vue": "^2.2.0",
     "@prisma/client": "^5.19.1",
     "@tiptap/extension-code-block": "^3.15.1",
     "@tiptap/starter-kit": "^3.15.1",
     "@tiptap/vue-3": "^3.15.1",
+    "@vitalets/google-translate-api": "^9.2.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
