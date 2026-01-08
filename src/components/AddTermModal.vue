@@ -180,8 +180,18 @@ watch(
           examplesText.value = suggestions.examples.join('\n');
         }
       } catch (error) {
-        // Тихая обработка ошибок - не показываем пользователю, если AI недоступен
-        console.warn('Не удалось получить AI-предложения:', error);
+        // Обработка ошибок AI
+        const errorMessage = error.response?.data?.message || error.message || 'Неизвестная ошибка';
+        const errorType = error.response?.data?.error || '';
+
+        // Показываем предупреждение только для критических ошибок (квота, авторизация)
+        if (errorType.includes('quota') || errorType.includes('authentication')) {
+          console.warn('AI недоступен:', errorMessage);
+          // Можно показать уведомление пользователю, но не блокируем работу формы
+        } else {
+          // Для остальных ошибок просто логируем
+          console.warn('Не удалось получить AI-предложения:', errorMessage);
+        }
       } finally {
         suggestionsLoading.value = false;
       }
