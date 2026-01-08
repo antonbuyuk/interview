@@ -11,7 +11,11 @@
       :title="isCopied ? 'Скопировано' : 'Копировать код'"
       @click="handleCopy"
     >
-      {{ isCopied ? '✓ Скопировано' : '📋' }}
+      <template v-if="isCopied">
+        <CheckIcon class="icon-inline" />
+        Скопировано
+      </template>
+      <ClipboardDocumentIcon v-else class="icon-inline" />
     </button>
   </pre>
 </template>
@@ -230,6 +234,16 @@ const handleCopy = async () => {
   transition: all 0.2s ease;
   z-index: 10;
   backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+
+  .icon-inline {
+    width: 1rem;
+    height: 1rem;
+    color: inherit;
+    flex-shrink: 0;
+  }
 
   &:hover {
     background: rgba(255, 255, 255, 0.15);
@@ -250,6 +264,11 @@ const handleCopy = async () => {
     right: 0.5rem;
     padding: 0.375rem 0.5rem;
     font-size: 0.875rem;
+
+    .icon-inline {
+      width: 0.875rem;
+      height: 0.875rem;
+    }
   }
 }
 </style>

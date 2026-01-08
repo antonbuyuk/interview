@@ -1,7 +1,10 @@
 <template>
   <div class="practice-mode-view">
     <div class="practice-header">
-      <h1>⏱️ Режим самопроверки</h1>
+      <h1>
+        <ClockIcon class="title-icon" />
+        Режим самопроверки
+      </h1>
       <p class="subtitle">Тренируйтесь отвечать на вопросы с таймером</p>
     </div>
 
@@ -124,7 +127,10 @@
 
       <div class="practice-actions">
         <button class="action-btn" @click="restartPractice">🔄 Начать заново</button>
-        <button class="action-btn" @click="stopPractice">⏹️ Завершить</button>
+        <button class="action-btn" @click="stopPractice">
+          <StopIcon class="icon-inline" />
+          Завершить
+        </button>
       </div>
     </div>
 
@@ -159,6 +165,7 @@ import { useTextToSpeech } from '../composables/useTextToSpeech';
 import { getQuestions } from '../api/questions';
 import { getSectionById } from '../api/sections';
 import { sections } from '../data/sections.js';
+import { ClockIcon, StopIcon } from '@heroicons/vue/24/outline';
 
 const { practiceTimerDuration, ttsEnabled } = useTrainingMode();
 const { isSupported, speakQuestion, speakAnswer, stop: stopTTS } = useTextToSpeech();
@@ -431,9 +438,25 @@ onUnmounted(() => {
     font-weight: 700;
     color: $text-dark;
     margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+
+    .title-icon {
+      width: 2rem;
+      height: 2rem;
+      color: $primary-color;
+      flex-shrink: 0;
+    }
 
     @media (max-width: $breakpoint-mobile) {
       font-size: 1.5rem;
+
+      .title-icon {
+        width: 1.5rem;
+        height: 1.5rem;
+      }
     }
   }
 
@@ -811,6 +834,17 @@ onUnmounted(() => {
   font-size: 0.9375rem;
   cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  .icon-inline {
+    width: 1.125rem;
+    height: 1.125rem;
+    color: inherit;
+    flex-shrink: 0;
+  }
 
   &:hover {
     background: #e9ecef;

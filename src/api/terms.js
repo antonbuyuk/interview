@@ -2,15 +2,11 @@ import api from './client';
 
 /**
  * Получить термины
- * @param {Object} filters - Фильтры { category, search, sortBy }
+ * @param {Object} filters - Фильтры { search, sortBy }
  * @returns {Promise<Array>}
  */
 export async function getTerms(filters = {}) {
   const params = new URLSearchParams();
-
-  if (filters.category && filters.category !== 'all') {
-    params.append('category', filters.category);
-  }
 
   if (filters.search) {
     params.append('search', filters.search);

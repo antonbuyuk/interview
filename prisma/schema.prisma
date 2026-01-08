@@ -55,14 +55,10 @@ model Term {
   id           String        @id @default(uuid())
   term         String        @unique
   translation  String
-  category     String        // sectionId
-  categoryTitle String
   examples     TermExample[]
   phrases      TermPhrase[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-
-  @@index([category])
 }
 
 model TermExample {

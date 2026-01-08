@@ -3,7 +3,9 @@
     <div class="modal-content" @click.stop>
       <div class="modal-header">
         <h2>{{ editingTerm ? 'Редактировать термин' : 'Добавить термин' }}</h2>
-        <button class="close-btn" @click="close">×</button>
+        <button class="close-btn" @click="close">
+          <XMarkIcon class="icon-small" />
+        </button>
       </div>
 
       <form class="modal-form" @submit.prevent="handleSubmit">
@@ -28,16 +30,6 @@
             required
             placeholder="Введите перевод"
           />
-        </div>
-
-        <div class="form-group">
-          <label>Категория:</label>
-          <select v-model="formData.category" required>
-            <option value="">Выберите категорию</option>
-            <option v-for="section in sections" :key="section.id" :value="section.id">
-              {{ section.title }}
-            </option>
-          </select>
         </div>
 
         <div class="form-group">
@@ -70,13 +62,20 @@
 </template>
 
 <script setup>
+import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { ref, watch, computed } from 'vue';
 import { createTerm, updateTerm, getTermSuggestions } from '../api/terms';
-import { sections } from '../data/sections.js';
 
 const props = defineProps({
   isOpen: Boolean,
-  term: Object,
+  term: {
+    type: Object,
+    default: null,
+  },
+  initialTerm: {
+    type: String,
+    default: '',
+  },
 });
 
 const emit = defineEmits(['close', 'saved']);
@@ -86,8 +85,6 @@ const suggestionsLoading = ref(false);
 const formData = ref({
   term: '',
   translation: '',
-  category: '',
-  categoryTitle: '',
 });
 
 const examplesText = ref('');
@@ -109,8 +106,6 @@ watch(
       formData.value = {
         term: props.term.term,
         translation: props.term.translation,
-        category: props.term.category,
-        categoryTitle: props.term.categoryTitle,
       };
       examplesText.value = (props.term.examples || []).map(e => e.example || e).join('\n');
       phrasesText.value = (props.term.phrases || []).map(p => p.phrase || p).join(', ');
@@ -121,12 +116,10 @@ watch(
         examples: true,
       };
     } else if (newVal) {
-      // Сброс формы для нового термина
+      // Сброс формы для нового термина или предзаполнение из initialTerm
       formData.value = {
-        term: '',
+        term: props.initialTerm || '',
         translation: '',
-        category: '',
-        categoryTitle: '',
       };
       examplesText.value = '';
       phrasesText.value = '';
@@ -243,13 +236,9 @@ const close = () => {
 const handleSubmit = async () => {
   loading.value = true;
   try {
-    const selectedSection = sections.find(s => s.id === formData.value.category);
-
     const termData = {
       term: formData.value.term.toLowerCase(),
       translation: formData.value.translation,
-      category: formData.value.category,
-      categoryTitle: selectedSection ? selectedSection.title : formData.value.category,
       examples: examplesText.value
         .split('\n')
         .map(e => e.trim())

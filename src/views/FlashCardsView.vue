@@ -1,7 +1,10 @@
 <template>
   <div class="flash-cards-view">
     <div class="flash-cards-header">
-      <h1>🎴 Флэш-карточки</h1>
+      <h1>
+        <RectangleStackIcon class="title-icon" />
+        Флэш-карточки
+      </h1>
       <p class="subtitle">Тренируйтесь отвечать на вопросы на английском</p>
     </div>
 
@@ -109,7 +112,10 @@
 
       <div class="card-actions">
         <button class="action-btn" @click="restartTraining">🔄 Начать заново</button>
-        <button class="action-btn" @click="stopTraining">⏹️ Завершить</button>
+        <button class="action-btn" @click="stopTraining">
+          <StopIcon class="icon-inline" />
+          Завершить
+        </button>
       </div>
     </div>
 
@@ -144,6 +150,7 @@ import { useTextToSpeech } from '../composables/useTextToSpeech';
 import { getQuestions } from '../api/questions';
 import { getSectionById } from '../api/sections';
 import { sections } from '../data/sections.js';
+import { RectangleStackIcon, StopIcon } from '@heroicons/vue/24/outline';
 
 const { flashCardDuration, ttsEnabled } = useTrainingMode();
 const { isSupported, speakQuestion, speakAnswer, stop: stopTTS } = useTextToSpeech();
@@ -406,6 +413,17 @@ onUnmounted(() => {
 
   h1 {
     font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+
+    .title-icon {
+      width: 2rem;
+      height: 2rem;
+      color: $primary-color;
+      flex-shrink: 0;
+    }
     font-weight: 700;
     color: $text-dark;
     margin-bottom: 0.5rem;
@@ -875,6 +893,17 @@ onUnmounted(() => {
   border: 1px solid $border-color;
   border-radius: 6px;
   font-size: 0.9375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  .icon-inline {
+    width: 1.125rem;
+    height: 1.125rem;
+    color: inherit;
+    flex-shrink: 0;
+  }
   cursor: pointer;
   transition: all 0.2s;
 

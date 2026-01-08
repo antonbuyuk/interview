@@ -1,18 +1,19 @@
 <template>
   <div class="secondary-menu">
     <!-- Если не авторизован -->
-    <button v-if="!isAdmin" class="secondary-menu-item" @click="openLoginModal">
-      <span class="nav-icon">🔐</span>
+    <button v-if="!isAdmin" class="secondary-menu-item" title="Авторизация" @click="openLoginModal">
+      <LockClosedIcon class="nav-icon" />
     </button>
 
     <template v-else>
-      <button class="secondary-menu-item" @click="openAddQuestion">
-        <span class="nav-icon">➕</span>
-        <!-- <span>Добавить вопрос</span> -->
+      <button class="secondary-menu-item" title="Добавить вопрос" @click="openAddQuestion">
+        <QuestionMarkCircleIcon class="nav-icon" />
       </button>
-      <button class="secondary-menu-item" @click="openManageSections">
-        <span class="nav-icon">⚙️</span>
-        <!-- <span>Настройка раздела</span> -->
+      <button class="secondary-menu-item" title="Настройка раздела" @click="openManageSections">
+        <Cog6ToothIcon class="nav-icon" />
+      </button>
+      <button class="secondary-menu-item" title="Добавить термин" @click="openAddTerm">
+        <BookOpenIcon class="nav-icon" />
       </button>
     </template>
   </div>
@@ -20,6 +21,12 @@
 
 <script setup>
 import { useAdminAuth } from '../composables/useAdminAuth';
+import {
+  LockClosedIcon,
+  QuestionMarkCircleIcon,
+  Cog6ToothIcon,
+  BookOpenIcon,
+} from '@heroicons/vue/24/outline';
 
 const { isAdmin } = useAdminAuth();
 
@@ -30,6 +37,11 @@ const openAddQuestion = () => {
 
 const openManageSections = () => {
   const event = new CustomEvent('open-manage-sections');
+  window.dispatchEvent(event);
+};
+
+const openAddTerm = () => {
+  const event = new CustomEvent('open-add-term');
   window.dispatchEvent(event);
 };
 </script>
@@ -63,6 +75,12 @@ const openManageSections = () => {
     cursor: pointer;
     border-radius: 6px;
     @include transition;
+
+    .nav-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+      color: inherit;
+    }
 
     &:hover {
       background: #f0f0f0;
