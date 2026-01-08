@@ -4,7 +4,6 @@ import { parseQuestionsForTraining } from '../utils/questionParser';
 const STORAGE_KEY = 'training-mode-settings';
 const DEFAULT_SETTINGS = {
   englishOnly: false,
-  ttsEnabled: false,
   ttsRate: 1.0,
   ttsPitch: 1.0,
   ttsVoice: null,
@@ -63,13 +62,6 @@ export function useTrainingMode() {
     },
   });
 
-  const ttsEnabled = computed({
-    get: () => settings.value.ttsEnabled,
-    set: value => {
-      settings.value.ttsEnabled = value;
-    },
-  });
-
   const ttsRate = computed({
     get: () => settings.value.ttsRate,
     set: value => {
@@ -116,7 +108,6 @@ export function useTrainingMode() {
   return {
     // Состояние
     englishOnly,
-    ttsEnabled,
     ttsRate,
     ttsPitch,
     flashCardDuration,

@@ -66,7 +66,7 @@
             <div class="card-header">
               <div class="card-label">Вопрос</div>
               <button
-                v-if="ttsEnabled && isSupported"
+                v-if="isSupported"
                 class="tts-btn"
                 title="Озвучить вопрос"
                 @click.stop="speakQuestion(currentQuestion.question)"
@@ -80,7 +80,7 @@
             <div class="card-header">
               <div class="card-label">Answer EN</div>
               <button
-                v-if="ttsEnabled && isSupported && currentQuestion.answerEn"
+                v-if="isSupported && currentQuestion.answerEn"
                 class="tts-btn"
                 title="Озвучить ответ"
                 @click.stop="speakAnswer(currentQuestion.answerEn)"
@@ -155,7 +155,7 @@ import { getSectionById } from '../api/sections';
 import { sections } from '../data/sections.js';
 import { RectangleStackIcon, StopIcon, ArrowPathIcon } from '@heroicons/vue/24/outline';
 
-const { flashCardDuration, ttsEnabled } = useTrainingMode();
+const { flashCardDuration } = useTrainingMode();
 const { isSupported, speakQuestion, speakAnswer, stop: stopTTS } = useTextToSpeech();
 
 const loading = ref(false);
@@ -206,7 +206,7 @@ const toggleCard = () => {
   }
 
   // Автоматическое озвучивание
-  if (ttsEnabled.value && isSupported.value) {
+  if (isSupported.value) {
     if (showAnswer.value && currentQuestion.value?.answerEn) {
       speakAnswer(currentQuestion.value.answerEn);
     } else if (!showAnswer.value && currentQuestion.value?.question) {
@@ -228,7 +228,7 @@ const nextQuestion = () => {
     }
 
     // Автоматическое озвучивание вопроса
-    if (ttsEnabled.value && isSupported.value && currentQuestion.value?.question) {
+    if (isSupported.value && currentQuestion.value?.question) {
       setTimeout(() => {
         speakQuestion(currentQuestion.value.question);
       }, 200);
@@ -244,7 +244,7 @@ const previousQuestion = () => {
     clearAutoFlip();
 
     // Автоматическое озвучивание вопроса
-    if (ttsEnabled.value && isSupported.value && currentQuestion.value?.question) {
+    if (isSupported.value && currentQuestion.value?.question) {
       setTimeout(() => {
         speakQuestion(currentQuestion.value.question);
       }, 200);

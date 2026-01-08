@@ -53,7 +53,18 @@
     <div v-else class="vocabulary-grid">
       <div v-for="term in filteredTerms" :key="term.id || term.term" class="vocabulary-card">
         <div class="card-header">
-          <h3 class="term-title">{{ term.term }}</h3>
+          <div class="term-header-row">
+            <h3 class="term-title">{{ term.term }}</h3>
+            <button
+              class="play-btn"
+              :class="{ disabled: !isSupported }"
+              :title="isSupported ? 'Воспроизвести термин' : 'Браузер не поддерживает озвучку'"
+              :disabled="!isSupported"
+              @click.stop="speakTerm(term.term)"
+            >
+              <SpeakerWaveIcon class="icon-small" />
+            </button>
+          </div>
           <div v-if="isAdmin" class="card-actions-top">
             <button class="edit-btn" title="Редактировать" @click="editTerm(term)">
               <PencilIcon class="icon-small" />
@@ -106,11 +117,13 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { getTerms, deleteTerm as deleteTermApi } from '../api/terms';
 import AddTermModal from '../components/AddTermModal.vue';
 import { useAdminAuth } from '../composables/useAdminAuth';
+import { useTextToSpeech } from '../composables/useTextToSpeech';
 import {
   BookOpenIcon,
   MagnifyingGlassIcon,
   PencilIcon,
   TrashIcon,
+  SpeakerWaveIcon,
 } from '@heroicons/vue/24/outline';
 
 const vocabulary = ref([]);
@@ -122,6 +135,7 @@ const editingTerm = ref(null);
 const searchDebounceTimer = ref(null);
 
 const { isAdmin } = useAdminAuth();
+const { isSupported, speak } = useTextToSpeech();
 
 // Загружаем словарь через API
 const loadTerms = async () => {
@@ -222,6 +236,10 @@ const deleteTerm = async term => {
     console.error('Ошибка удаления термина:', error);
     alert('Ошибка удаления: ' + (error.message || 'Неизвестная ошибка'));
   }
+};
+
+const speakTerm = termText => {
+  speak(termText, { lang: 'en-US' });
 };
 </script>
 
@@ -471,12 +489,61 @@ const deleteTerm = async term => {
   }
 }
 
+.term-header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
 .term-title {
   font-size: 1.5rem;
   font-weight: 700;
   color: $text-dark;
   margin: 0;
   flex: 1;
+}
+
+.play-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid $border-color;
+  border-radius: 4px;
+  padding: 0.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  @include transition;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $primary-color;
+
+  .icon-small {
+    width: 1rem;
+    height: 1rem;
+    color: inherit;
+  }
+
+  &:hover:not(.disabled) {
+    background: #f0f7ff;
+    border-color: $primary-color;
+    transform: scale(1.05);
+  }
+
+  &:active:not(.disabled) {
+    transform: scale(0.95);
+  }
+
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    color: $text-lighter-gray;
+
+    &:hover {
+      transform: none;
+      background: rgba(255, 255, 255, 0.9);
+      border-color: $border-color;
+    }
+  }
 }
 
 .card-body {

@@ -23,7 +23,6 @@
                 :to="section.path"
                 class="dropdown-item"
                 :class="{ active: isSectionActive(section.path) }"
-                @click="hideSectionsDropdown"
               >
                 <span class="section-title">{{ section.title }}</span>
               </router-link>
@@ -43,7 +42,6 @@
                 to="/training/flash-cards"
                 class="dropdown-item"
                 :class="{ active: route.path === '/training/flash-cards' }"
-                @click="hideTrainingDropdown"
               >
                 <RectangleStackIcon class="nav-icon" />
                 <span>Флэш-карточки</span>
@@ -97,18 +95,6 @@
         @click="toggleEnglishOnly"
       >
         en
-      </button>
-
-      <!-- Text-to-Speech Toggle -->
-      <button
-        class="header-icon-btn"
-        :class="{ active: ttsEnabled }"
-        aria-label="Text-to-Speech"
-        :title="ttsEnabled ? 'Выключить озвучку' : 'Включить озвучку'"
-        @click="toggleTTS"
-      >
-        <MicrophoneIcon v-if="!ttsEnabled" class="icon-btn" />
-        <MicrophoneIconSolid v-else class="icon-btn" />
       </button>
 
       <!-- Фильтр вопросов (только на странице раздела) -->
@@ -219,8 +205,6 @@ import { MicrophoneIcon as MicrophoneIconSolid } from '@heroicons/vue/24/solid';
 
 const route = useRoute();
 const isMobile = ref(false);
-const showSectionsDropdown = ref(false);
-const showTrainingDropdown = ref(false);
 const showUserMenu = ref(false);
 const filterOpen = ref(false);
 const mobileMenuOpen = ref(false);
@@ -235,36 +219,6 @@ const { englishOnly, ttsEnabled } = useTrainingMode();
 
 const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768;
-};
-
-let sectionsDropdownTimeout = null;
-
-const hideSectionsDropdown = () => {
-  sectionsDropdownTimeout = setTimeout(() => {
-    showSectionsDropdown.value = false;
-  }, 150);
-};
-
-const cancelHideSectionsDropdown = () => {
-  if (sectionsDropdownTimeout) {
-    clearTimeout(sectionsDropdownTimeout);
-    sectionsDropdownTimeout = null;
-  }
-};
-
-let trainingDropdownTimeout = null;
-
-const hideTrainingDropdown = () => {
-  trainingDropdownTimeout = setTimeout(() => {
-    showTrainingDropdown.value = false;
-  }, 150);
-};
-
-const cancelHideTrainingDropdown = () => {
-  if (trainingDropdownTimeout) {
-    clearTimeout(trainingDropdownTimeout);
-    trainingDropdownTimeout = null;
-  }
 };
 
 const hideUserMenu = () => {

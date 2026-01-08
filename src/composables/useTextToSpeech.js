@@ -5,7 +5,7 @@ import { useTrainingMode } from './useTrainingMode';
  * Composable для работы с Text-to-Speech API
  */
 export function useTextToSpeech() {
-  const { ttsEnabled, ttsRate, ttsPitch } = useTrainingMode();
+  const { ttsRate, ttsPitch } = useTrainingMode();
 
   const isSupported = ref(false);
   const isSpeaking = ref(false);
@@ -28,14 +28,30 @@ export function useTextToSpeech() {
     const voices = window.speechSynthesis.getVoices();
     availableVoices.value = voices;
 
-    // Пытаемся найти английский голос по умолчанию
+    // Пытаемся найти качественный американский английский голос
     if (!selectedVoice.value && voices.length > 0) {
-      // Ищем английский голос
-      const englishVoice =
-        voices.find(voice => voice.lang.startsWith('en')) ||
-        voices.find(voice => voice.lang.includes('en')) ||
-        voices[0];
-      selectedVoice.value = englishVoice;
+      // Приоритет: en-US голоса с качественными синтезаторами
+      const preferredVoices = [
+        // Google TTS голоса (обычно высокого качества)
+        voice => voice.lang === 'en-US' && voice.name.toLowerCase().includes('google'),
+        // Microsoft голоса
+        voice => voice.lang === 'en-US' && voice.name.toLowerCase().includes('microsoft'),
+        // Amazon Polly голоса
+        voice => voice.lang === 'en-US' && voice.name.toLowerCase().includes('amazon'),
+        // Любые en-US голоса
+        voice => voice.lang === 'en-US',
+        // Fallback: любые английские голоса
+        voice => voice.lang.startsWith('en'),
+        voice => voice.lang.includes('en'),
+      ];
+
+      let foundVoice = null;
+      for (const check of preferredVoices) {
+        foundVoice = voices.find(check);
+        if (foundVoice) break;
+      }
+
+      selectedVoice.value = foundVoice || voices[0];
     }
   };
 
@@ -55,8 +71,8 @@ export function useTextToSpeech() {
    * @param {Object} options - опции (lang, rate, pitch, voice)
    */
   const speak = (text, options = {}) => {
-    if (!isSupported.value || !ttsEnabled.value) {
-      console.warn('Text-to-Speech не поддерживается или отключен');
+    if (!isSupported.value) {
+      console.warn('Text-to-Speech не поддерживается');
       return;
     }
 
@@ -81,11 +97,32 @@ export function useTextToSpeech() {
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
 
+    // Убеждаемся, что голоса загружены
+    if (availableVoices.value.length === 0) {
+      loadVoices();
+    }
+
+    // Выбираем голос: сначала из опций, потом из выбранного, иначе ищем лучший en-US
+    let voiceToUse = options.voice || selectedVoice.value;
+    if (!voiceToUse || (options.lang === 'en-US' && voiceToUse.lang !== 'en-US')) {
+      // Если нужен en-US, но текущий голос не en-US, ищем лучший
+      const enUSVoice =
+        availableVoices.value.find(
+          v => v.lang === 'en-US' && v.name.toLowerCase().includes('google')
+        ) ||
+        availableVoices.value.find(
+          v => v.lang === 'en-US' && v.name.toLowerCase().includes('microsoft')
+        ) ||
+        availableVoices.value.find(v => v.lang === 'en-US') ||
+        selectedVoice.value;
+      voiceToUse = enUSVoice || voiceToUse;
+    }
+
     // Настройки из опций или из настроек по умолчанию
     utterance.rate = options.rate || ttsRate.value;
     utterance.pitch = options.pitch || ttsPitch.value;
-    utterance.lang = options.lang || selectedVoice.value?.lang || 'en-US';
-    utterance.voice = options.voice || selectedVoice.value;
+    utterance.lang = options.lang || voiceToUse?.lang || 'en-US';
+    utterance.voice = voiceToUse;
 
     // Обработчики событий
     utterance.onstart = () => {

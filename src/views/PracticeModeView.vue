@@ -69,7 +69,7 @@
         <div class="question-header">
           <div class="question-label">Вопрос</div>
           <button
-            v-if="ttsEnabled && isSupported"
+            v-if="isSupported"
             class="tts-btn"
             title="Озвучить вопрос"
             @click="speakQuestion(currentQuestion.question)"
@@ -106,7 +106,7 @@
         <div class="answer-header">
           <div class="answer-label">Answer EN (эталонный ответ):</div>
           <button
-            v-if="ttsEnabled && isSupported && currentQuestion.answerEn"
+            v-if="isSupported && currentQuestion.answerEn"
             class="tts-btn"
             title="Озвучить ответ"
             @click="speakAnswer(currentQuestion.answerEn)"
@@ -170,7 +170,7 @@ import { getSectionById } from '../api/sections';
 import { sections } from '../data/sections.js';
 import { ClockIcon, StopIcon, ArrowPathIcon } from '@heroicons/vue/24/outline';
 
-const { practiceTimerDuration, ttsEnabled } = useTrainingMode();
+const { practiceTimerDuration } = useTrainingMode();
 const { isSupported, speakQuestion, speakAnswer, stop: stopTTS } = useTextToSpeech();
 
 const loading = ref(false);
@@ -332,12 +332,7 @@ const startPractice = async () => {
 const showAnswer = () => {
   showCorrectAnswer.value = !showCorrectAnswer.value;
   // Автоматическое озвучивание правильного ответа
-  if (
-    showCorrectAnswer.value &&
-    ttsEnabled.value &&
-    isSupported.value &&
-    currentQuestion.value?.answerEn
-  ) {
+  if (showCorrectAnswer.value && isSupported.value && currentQuestion.value?.answerEn) {
     setTimeout(() => {
       speakAnswer(currentQuestion.value.answerEn);
     }, 200);
@@ -357,7 +352,7 @@ const nextQuestion = () => {
     }
 
     // Автоматическое озвучивание вопроса
-    if (ttsEnabled.value && isSupported.value && currentQuestion.value?.question) {
+    if (isSupported.value && currentQuestion.value?.question) {
       setTimeout(() => {
         speakQuestion(currentQuestion.value.question);
       }, 200);
@@ -376,7 +371,7 @@ const previousQuestion = () => {
     }
 
     // Автоматическое озвучивание вопроса
-    if (ttsEnabled.value && isSupported.value && currentQuestion.value?.question) {
+    if (isSupported.value && currentQuestion.value?.question) {
       setTimeout(() => {
         speakQuestion(currentQuestion.value.question);
       }, 200);

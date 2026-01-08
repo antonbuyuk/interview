@@ -74,7 +74,6 @@ const props = defineProps({
 const route = useRoute();
 const loading = ref(true);
 const error = ref(null);
-const contentRef = ref(null);
 const questions = ref([]);
 const filterOpen = ref(false);
 const fullQuestionsData = ref([]); // Полные данные вопросов для редактирования
@@ -83,9 +82,6 @@ const currentSectionId = ref(null); // UUID текущего раздела
 // Модалка для добавления/редактирования вопросов
 const showQuestionModal = ref(false);
 const editingQuestion = ref(null);
-
-// Training mode - больше не используем здесь, перенесено в Header
-// const { englishOnly, ttsEnabled } = useTrainingMode();
 
 // Admin auth
 const { isAdmin } = useAdminAuth();
