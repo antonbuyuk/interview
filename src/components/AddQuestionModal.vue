@@ -369,6 +369,7 @@ import {
 } from '../api/questions';
 import { getSections } from '../api/sections';
 import { TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import type { Section, Question, CreateAnswerRequest } from '../types/api';
 
 // Инициализация Turndown для конвертации HTML в Markdown
 const turndownService = new TurndownService({
@@ -376,21 +377,25 @@ const turndownService = new TurndownService({
   codeBlockStyle: 'fenced',
 });
 
-const props = defineProps({
-  isOpen: { type: Boolean, default: false },
-  question: { type: Object, default: null },
-  defaultSectionId: { type: String, default: '' },
-  isAdmin: { type: Boolean, default: false },
-});
+const props = defineProps<{
+  isOpen?: boolean;
+  question?: Question | null;
+  defaultSectionId?: string;
+  isAdmin?: boolean;
+}>();
 
-const emit = defineEmits(['close', 'saved', 'deleted']);
+const emit = defineEmits<{
+  close: [];
+  saved: [];
+  deleted: [id: string];
+}>();
 
 const loading = ref(false);
 const deleting = ref(false);
 const translating = ref(false);
-const sections = ref([]);
+const sections = ref<Section[]>([]);
 const sectionsLoading = ref(false);
-const activeTab = ref('ru');
+const activeTab = ref<'ru' | 'en' | 'senior'>('ru');
 
 const formData = ref({
   sectionId: '',
@@ -440,14 +445,15 @@ const loadSections = async () => {
     sections.value = await getSections();
   } catch (error) {
     console.error('Ошибка загрузки секций:', error);
-    alert('Ошибка загрузки секций: ' + (error.message || 'Неизвестная ошибка'));
+    const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+    alert('Ошибка загрузки секций: ' + errorMessage);
   } finally {
     sectionsLoading.value = false;
   }
 };
 
 // Вычисление следующего номера вопроса для выбранного раздела
-const calculateNextQuestionNumber = async sectionId => {
+const calculateNextQuestionNumber = async (sectionId: string): Promise<number> => {
   if (!sectionId) {
     return 1;
   }
@@ -483,7 +489,7 @@ onBeforeUnmount(() => {
 
 watch(
   () => props.isOpen,
-  newVal => {
+  (newVal: boolean) => {
     if (newVal && props.question) {
       // Заполняем форму данными вопроса
       formData.value = {
@@ -553,7 +559,7 @@ watch(
 // Отслеживаем изменение раздела для автоматического вычисления номера
 watch(
   () => formData.value.sectionId,
-  async (newSectionId, oldSectionId) => {
+  async (newSectionId: string, oldSectionId: string | undefined) => {
     // Обновляем номер только при создании нового вопроса (не при редактировании)
     if (!editingQuestion.value && newSectionId && newSectionId !== oldSectionId) {
       const nextNumber = await calculateNextQuestionNumber(newSectionId);
@@ -586,7 +592,7 @@ const handleSubmit = async () => {
     const answerSenior = editorSenior.value?.getHTML() || '';
 
     // Конвертируем HTML в markdown
-    const htmlToMarkdown = html => {
+    const htmlToMarkdown = (html: string): string => {
       if (!html || html.trim() === '' || html === '<p></p>' || html === '<p><br></p>') return '';
       try {
         const markdown = turndownService.turndown(html);
@@ -597,7 +603,15 @@ const handleSubmit = async () => {
       }
     };
 
-    const questionData = {
+    const questionData: {
+      sectionId: string;
+      number: number;
+      question: string;
+      questionRaw: string;
+      questionEn: string | null;
+      rawMarkdown: string;
+      answers: CreateAnswerRequest[];
+    } = {
       sectionId: formData.value.sectionId,
       number: formData.value.number,
       question: formData.value.question,
@@ -632,7 +646,7 @@ const handleSubmit = async () => {
       });
     }
 
-    if (editingQuestion.value) {
+    if (editingQuestion.value && props.question) {
       // Обновление существующего вопроса
       await updateQuestion(props.question.id, {
         sectionId: questionData.sectionId,
@@ -672,7 +686,8 @@ const handleSubmit = async () => {
     close();
   } catch (error) {
     console.error('Ошибка сохранения вопроса:', error);
-    alert('Ошибка сохранения: ' + (error.message || 'Неизвестная ошибка'));
+    const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+    alert('Ошибка сохранения: ' + errorMessage);
   } finally {
     loading.value = false;
   }
@@ -694,13 +709,18 @@ const handleAutoTranslate = async () => {
     }
   } catch (error) {
     console.error('Ошибка перевода:', error);
-    if (error.response?.status === 429) {
-      alert(
-        'Сервис перевода временно недоступен из-за большого количества запросов. Пожалуйста, попробуйте позже.'
-      );
-    } else {
-      alert('Ошибка перевода: ' + (error.message || 'Неизвестная ошибка'));
+    if (error && typeof error === 'object' && 'response' in error) {
+      const response = (error as { response?: { status?: number } }).response;
+      if (response?.status === 429) {
+        alert(
+          'Сервис перевода временно недоступен из-за большого количества запросов. Пожалуйста, попробуйте позже.'
+        );
+        translating.value = false;
+        return;
+      }
     }
+    const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+    alert('Ошибка перевода: ' + errorMessage);
   } finally {
     translating.value = false;
   }
@@ -727,7 +747,8 @@ const handleDelete = async () => {
     close();
   } catch (error) {
     console.error('Ошибка удаления вопроса:', error);
-    alert('Ошибка удаления: ' + (error.message || 'Неизвестная ошибка'));
+    const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+    alert('Ошибка удаления: ' + errorMessage);
   } finally {
     deleting.value = false;
   }

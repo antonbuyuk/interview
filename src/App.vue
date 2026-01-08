@@ -39,7 +39,7 @@
                 <h4>{{ section.title }}</h4>
                 <p class="section-meta">
                   ID: {{ section.sectionId }} | Путь: {{ section.path }} | Вопросов:
-                  {{ section._count?.questions || 0 }}
+                  {{ section._count?.questions ?? 0 }}
                 </p>
               </div>
               <div v-if="isAdmin" class="section-actions">
@@ -53,7 +53,7 @@
                 <button
                   class="action-btn delete-btn"
                   title="Удалить"
-                  :disabled="section._count?.questions > 0"
+                  :disabled="(section._count?.questions ?? 0) > 0"
                   @click="deleteSection(section)"
                 >
                   <TrashIcon class="icon-small" />
@@ -100,7 +100,11 @@
     />
 
     <!-- Tooltip для терминов из словаря -->
-    <TermTooltip :term="hoveredTerm || undefined" :position="tooltipPosition" @close="handleTermTooltipClose" />
+    <TermTooltip
+      :term="hoveredTerm || undefined"
+      :position="tooltipPosition"
+      @close="handleTermTooltipClose"
+    />
 
     <SecondaryMenu />
   </div>
@@ -179,7 +183,7 @@ const editSection = (section: Section) => {
 };
 
 const deleteSection = async (section: Section) => {
-  if (section._count?.questions && section._count.questions > 0) {
+  if ((section._count?.questions ?? 0) > 0) {
     alert(
       'Невозможно удалить раздел с существующими вопросами. Сначала удалите или переместите вопросы.'
     );
@@ -200,7 +204,10 @@ const deleteSection = async (section: Section) => {
     console.error('Ошибка удаления раздела:', error);
     const errorMessage =
       (error instanceof Error && error.message) ||
-      (typeof error === 'object' && error !== null && 'error' in error && typeof error.error === 'string'
+      (typeof error === 'object' &&
+      error !== null &&
+      'error' in error &&
+      typeof error.error === 'string'
         ? error.error
         : 'Неизвестная ошибка');
     alert(`Ошибка удаления: ${errorMessage}`);
@@ -325,7 +332,10 @@ onMounted(() => {
   window.addEventListener('current-section-updated', handleCurrentSectionUpdated);
   // Слушаем событие hover на термине
   window.addEventListener('term-hover', (e: Event) => {
-    const customEvent = e as CustomEvent<{ term?: { id: string }; position?: { x: number; y: number } }>;
+    const customEvent = e as CustomEvent<{
+      term?: { id: string };
+      position?: { x: number; y: number };
+    }>;
     handleTermHover(customEvent.detail || {});
   });
   // Слушаем обновление словаря для перезагрузки
@@ -342,7 +352,10 @@ onUnmounted(() => {
   window.removeEventListener('edit-question', handleEditQuestion);
   window.removeEventListener('current-section-updated', handleCurrentSectionUpdated);
   window.removeEventListener('term-hover', (e: Event) => {
-    const customEvent = e as CustomEvent<{ term?: { id: string }; position?: { x: number; y: number } }>;
+    const customEvent = e as CustomEvent<{
+      term?: { id: string };
+      position?: { x: number; y: number };
+    }>;
     handleTermHover(customEvent.detail || {});
   });
 });

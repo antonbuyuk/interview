@@ -52,7 +52,7 @@ const emit = defineEmits(['close', 'success']);
 
 const { login } = useAdminAuth();
 const password = ref('');
-const error = ref(null);
+const error = ref<string | null>(null);
 const isLoading = ref(false);
 
 const close = () => {
