@@ -66,15 +66,19 @@
             <div class="card-header">
               <div class="card-label">Вопрос</div>
               <button
-                v-if="isSupported"
+                v-if="isSupported && currentQuestion?.question"
                 class="tts-btn"
                 title="Озвучить вопрос"
-                @click.stop="speakQuestion(currentQuestion?.question)"
+                @click.stop="speakQuestion(currentQuestion.question)"
               >
                 🔊
               </button>
             </div>
-            <div class="card-text" v-html="currentQuestion?.question"></div>
+            <div
+              v-if="currentQuestion?.question"
+              class="card-text"
+              v-html="currentQuestion.question"
+            ></div>
           </div>
           <div v-else class="card-back">
             <div class="card-header">
@@ -83,12 +87,16 @@
                 v-if="isSupported && currentQuestion?.answerEn"
                 class="tts-btn"
                 title="Озвучить ответ"
-                @click.stop="speakAnswer(currentQuestion?.answerEn)"
+                @click.stop="speakAnswer(currentQuestion.answerEn)"
               >
                 🔊
               </button>
             </div>
-            <div v-if="currentQuestion.answerEn" class="card-text" v-html="formattedAnswer"></div>
+            <div
+              v-if="currentQuestion && currentQuestion.answerEn"
+              class="card-text"
+              v-html="formattedAnswer"
+            ></div>
             <div v-else class="no-answer">Английский ответ не найден</div>
           </div>
         </div>
@@ -153,22 +161,38 @@ import { useTextToSpeech } from '../composables/useTextToSpeech';
 import { getQuestions } from '../api/questions';
 import { getSections, getSectionById } from '../api/sections';
 import { RectangleStackIcon, StopIcon, ArrowPathIcon } from '@heroicons/vue/24/outline';
+import type { Section, Question, CodeBlock } from '../types/api';
+
+interface QuestionForTraining {
+  id: string;
+  number: number;
+  question: string;
+  questionRaw: string;
+  answerEn: string | null;
+  answerRu: string | null;
+  answerSenior: string | null;
+  sectionId: string;
+  hasAnswerEn: boolean;
+  hasAnswerRu: boolean;
+  hasAnswerSenior: boolean;
+  codeBlocks: CodeBlock[];
+}
 
 const { flashCardDuration } = useTrainingMode();
 const { isSupported, speakQuestion, speakAnswer, stop: stopTTS } = useTextToSpeech();
 
 const loading = ref(false);
-const error = ref(null);
+const error = ref<string | null>(null);
 const started = ref(false);
 const selectedSection = ref('all');
 const autoFlip = ref(false);
 const shuffleQuestions = ref(true);
 const currentIndex = ref(0);
 const showAnswer = ref(false);
-const allQuestions = ref([]);
-const sections = ref([]);
+const allQuestions = ref<QuestionForTraining[]>([]);
+const sections = ref<Section[]>([]);
 
-let autoFlipTimer = null;
+let autoFlipTimer: ReturnType<typeof setTimeout> | null = null;
 
 const filteredQuestions = computed(() => {
   if (selectedSection.value === 'all') {
@@ -237,8 +261,9 @@ const nextQuestion = () => {
 
     // Автоматическое озвучивание вопроса
     if (isSupported.value && currentQuestion.value?.question) {
+      const questionText = currentQuestion.value.question;
       setTimeout(() => {
-        speakQuestion(currentQuestion.value.question);
+        speakQuestion(questionText);
       }, 200);
     }
   }
@@ -253,8 +278,9 @@ const previousQuestion = () => {
 
     // Автоматическое озвучивание вопроса
     if (isSupported.value && currentQuestion.value?.question) {
+      const questionText = currentQuestion.value.question;
       setTimeout(() => {
-        speakQuestion(currentQuestion.value.question);
+        speakQuestion(questionText);
       }, 200);
     }
   }
@@ -285,11 +311,13 @@ const clearAutoFlip = () => {
   }
 };
 
-const shuffleArray = array => {
-  const shuffled = [...array];
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const shuffled: T[] = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    const temp = shuffled[i];
+    shuffled[i] = shuffled[j] as T;
+    shuffled[j] = temp as T;
   }
   return shuffled;
 };
@@ -314,26 +342,26 @@ const loadQuestions = async () => {
         const questions = await getQuestions(dbSection.id);
 
         // Преобразуем данные из API в формат для тренировки
-        const questionsForTraining = questions
-          .filter(q => {
+        const questionsForTraining: QuestionForTraining[] = questions
+          .filter((q: Question) => {
             // Фильтруем только вопросы с Answer EN
             return q.answers && q.answers.some(a => a.type === 'en');
           })
-          .map(q => {
-            const answerEn = q.answers.find(a => a.type === 'en');
+          .map((q: Question) => {
+            const answerEn = q.answers?.find(a => a.type === 'en');
             return {
               id: q.id,
               number: q.number,
               question: q.question,
               questionRaw: q.questionRaw,
               answerEn: answerEn ? answerEn.content : null,
-              answerRu: q.answers.find(a => a.type === 'ru')?.content || null,
-              answerSenior: q.answers.find(a => a.type === 'senior')?.content || null,
+              answerRu: q.answers?.find(a => a.type === 'ru')?.content || null,
+              answerSenior: q.answers?.find(a => a.type === 'senior')?.content || null,
               sectionId: section.sectionId,
               hasAnswerEn: !!answerEn,
-              hasAnswerRu: !!q.answers.find(a => a.type === 'ru'),
-              hasAnswerSenior: !!q.answers.find(a => a.type === 'senior'),
-              codeBlocks: q.codeBlocks || [],
+              hasAnswerRu: !!q.answers?.find(a => a.type === 'ru'),
+              hasAnswerSenior: !!q.answers?.find(a => a.type === 'senior'),
+              codeBlocks: (q.codeBlocks || []) as CodeBlock[],
             };
           });
 
@@ -351,7 +379,8 @@ const loadQuestions = async () => {
       error.value = 'Не найдено вопросов с английскими ответами';
     }
   } catch (err) {
-    error.value = `Ошибка загрузки: ${err.message}`;
+    const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка';
+    error.value = `Ошибка загрузки: ${errorMessage}`;
     console.error('Ошибка загрузки вопросов:', err);
   } finally {
     loading.value = false;

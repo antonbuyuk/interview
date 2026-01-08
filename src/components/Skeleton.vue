@@ -106,7 +106,8 @@ const props = defineProps({
   variant: {
     type: String,
     required: true,
-    validator: value =>
+    validator: (value: unknown) =>
+      typeof value === 'string' &&
       ['section-card', 'question', 'vocabulary-card', 'text', 'card'].includes(value),
   },
   lines: { type: Number, default: 3 },
@@ -116,7 +117,7 @@ const props = defineProps({
 });
 
 const skeletonStyle = computed(() => {
-  const style = {};
+  const style: Record<string, string> = {};
   if (props.width) style.width = props.width;
   if (props.height) style.height = props.height;
   return style;

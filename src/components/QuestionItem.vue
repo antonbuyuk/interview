@@ -68,7 +68,9 @@ const sortedAnswers = computed(() => {
   // Сортируем ответы: ru, en, senior
   const order = { ru: 0, en: 1, senior: 2 };
   return [...answers].sort((a, b) => {
-    return (order[a.type] || 99) - (order[b.type] || 99);
+    return (
+      (order[a.type as keyof typeof order] || 99) - (order[b.type as keyof typeof order] || 99)
+    );
   });
 });
 
@@ -86,11 +88,11 @@ const highlightedQuestion = computed(() => {
   return highlightTermsInText(questionText.value);
 });
 
-let hoverTimer = null;
+let hoverTimer: ReturnType<typeof setTimeout> | null = null;
 
-const handleMouseOver = event => {
-  const target = event.target;
-  if (target.classList.contains('dictionary-term')) {
+const handleMouseOver = (event: MouseEvent) => {
+  const target = event.target as HTMLElement | null;
+  if (target && target.classList.contains('dictionary-term')) {
     // Отменяем предыдущий таймер скрытия
     if (hoverTimer) {
       clearTimeout(hoverTimer);
@@ -116,9 +118,9 @@ const handleMouseOver = event => {
   }
 };
 
-const handleMouseOut = event => {
-  const target = event.target;
-  if (target.classList.contains('dictionary-term')) {
+const handleMouseOut = (event: MouseEvent) => {
+  const target = event.target as HTMLElement | null;
+  if (target && target.classList.contains('dictionary-term')) {
     // Добавляем задержку перед скрытием, чтобы пользователь успел навести на tooltip
     hoverTimer = setTimeout(() => {
       window.dispatchEvent(

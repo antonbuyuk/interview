@@ -140,7 +140,8 @@ const handleSubmit = async () => {
     close();
   } catch (error) {
     console.error('Ошибка сохранения раздела:', error);
-    alert('Ошибка сохранения: ' + (error.message || 'Неизвестная ошибка'));
+    const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+    alert('Ошибка сохранения: ' + errorMessage);
   } finally {
     loading.value = false;
   }

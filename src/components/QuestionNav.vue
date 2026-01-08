@@ -26,18 +26,22 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 
-defineProps({
-  questions: {
-    type: Array,
-    default: () => [],
-  },
-});
+interface QuestionNavItem {
+  id: string;
+  text: string;
+}
 
-const emit = defineEmits(['question-click']);
+defineProps<{
+  questions: QuestionNavItem[];
+}>();
 
-const activeQuestion = ref(null);
+const emit = defineEmits<{
+  'question-click': [questionId: string];
+}>();
 
-const scrollToQuestion = questionId => {
+const activeQuestion = ref<string | null>(null);
+
+const scrollToQuestion = (questionId: string) => {
   const element = document.getElementById(questionId);
   if (element) {
     const offset = 100; // Отступ от верха
@@ -62,13 +66,13 @@ const scrollToQuestion = questionId => {
 
 // Отслеживание активного вопроса при прокрутке
 const handleScroll = () => {
-  const questionElements = document.querySelectorAll('[id^="question-"]');
+  const questionElements = document.querySelectorAll<HTMLElement>('[id^="question-"]');
   if (questionElements.length === 0) return;
 
   const scrollPosition = window.pageYOffset + 120;
-  let currentActive = null;
+  let currentActive: string | null = null;
 
-  questionElements.forEach(question => {
+  questionElements.forEach((question: HTMLElement) => {
     const questionTop = question.offsetTop;
     const questionBottom = questionTop + question.offsetHeight;
 
@@ -79,13 +83,14 @@ const handleScroll = () => {
 
   // Если мы в самом верху, выбираем первый вопрос
   if (!currentActive && window.pageYOffset < 100) {
-    currentActive = questionElements[0]?.id || null;
+    const firstElement = questionElements[0] as HTMLElement | undefined;
+    currentActive = firstElement?.id || null;
   }
 
   // Если мы прокрутили вниз и нет активного, выбираем последний
   if (!currentActive && questionElements.length > 0) {
-    const lastQuestion = questionElements[questionElements.length - 1];
-    if (scrollPosition >= lastQuestion.offsetTop - 50) {
+    const lastQuestion = questionElements[questionElements.length - 1] as HTMLElement | undefined;
+    if (lastQuestion && scrollPosition >= lastQuestion.offsetTop - 50) {
       currentActive = lastQuestion.id;
     }
   }

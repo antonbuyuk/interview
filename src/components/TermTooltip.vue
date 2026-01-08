@@ -50,17 +50,18 @@ const emit = defineEmits(['close']);
 
 const router = useRouter();
 const visible = ref(false);
-const tooltipStyle = ref({});
-const hideTimer = ref(null);
-const showTimer = ref(null);
+const tooltipStyle = ref<Record<string, string>>({});
+const hideTimer = ref<ReturnType<typeof setTimeout> | null>(null);
+const showTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 const isHoveringTooltip = ref(false); // Флаг для отслеживания наведения на tooltip
-const currentTerm = ref(null); // Локальная копия term для сохранения при наведении
+const currentTerm = ref<import('../types/api').Term | null>(null); // Локальная копия term для сохранения при наведении
 const offset = 50; // Отступ от курсора
 const hideDelay = 300; // Задержка перед скрытием (мс)
 
-const getFirstExample = examples => {
+const getFirstExample = (examples: Array<{ example: string } | string>) => {
   if (!examples || examples.length === 0) return '';
   const first = examples[0];
+  if (!first) return '';
   return typeof first === 'string' ? first : first.example || '';
 };
 
@@ -104,7 +105,7 @@ const handleMouseEnter = () => {
   }
   // Сохраняем текущий term, чтобы tooltip не исчез
   if (props.term) {
-    currentTerm.value = props.term;
+    currentTerm.value = props.term as import('../types/api').Term;
   }
 };
 
@@ -129,7 +130,7 @@ const show = () => {
 
   // Сохраняем term локально
   if (props.term) {
-    currentTerm.value = props.term;
+    currentTerm.value = props.term as import('../types/api').Term;
   }
 
   // Небольшая задержка перед показом для плавности
@@ -209,7 +210,7 @@ const handleMouseMove = () => {
 
 onMounted(() => {
   if (props.term) {
-    currentTerm.value = props.term;
+    currentTerm.value = props.term as import('../types/api').Term;
     show();
   }
   window.addEventListener('mousemove', handleMouseMove);

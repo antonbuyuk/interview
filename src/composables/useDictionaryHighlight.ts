@@ -120,6 +120,8 @@ export function useDictionaryHighlight(): UseDictionaryHighlightReturn {
 
       while ((match = wordRegex.exec(text)) !== null) {
         const word = match[1];
+        if (!word) continue;
+
         const term = findTerm(word);
 
         if (term) {
@@ -222,6 +224,8 @@ export function useDictionaryHighlight(): UseDictionaryHighlightReturn {
 
     while ((match = wordRegex.exec(text)) !== null) {
       const word = match[1];
+      if (!word) continue;
+
       const term = findTerm(word);
 
       if (term) {

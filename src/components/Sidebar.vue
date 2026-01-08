@@ -68,10 +68,11 @@ import {
   BookOpenIcon,
   Cog6ToothIcon,
 } from '@heroicons/vue/24/outline';
+import type { Section } from '../types/api';
 
 const route = useRoute();
 const isOpen = ref(false);
-const sections = ref([]);
+const sections = ref<Section[]>([]);
 const { isAdmin } = useAdminAuth();
 
 const closeSidebar = () => {
@@ -80,8 +81,9 @@ const closeSidebar = () => {
   window.dispatchEvent(event);
 };
 
-const handleToggleSidebar = event => {
-  isOpen.value = event.detail.open;
+const handleToggleSidebar = (event: Event) => {
+  const customEvent = event as CustomEvent<{ open: boolean }>;
+  isOpen.value = customEvent.detail.open;
 };
 
 const loadSections = async () => {
