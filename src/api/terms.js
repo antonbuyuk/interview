@@ -67,5 +67,5 @@ export async function deleteTerm(id) {
  * @returns {Promise<Object>} { translation, phrases, examples }
  */
 export async function getTermSuggestions(term) {
-  return api.post('/terms/suggestions', { term });
+  return api.post('/terms/suggestions', { term: term.toLowerCase() });
 }
