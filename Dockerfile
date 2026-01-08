@@ -18,9 +18,6 @@ RUN npm run prisma:generate
 # Копируем остальные файлы
 COPY . .
 
-# Собираем приложение
-RUN npm run build
-
 # Railway автоматически установит переменную PORT
 EXPOSE 3001
 
