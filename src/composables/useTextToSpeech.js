@@ -28,18 +28,18 @@ export function useTextToSpeech() {
     const voices = window.speechSynthesis.getVoices();
     availableVoices.value = voices;
 
-    // Пытаемся найти качественный американский английский голос
+    // Пытаемся найти качественный британский английский голос
     if (!selectedVoice.value && voices.length > 0) {
-      // Приоритет: en-US голоса с качественными синтезаторами
+      // Приоритет: en-GB голоса с качественными синтезаторами
       const preferredVoices = [
         // Google TTS голоса (обычно высокого качества)
-        voice => voice.lang === 'en-US' && voice.name.toLowerCase().includes('google'),
+        voice => voice.lang === 'en-GB' && voice.name.toLowerCase().includes('google'),
         // Microsoft голоса
-        voice => voice.lang === 'en-US' && voice.name.toLowerCase().includes('microsoft'),
+        voice => voice.lang === 'en-GB' && voice.name.toLowerCase().includes('microsoft'),
         // Amazon Polly голоса
-        voice => voice.lang === 'en-US' && voice.name.toLowerCase().includes('amazon'),
-        // Любые en-US голоса
-        voice => voice.lang === 'en-US',
+        voice => voice.lang === 'en-GB' && voice.name.toLowerCase().includes('amazon'),
+        // Любые en-GB голоса
+        voice => voice.lang === 'en-GB',
         // Fallback: любые английские голоса
         voice => voice.lang.startsWith('en'),
         voice => voice.lang.includes('en'),
@@ -102,26 +102,27 @@ export function useTextToSpeech() {
       loadVoices();
     }
 
-    // Выбираем голос: сначала из опций, потом из выбранного, иначе ищем лучший en-US
+    // Выбираем голос: сначала из опций, потом из выбранного, иначе ищем лучший en-GB
     let voiceToUse = options.voice || selectedVoice.value;
-    if (!voiceToUse || (options.lang === 'en-US' && voiceToUse.lang !== 'en-US')) {
-      // Если нужен en-US, но текущий голос не en-US, ищем лучший
-      const enUSVoice =
+    const targetLang = options.lang || 'en-GB';
+    if (!voiceToUse || (targetLang === 'en-GB' && voiceToUse.lang !== 'en-GB')) {
+      // Если нужен en-GB, но текущий голос не en-GB, ищем лучший
+      const enGBVoice =
         availableVoices.value.find(
-          v => v.lang === 'en-US' && v.name.toLowerCase().includes('google')
+          v => v.lang === 'en-GB' && v.name.toLowerCase().includes('google')
         ) ||
         availableVoices.value.find(
-          v => v.lang === 'en-US' && v.name.toLowerCase().includes('microsoft')
+          v => v.lang === 'en-GB' && v.name.toLowerCase().includes('microsoft')
         ) ||
-        availableVoices.value.find(v => v.lang === 'en-US') ||
+        availableVoices.value.find(v => v.lang === 'en-GB') ||
         selectedVoice.value;
-      voiceToUse = enUSVoice || voiceToUse;
+      voiceToUse = enGBVoice || voiceToUse;
     }
 
     // Настройки из опций или из настроек по умолчанию
     utterance.rate = options.rate || ttsRate.value;
     utterance.pitch = options.pitch || ttsPitch.value;
-    utterance.lang = options.lang || voiceToUse?.lang || 'en-US';
+    utterance.lang = options.lang || voiceToUse?.lang || 'en-GB';
     utterance.voice = voiceToUse;
 
     // Обработчики событий
@@ -178,14 +179,14 @@ export function useTextToSpeech() {
    * Озвучивает вопрос
    */
   const speakQuestion = questionText => {
-    speak(questionText, { lang: 'en-US' });
+    speak(questionText, { lang: 'en-GB' });
   };
 
   /**
    * Озвучивает ответ
    */
   const speakAnswer = answerText => {
-    speak(answerText, { lang: 'en-US' });
+    speak(answerText, { lang: 'en-GB' });
   };
 
   // Очистка при размонтировании

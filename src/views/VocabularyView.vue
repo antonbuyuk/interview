@@ -239,7 +239,7 @@ const deleteTerm = async term => {
 };
 
 const speakTerm = termText => {
-  speak(termText, { lang: 'en-US' });
+  speak(termText, { lang: 'en-GB' });
 };
 </script>
 

@@ -26,7 +26,9 @@
         </div>
         <div v-if="foundTerm.examples && foundTerm.examples.length > 0" class="examples-preview">
           <span class="examples-label">Пример:</span>
-          <span class="example-text">{{ foundTerm.examples[0].example || foundTerm.examples[0] }}</span>
+          <span class="example-text">{{
+            foundTerm.examples[0].example || foundTerm.examples[0]
+          }}</span>
         </div>
       </div>
       <div class="term-card-footer">
@@ -69,7 +71,7 @@ const checkingTerm = ref(false);
 const checkDebounceTimer = ref(null);
 
 // Проверка существования термина с debounce
-const checkTermExists = async (termText) => {
+const checkTermExists = async termText => {
   if (!termText || termText.trim().length < 2) {
     foundTerm.value = null;
     return;
@@ -106,7 +108,7 @@ const checkTermExists = async (termText) => {
 // Watcher на selectedText для проверки термина
 watch(
   () => selectedText.value,
-  (newText) => {
+  newText => {
     if (newText) {
       checkTermExists(newText);
     } else {

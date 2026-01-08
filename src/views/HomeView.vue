@@ -1,10 +1,7 @@
 <template>
   <div class="home">
     <div class="home-header">
-      <h1>
-        <RectangleStackIcon class="title-icon" />
-        Шпаргалка: Вопросы для собеседования Frontend Developer
-      </h1>
+      <h1>Шпаргалка: Вопросы для собеседования Frontend Developer</h1>
       <p class="description">
         Подборка вопросов и ответов для подготовки к собеседованиям на позицию Frontend Developer
       </p>
@@ -38,7 +35,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { getSections } from '../api/sections';
-import { PlusIcon, RectangleStackIcon } from '@heroicons/vue/24/outline';
+import { PlusIcon } from '@heroicons/vue/24/outline';
 
 const sections = ref([]);
 

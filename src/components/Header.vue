@@ -196,12 +196,10 @@ import {
   ClockIcon,
   BookOpenIcon,
   Bars3Icon,
-  MicrophoneIcon,
   ClipboardDocumentListIcon,
   Cog6ToothIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline';
-import { MicrophoneIcon as MicrophoneIconSolid } from '@heroicons/vue/24/solid';
 
 const route = useRoute();
 const isMobile = ref(false);
@@ -215,7 +213,7 @@ const currentSection = ref(null);
 const currentQuestions = ref([]);
 
 const { isAdmin } = useAdminAuth();
-const { englishOnly, ttsEnabled } = useTrainingMode();
+const { englishOnly } = useTrainingMode();
 
 const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768;
@@ -235,10 +233,6 @@ const handleUserMenuClickOutside = event => {
 
 const toggleEnglishOnly = () => {
   englishOnly.value = !englishOnly.value;
-};
-
-const toggleTTS = () => {
-  ttsEnabled.value = !ttsEnabled.value;
 };
 
 const toggleFilter = () => {

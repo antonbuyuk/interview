@@ -54,7 +54,16 @@ const getQuestionById = async (req, res, next) => {
 
 const createQuestion = async (req, res, next) => {
   try {
-    const { sectionId, number, question, questionRaw, questionEn, codeBlocks, rawMarkdown, answers } = req.body;
+    const {
+      sectionId,
+      number,
+      question,
+      questionRaw,
+      questionEn,
+      codeBlocks,
+      rawMarkdown,
+      answers,
+    } = req.body;
 
     // Check if section exists
     const section = await prisma.section.findUnique({
@@ -114,7 +123,8 @@ const createQuestion = async (req, res, next) => {
 const updateQuestion = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { sectionId, number, question, questionRaw, questionEn, codeBlocks, rawMarkdown } = req.body;
+    const { sectionId, number, question, questionRaw, questionEn, codeBlocks, rawMarkdown } =
+      req.body;
 
     // Получаем текущий вопрос для проверки изменений
     const currentQuestion = await prisma.question.findUnique({

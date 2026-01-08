@@ -39,7 +39,7 @@ export function useTextSelection() {
     };
   };
 
-  const handleMouseUp = (event) => {
+  const handleMouseUp = event => {
     // Игнорируем выделение в input, textarea и других интерактивных элементах
     const target = event.target;
     if (
@@ -102,7 +102,7 @@ export function useTextSelection() {
     showMenu.value = true;
   };
 
-  const handleClick = (event) => {
+  const handleClick = event => {
     // Не закрываем меню при клике на само меню
     if (event.target.closest('.text-selection-menu')) {
       return;

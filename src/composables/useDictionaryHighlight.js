@@ -53,7 +53,7 @@ export function useDictionaryHighlight() {
    * @param {string} id - ID термина
    * @returns {Object|null} Объект термина или null
    */
-  const findTermById = (id) => {
+  const findTermById = id => {
     if (!id) {
       return null;
     }
@@ -65,7 +65,7 @@ export function useDictionaryHighlight() {
    * @param {string} word - Слово для проверки
    * @returns {Object|null} Объект термина или null
    */
-  const findTerm = (word) => {
+  const findTerm = word => {
     if (!word || typeof word !== 'string') {
       return null;
     }
@@ -79,7 +79,7 @@ export function useDictionaryHighlight() {
    * @param {string} html - HTML строка
    * @returns {string} HTML с подсветкой
    */
-  const highlightTermsInHTML = (html) => {
+  const highlightTermsInHTML = html => {
     if (!html || typeof html !== 'string' || termsMap.value.size === 0) {
       return html;
     }
@@ -94,7 +94,7 @@ export function useDictionaryHighlight() {
     tempDiv.innerHTML = html;
 
     // Функция для обработки текстовых узлов
-    const processTextNode = (node) => {
+    const processTextNode = node => {
       const text = node.textContent;
       if (!text || text.trim().length === 0) {
         return;
@@ -160,24 +160,20 @@ export function useDictionaryHighlight() {
     };
 
     // Рекурсивно обрабатываем все текстовые узлы
-    const walker = document.createTreeWalker(
-      tempDiv,
-      NodeFilter.SHOW_TEXT,
-      {
-        acceptNode: (node) => {
-          // Пропускаем узлы внутри code, pre, script, style
-          let parent = node.parentElement;
-          while (parent && parent !== tempDiv) {
-            const tagName = parent.tagName?.toLowerCase();
-            if (['code', 'pre', 'script', 'style'].includes(tagName)) {
-              return NodeFilter.FILTER_REJECT;
-            }
-            parent = parent.parentElement;
+    const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT, {
+      acceptNode: node => {
+        // Пропускаем узлы внутри code, pre, script, style
+        let parent = node.parentElement;
+        while (parent && parent !== tempDiv) {
+          const tagName = parent.tagName?.toLowerCase();
+          if (['code', 'pre', 'script', 'style'].includes(tagName)) {
+            return NodeFilter.FILTER_REJECT;
           }
-          return NodeFilter.FILTER_ACCEPT;
-        },
-      }
-    );
+          parent = parent.parentElement;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      },
+    });
 
     const textNodes = [];
     let node;
@@ -196,16 +192,13 @@ export function useDictionaryHighlight() {
    * @param {string} text - Текст для обработки
    * @returns {string} HTML с подсветкой
    */
-  const highlightTermsInText = (text) => {
+  const highlightTermsInText = text => {
     if (!text || typeof text !== 'string' || termsMap.value.size === 0) {
       return text;
     }
 
     // Экранируем HTML для безопасности
-    const escaped = text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
     // Регулярное выражение для поиска слов
     const wordRegex = /\b([a-zA-Z][a-zA-Z0-9]*)\b/g;
