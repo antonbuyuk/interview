@@ -31,16 +31,6 @@
         </div>
 
         <div class="form-group">
-          <label>Категория:</label>
-          <select v-model="formData.category" required>
-            <option value="">Выберите категорию</option>
-            <option v-for="section in sections" :key="section.id" :value="section.id">
-              {{ section.title }}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-group">
           <label>Примеры использования (по одному на строку):</label>
           <textarea
             v-model="examplesText"
@@ -72,7 +62,6 @@
 <script setup>
 import { ref, watch, computed } from 'vue';
 import { createTerm, updateTerm, getTermSuggestions } from '../api/terms';
-import { sections } from '../data/sections.js';
 
 const props = defineProps({
   isOpen: Boolean,
@@ -86,8 +75,6 @@ const suggestionsLoading = ref(false);
 const formData = ref({
   term: '',
   translation: '',
-  category: '',
-  categoryTitle: '',
 });
 
 const examplesText = ref('');
@@ -109,8 +96,6 @@ watch(
       formData.value = {
         term: props.term.term,
         translation: props.term.translation,
-        category: props.term.category,
-        categoryTitle: props.term.categoryTitle,
       };
       examplesText.value = (props.term.examples || []).map(e => e.example || e).join('\n');
       phrasesText.value = (props.term.phrases || []).map(p => p.phrase || p).join(', ');
@@ -125,8 +110,6 @@ watch(
       formData.value = {
         term: '',
         translation: '',
-        category: '',
-        categoryTitle: '',
       };
       examplesText.value = '';
       phrasesText.value = '';
@@ -243,13 +226,9 @@ const close = () => {
 const handleSubmit = async () => {
   loading.value = true;
   try {
-    const selectedSection = sections.find(s => s.id === formData.value.category);
-
     const termData = {
       term: formData.value.term.toLowerCase(),
       translation: formData.value.translation,
-      category: formData.value.category,
-      categoryTitle: selectedSection ? selectedSection.title : formData.value.category,
       examples: examplesText.value
         .split('\n')
         .map(e => e.trim())

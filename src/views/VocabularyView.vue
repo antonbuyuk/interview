@@ -24,20 +24,9 @@
 
       <div class="filters-container">
         <div class="filter-group">
-          <label class="filter-label">Категория:</label>
-          <select v-model="selectedCategory" class="filter-select">
-            <option value="all">Все категории</option>
-            <option v-for="category in uniqueCategories" :key="category.id" :value="category.id">
-              {{ category.title }}
-            </option>
-          </select>
-        </div>
-
-        <div class="filter-group">
           <label class="filter-label">Сортировка:</label>
           <select v-model="sortBy" class="filter-select">
             <option value="term">По термину (A-Z)</option>
-            <option value="category">По категории</option>
             <option value="translation">По переводу (A-Z)</option>
           </select>
         </div>
@@ -62,7 +51,6 @@
       <div v-for="term in filteredTerms" :key="term.id || term.term" class="vocabulary-card">
         <div class="card-header">
           <h3 class="term-title">{{ term.term }}</h3>
-          <span class="term-category">{{ getCategoryTitle(term.category) }}</span>
           <div v-if="isAdmin" class="card-actions-top">
             <button class="edit-btn" title="Редактировать" @click="editTerm(term)">✏️</button>
             <button class="delete-btn" title="Удалить" @click="deleteTerm(term)">🗑️</button>
@@ -107,19 +95,18 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { getTerms, deleteTerm as deleteTermApi } from '../api/terms';
-import { sections } from '../data/sections.js';
 import AddTermModal from '../components/AddTermModal.vue';
 import { useAdminAuth } from '../composables/useAdminAuth';
 
 const vocabulary = ref([]);
 const loading = ref(true);
 const searchQuery = ref('');
-const selectedCategory = ref('all');
 const sortBy = ref('term');
 const showAddModal = ref(false);
 const editingTerm = ref(null);
+const searchDebounceTimer = ref(null);
 
 const { isAdmin } = useAdminAuth();
 
@@ -128,7 +115,6 @@ const loadTerms = async () => {
   loading.value = true;
   try {
     const filters = {
-      category: selectedCategory.value !== 'all' ? selectedCategory.value : undefined,
       search: searchQuery.value.trim() || undefined,
       sortBy: sortBy.value,
     };
@@ -138,8 +124,6 @@ const loadTerms = async () => {
       id: term.id,
       term: term.term,
       translation: term.translation,
-      category: term.category,
-      categoryTitle: term.categoryTitle,
       examples: term.examples?.map(e => ({ example: e.example })) || [],
       phrases: term.phrases?.map(p => ({ phrase: p.phrase })) || [],
     }));
@@ -155,31 +139,36 @@ onMounted(() => {
   loadTerms();
 });
 
-// Перезагружаем при изменении фильтров
-watch([searchQuery, selectedCategory, sortBy], () => {
-  loadTerms();
+// Очищаем таймер при размонтировании компонента
+onBeforeUnmount(() => {
+  if (searchDebounceTimer.value) {
+    clearTimeout(searchDebounceTimer.value);
+  }
 });
 
-// Уникальные категории
-const uniqueCategories = computed(() => {
-  const categoriesMap = new Map();
-  vocabulary.value.forEach(term => {
-    if (!categoriesMap.has(term.category)) {
-      const section = sections.find(s => s.id === term.category);
-      categoriesMap.set(term.category, {
-        id: term.category,
-        title: section ? section.title : term.categoryTitle || term.category,
-      });
+// Debounced watch для поиска (500ms)
+watch(
+  () => searchQuery.value,
+  () => {
+    // Очищаем предыдущий таймер
+    if (searchDebounceTimer.value) {
+      clearTimeout(searchDebounceTimer.value);
     }
-  });
-  return Array.from(categoriesMap.values()).sort((a, b) => a.title.localeCompare(b.title));
-});
 
-// Получить название категории
-const getCategoryTitle = categoryId => {
-  const section = sections.find(s => s.id === categoryId);
-  return section ? section.title : categoryId;
-};
+    // Устанавливаем новый таймер с debounce 500ms
+    searchDebounceTimer.value = setTimeout(() => {
+      loadTerms();
+    }, 500);
+  }
+);
+
+// Перезагружаем при изменении сортировки (без debounce)
+watch(
+  () => sortBy.value,
+  () => {
+    loadTerms();
+  }
+);
 
 // Фильтрация и сортировка (теперь выполняется на сервере, но оставляем для совместимости)
 const filteredTerms = computed(() => {
@@ -446,21 +435,6 @@ const deleteTerm = async term => {
   flex: 1;
 }
 
-.term-category {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: $primary-color;
-  background: #f0f7ff;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  white-space: nowrap;
-  margin-left: 0.75rem;
-
-  @include mobile {
-    margin-left: 0;
-    align-self: flex-start;
-  }
-}
 
 .card-body {
   flex: 1;

@@ -77,13 +77,9 @@ async function retryRequest(requestFn, maxRetries = 3, initialDelay = 1000) {
 
 const getTerms = async (req, res, next) => {
   try {
-    const { category, search, sortBy = 'term' } = req.query;
+    const { search, sortBy = 'term' } = req.query;
 
     const where = {};
-
-    if (category && category !== 'all') {
-      where.category = category;
-    }
 
     if (search) {
       where.OR = [
@@ -100,9 +96,6 @@ const getTerms = async (req, res, next) => {
         break;
       case 'translation':
         orderBy.translation = 'asc';
-        break;
-      case 'category':
-        orderBy.category = 'asc';
         break;
       default:
         orderBy.term = 'asc';
@@ -147,7 +140,7 @@ const getTermById = async (req, res, next) => {
 
 const createTerm = async (req, res, next) => {
   try {
-    const { term, translation, category, categoryTitle, examples, phrases } = req.body;
+    const { term, translation, examples, phrases } = req.body;
 
     // Check if term already exists
     const existing = await prisma.term.findUnique({
@@ -162,8 +155,6 @@ const createTerm = async (req, res, next) => {
       data: {
         term,
         translation,
-        category,
-        categoryTitle,
         examples: examples
           ? {
               create: examples.map(example => ({
@@ -194,7 +185,7 @@ const createTerm = async (req, res, next) => {
 const updateTerm = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { term, translation, category, categoryTitle, examples, phrases } = req.body;
+    const { term, translation, examples, phrases } = req.body;
 
     // If updating term name, check for conflicts
     if (term) {
@@ -214,8 +205,6 @@ const updateTerm = async (req, res, next) => {
     const updateData = {
       ...(term !== undefined && { term }),
       ...(translation !== undefined && { translation }),
-      ...(category !== undefined && { category }),
-      ...(categoryTitle !== undefined && { categoryTitle }),
     };
 
     // Handle examples update (delete all and recreate)
