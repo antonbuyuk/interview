@@ -81,7 +81,7 @@
     <div class="header-right">
       <!-- Поиск -->
       <div class="search-wrapper">
-        <Search :current-section="currentSection || undefined" :questions="currentQuestions" />
+        <Search :current-section="currentSection || null" :questions="currentQuestions" />
       </div>
 
       <!-- English Only Toggle -->
@@ -334,8 +334,8 @@ onMounted(() => {
 
   // Слушаем события для установки текущего раздела
   window.addEventListener('current-section-updated', (event: Event) => {
-    const customEvent = event as CustomEvent<{ section?: Section }>;
-    currentSection.value = customEvent.detail.section || null;
+    const customEvent = event as CustomEvent<{ section?: Section | null }>;
+    currentSection.value = customEvent.detail.section ?? null;
   });
 
   // Слушаем события открытия модального окна авторизации

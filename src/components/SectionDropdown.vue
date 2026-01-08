@@ -16,21 +16,24 @@ import { ref, computed, watch, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { getSectionById } from '../api/sections.js';
 import { getQuestions } from '../api/questions.js';
+import type { Section } from '../types/api';
 
-const props = defineProps({
-  section: {
-    type: Object,
-    required: true,
-  },
-});
+interface QuestionItem {
+  id: string;
+  text: string;
+}
+
+const props = defineProps<{
+  section: Section;
+}>();
 
 const route = useRoute();
 
 const showDropdown = ref(false);
-const questions = ref([]);
+const questions = ref<QuestionItem[]>([]);
 const isLoading = ref(false);
-const questionsCache = ref(new Map());
-let closeTimeout = null;
+const questionsCache = ref<Map<string, QuestionItem[]>>(new Map());
+let closeTimeout: ReturnType<typeof setTimeout> | null = null;
 
 const isActive = computed(() => {
   return route.path === props.section.path || route.path.startsWith(props.section.path + '#');
@@ -54,9 +57,12 @@ onUnmounted(() => {
 
 const loadQuestions = async () => {
   // Проверяем кеш
-  if (questionsCache.value.has(props.section.id)) {
-    questions.value = questionsCache.value.get(props.section.id);
-    return;
+  if (questionsCache.value.has(props.section.sectionId)) {
+    const cached = questionsCache.value.get(props.section.sectionId);
+    if (cached) {
+      questions.value = cached;
+      return;
+    }
   }
 
   isLoading.value = true;
@@ -71,13 +77,13 @@ const loadQuestions = async () => {
 
     // Загружаем вопросы через API
     const questionsData = await getQuestions(section.id);
-    const extractedQuestions = questionsData.map(q => ({
+    const extractedQuestions: QuestionItem[] = questionsData.map(q => ({
       id: `question-${q.number}`,
       text: q.question,
     }));
 
     questions.value = extractedQuestions;
-    questionsCache.value.set(props.section.id, extractedQuestions);
+    questionsCache.value.set(props.section.sectionId, extractedQuestions);
   } catch (err) {
     console.error(`Ошибка загрузки вопросов для ${props.section.title}:`, err);
     questions.value = [];

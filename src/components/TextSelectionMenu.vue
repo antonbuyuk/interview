@@ -21,7 +21,11 @@
         <div v-if="foundTerm.examples && foundTerm.examples.length > 0" class="examples-preview">
           <span class="examples-label">Пример:</span>
           <span class="example-text">{{
-            foundTerm.examples[0].example || foundTerm.examples[0]
+            foundTerm.examples[0]
+              ? typeof foundTerm.examples[0] === 'string'
+                ? foundTerm.examples[0]
+                : foundTerm.examples[0].example
+              : ''
           }}</span>
         </div>
       </div>
@@ -60,12 +64,12 @@ const emit = defineEmits(['add-to-dictionary']);
 const router = useRouter();
 const { selectedText, showMenu, menuPosition, clearSelection } = useTextSelection();
 
-const foundTerm = ref(null);
+const foundTerm = ref<import('../types/api').Term | null>(null);
 const checkingTerm = ref(false);
-const checkDebounceTimer = ref(null);
+const checkDebounceTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 
 // Проверка существования термина с debounce
-const checkTermExists = async termText => {
+const checkTermExists = async (termText: string) => {
   if (!termText || termText.trim().length < 2) {
     foundTerm.value = null;
     return;
@@ -88,7 +92,7 @@ const checkTermExists = async termText => {
     checkingTerm.value = true;
     try {
       const term = await getTermByExactName(termToCheck);
-      foundTerm.value = term;
+      foundTerm.value = term || null;
     } catch (error) {
       console.error('Ошибка проверки термина:', error);
       // При ошибке считаем что термин не найден

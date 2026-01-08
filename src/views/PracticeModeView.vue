@@ -65,11 +65,11 @@
       </div>
 
       <!-- Вопрос -->
-      <div class="question-card">
+      <div v-if="currentQuestion" class="question-card">
         <div class="question-header">
           <div class="question-label">Вопрос</div>
           <button
-            v-if="isSupported"
+            v-if="isSupported && currentQuestion.question"
             class="tts-btn"
             title="Озвучить вопрос"
             @click="speakQuestion(currentQuestion.question)"
@@ -102,7 +102,7 @@
       </div>
 
       <!-- Правильный ответ -->
-      <div v-if="showCorrectAnswer" class="correct-answer-card">
+      <div v-if="showCorrectAnswer && currentQuestion" class="correct-answer-card">
         <div class="answer-header">
           <div class="answer-label">Answer EN (эталонный ответ):</div>
           <button
@@ -168,23 +168,39 @@ import { useTextToSpeech } from '../composables/useTextToSpeech';
 import { getQuestions } from '../api/questions';
 import { getSections, getSectionById } from '../api/sections';
 import { ClockIcon, StopIcon, ArrowPathIcon } from '@heroicons/vue/24/outline';
+import type { Section, Question, CodeBlock } from '../types/api';
+
+interface QuestionForTraining {
+  id: string;
+  number: number;
+  question: string;
+  questionRaw: string;
+  answerEn: string | null;
+  answerRu: string | null;
+  answerSenior: string | null;
+  sectionId: string;
+  hasAnswerEn: boolean;
+  hasAnswerRu: boolean;
+  hasAnswerSenior: boolean;
+  codeBlocks: CodeBlock[];
+}
 
 const { practiceTimerDuration } = useTrainingMode();
 const { isSupported, speakQuestion, speakAnswer, stop: stopTTS } = useTextToSpeech();
 
 const loading = ref(false);
-const error = ref(null);
+const error = ref<string | null>(null);
 const started = ref(false);
 const selectedSection = ref('all');
 const shuffleQuestions = ref(true);
 const currentIndex = ref(0);
 const showCorrectAnswer = ref(false);
 const userAnswer = ref('');
-const allQuestions = ref([]);
+const allQuestions = ref<QuestionForTraining[]>([]);
 const timeLeft = ref(0);
-const sections = ref([]);
+const sections = ref<Section[]>([]);
 
-let timerInterval = null;
+let timerInterval: ReturnType<typeof setInterval> | null = null;
 
 const filteredQuestions = computed(() => {
   if (selectedSection.value === 'all') {
@@ -253,11 +269,13 @@ const clearTimer = () => {
   }
 };
 
-const shuffleArray = array => {
-  const shuffled = [...array];
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const shuffled: T[] = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    const temp = shuffled[i];
+    shuffled[i] = shuffled[j] as T;
+    shuffled[j] = temp as T;
   }
   return shuffled;
 };
@@ -282,26 +300,26 @@ const loadQuestions = async () => {
         const questions = await getQuestions(dbSection.id);
 
         // Преобразуем данные из API в формат для тренировки
-        const questionsForTraining = questions
-          .filter(q => {
+        const questionsForTraining: QuestionForTraining[] = questions
+          .filter((q: Question) => {
             // Фильтруем только вопросы с Answer EN
             return q.answers && q.answers.some(a => a.type === 'en');
           })
-          .map(q => {
-            const answerEn = q.answers.find(a => a.type === 'en');
+          .map((q: Question) => {
+            const answerEn = q.answers?.find(a => a.type === 'en');
             return {
               id: q.id,
               number: q.number,
               question: q.question,
               questionRaw: q.questionRaw,
               answerEn: answerEn ? answerEn.content : null,
-              answerRu: q.answers.find(a => a.type === 'ru')?.content || null,
-              answerSenior: q.answers.find(a => a.type === 'senior')?.content || null,
+              answerRu: q.answers?.find(a => a.type === 'ru')?.content || null,
+              answerSenior: q.answers?.find(a => a.type === 'senior')?.content || null,
               sectionId: section.sectionId,
               hasAnswerEn: !!answerEn,
-              hasAnswerRu: !!q.answers.find(a => a.type === 'ru'),
-              hasAnswerSenior: !!q.answers.find(a => a.type === 'senior'),
-              codeBlocks: q.codeBlocks || [],
+              hasAnswerRu: !!q.answers?.find(a => a.type === 'ru'),
+              hasAnswerSenior: !!q.answers?.find(a => a.type === 'senior'),
+              codeBlocks: (q.codeBlocks || []) as CodeBlock[],
             };
           });
 
@@ -319,7 +337,8 @@ const loadQuestions = async () => {
       error.value = 'Не найдено вопросов с английскими ответами';
     }
   } catch (err) {
-    error.value = `Ошибка загрузки: ${err.message}`;
+    const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка';
+    error.value = `Ошибка загрузки: ${errorMessage}`;
     console.error('Ошибка загрузки вопросов:', err);
   } finally {
     loading.value = false;
@@ -341,8 +360,9 @@ const showAnswer = () => {
   showCorrectAnswer.value = !showCorrectAnswer.value;
   // Автоматическое озвучивание правильного ответа
   if (showCorrectAnswer.value && isSupported.value && currentQuestion.value?.answerEn) {
+    const answerText = currentQuestion.value.answerEn;
     setTimeout(() => {
-      speakAnswer(currentQuestion.value.answerEn);
+      speakAnswer(answerText);
     }, 200);
   } else {
     stopTTS();
@@ -361,8 +381,9 @@ const nextQuestion = () => {
 
     // Автоматическое озвучивание вопроса
     if (isSupported.value && currentQuestion.value?.question) {
+      const questionText = currentQuestion.value.question;
       setTimeout(() => {
-        speakQuestion(currentQuestion.value.question);
+        speakQuestion(questionText);
       }, 200);
     }
   }
@@ -380,8 +401,9 @@ const previousQuestion = () => {
 
     // Автоматическое озвучивание вопроса
     if (isSupported.value && currentQuestion.value?.question) {
+      const questionText = currentQuestion.value.question;
       setTimeout(() => {
-        speakQuestion(currentQuestion.value.question);
+        speakQuestion(questionText);
       }, 200);
     }
   }

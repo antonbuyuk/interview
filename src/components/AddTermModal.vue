@@ -186,8 +186,18 @@ watch(
         }
       } catch (error) {
         // Обработка ошибок AI
-        const errorMessage = error.response?.data?.message || error.message || 'Неизвестная ошибка';
-        const errorType = error.response?.data?.error || '';
+        let errorMessage = 'Неизвестная ошибка';
+        let errorType = '';
+
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else if (typeof error === 'object' && error !== null && 'response' in error) {
+          const responseError = error as {
+            response?: { data?: { message?: string; error?: string } };
+          };
+          errorMessage = responseError.response?.data?.message || errorMessage;
+          errorType = responseError.response?.data?.error || '';
+        }
 
         // Показываем предупреждение только для критических ошибок (квота, авторизация)
         if (errorType.includes('quota') || errorType.includes('authentication')) {
@@ -267,7 +277,8 @@ const handleSubmit = async () => {
     close();
   } catch (error) {
     console.error('Ошибка сохранения термина:', error);
-    alert('Ошибка сохранения: ' + (error.message || 'Неизвестная ошибка'));
+    const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+    alert('Ошибка сохранения: ' + errorMessage);
   } finally {
     loading.value = false;
   }

@@ -36,6 +36,7 @@ function extractTerms(text: string): Set<string> {
   let match: RegExpExecArray | null;
   while ((match = pascalCaseRegex.exec(textWithoutCode)) !== null) {
     const term = match[1];
+    if (!term) continue;
     // Исключаем слишком короткие и общие слова
     if (term.length >= 3 && !isCommonWord(term)) {
       terms.add(term);
@@ -46,21 +47,26 @@ function extractTerms(text: string): Set<string> {
   const acronymRegex = /\b([A-Z]{2,5})\b/g;
   while ((match = acronymRegex.exec(textWithoutCode)) !== null) {
     const term = match[1];
-    terms.add(term);
+    if (term) {
+      terms.add(term);
+    }
   }
 
   // 3. Словосочетания из секций "Answer EN" (2-3 слова)
   const answerEnRegex = /\*\*Answer EN:\*\*\s*([\s\S]*?)(?=\*\*|###|$)/gi;
   while ((match = answerEnRegex.exec(text)) !== null) {
     const answerText = match[1];
+    if (!answerText) continue;
     // Ищем технические словосочетания
     const phraseRegex =
       /\b([a-z]+(?:\s+[a-z]+){1,2})\s+(?:is|are|can|allows?|provides?|supports?|uses?|works?|helps?|enables?)/gi;
     let phraseMatch: RegExpExecArray | null;
     while ((phraseMatch = phraseRegex.exec(answerText)) !== null) {
-      const phrase = phraseMatch[1].trim();
-      if (phrase.length >= 5 && !isCommonPhrase(phrase)) {
-        terms.add(phrase);
+      const phrase = phraseMatch[1];
+      if (!phrase) continue;
+      const trimmedPhrase = phrase.trim();
+      if (trimmedPhrase.length >= 5 && !isCommonPhrase(trimmedPhrase)) {
+        terms.add(trimmedPhrase);
       }
     }
   }
@@ -73,6 +79,7 @@ function extractTerms(text: string): Set<string> {
     const codeTermsRegex = /\b([A-Z][a-z]+(?:[A-Z][a-z]*)*|[a-z]+[A-Z][a-z]*)\b/g;
     while ((match = codeTermsRegex.exec(code)) !== null) {
       const term = match[1];
+      if (!term) continue;
       if (term.length >= 3 && !isCommonWord(term)) {
         terms.add(term);
       }
@@ -225,7 +232,9 @@ function extractExamples(text: string, term: string): string[] {
   let match: RegExpExecArray | null;
   let count = 0;
   while ((match = regex.exec(text)) !== null && count < 3) {
-    const example = match[1].trim();
+    const exampleText = match[1];
+    if (!exampleText) continue;
+    const example = exampleText.trim();
     if (example.length > 20 && example.length < 200) {
       examples.push(example);
       count++;
@@ -249,7 +258,9 @@ function extractPhrases(text: string, term: string): string[] {
     let match: RegExpExecArray | null;
     let count = 0;
     while ((match = pattern.exec(text)) !== null && count < 5) {
-      const phrase = match[1].trim();
+      const phraseText = match[1];
+      if (!phraseText) continue;
+      const phrase = phraseText.trim();
       if (phrase.length >= term.length + 3 && phrase.length < 50) {
         phrases.add(phrase);
         count++;

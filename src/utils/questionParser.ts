@@ -26,7 +26,7 @@ export interface ParsedQuestionForTraining extends ParsedQuestion {
  */
 const isRussianSectionMarker = (text: string): boolean => {
   const match = text.match(/\*\*([^*]+):\*\*/);
-  if (!match) return false;
+  if (!match || !match[1]) return false;
   const headerText = match[1];
   // Проверяем наличие кириллицы, но исключаем маркеры "Ответ", "Ответ Senior", "Answer EN"
   if (/[а-яёА-ЯЁ]/.test(headerText)) {
@@ -49,8 +49,10 @@ export function parseQuestions(markdown: string): ParsedQuestion[] {
   questionRegex.lastIndex = 0;
 
   while ((match = questionRegex.exec(markdown)) !== null) {
+    const questionText = match[1];
+    if (!questionText) continue;
     questionMatches.push({
-      text: match[1].trim(),
+      text: questionText.trim(),
       index: match.index,
       fullMatch: match[0],
     });
@@ -59,7 +61,8 @@ export function parseQuestions(markdown: string): ParsedQuestion[] {
   // Обрабатываем каждый вопрос
   questionMatches.forEach((qMatch, idx) => {
     const questionIndex = qMatch.index;
-    const nextIndex = questionMatches[idx + 1] ? questionMatches[idx + 1].index : markdown.length;
+    const nextMatch = questionMatches[idx + 1];
+    const nextIndex = nextMatch ? nextMatch.index : markdown.length;
 
     const questionSection = markdown.substring(questionIndex, nextIndex);
 
@@ -139,10 +142,13 @@ export function parseQuestions(markdown: string): ParsedQuestion[] {
     const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
     let codeMatch: RegExpExecArray | null;
     while ((codeMatch = codeBlockRegex.exec(questionSection)) !== null) {
-      codeBlocks.push({
-        language: codeMatch[1] || '',
-        code: codeMatch[2].trim(),
-      });
+      const codeContent = codeMatch[2];
+      if (codeContent !== undefined) {
+        codeBlocks.push({
+          language: codeMatch[1] || '',
+          code: codeContent.trim(),
+        });
+      }
     }
 
     questions.push({

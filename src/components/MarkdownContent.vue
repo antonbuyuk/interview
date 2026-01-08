@@ -1,4 +1,5 @@
 <template>
+  <!-- v-html используется для рендеринга доверенного markdown контента -->
   <div
     class="markdown-content"
     @mouseover="handleMouseOver"
@@ -26,7 +27,7 @@ defineEmits(['term-hover']);
 const { highlightTermsInHTML } = useDictionaryHighlight();
 
 // Настройка marked для подсветки синтаксиса
-const highlightFunction = function (code, lang) {
+const highlightFunction = function (code: string, lang: string): string {
   if (lang && hljs.getLanguage(lang)) {
     try {
       return hljs.highlight(code, { language: lang }).value;
@@ -39,15 +40,14 @@ const highlightFunction = function (code, lang) {
 
 // Кастомный рендерер для блоков кода - добавляем класс hljs
 const renderer = new marked.Renderer();
-renderer.code = function (code, lang) {
+renderer.code = function (code: string, lang: string): string {
   const language = lang || '';
   const highlighted = highlightFunction(code, language);
   const classAttr = language ? ` class="language-${language} hljs"` : ' class="hljs"';
   return `<pre><code${classAttr}>${highlighted}</code></pre>`;
 };
 
-marked.setOptions({
-  highlight: highlightFunction,
+marked.use({
   renderer: renderer,
   breaks: true,
   gfm: true,
@@ -57,7 +57,9 @@ const htmlContent = computed(() => {
   if (!props.markdown || !props.markdown.trim()) {
     return '';
   }
-  return marked.parse(props.markdown);
+  const result = marked.parse(props.markdown);
+  // marked.parse может возвращать Promise в новых версиях, но синхронный вызов вернет string
+  return typeof result === 'string' ? result : '';
 });
 
 const highlightedContent = computed(() => {
@@ -66,11 +68,11 @@ const highlightedContent = computed(() => {
   return highlightTermsInHTML(html);
 });
 
-let hoverTimer = null;
+let hoverTimer: ReturnType<typeof setTimeout> | null = null;
 
-const handleMouseOver = event => {
-  const target = event.target;
-  if (target.classList.contains('dictionary-term')) {
+const handleMouseOver = (event: MouseEvent) => {
+  const target = event.target as HTMLElement | null;
+  if (target && target.classList.contains('dictionary-term')) {
     // Отменяем предыдущий таймер скрытия
     if (hoverTimer) {
       clearTimeout(hoverTimer);
@@ -96,9 +98,9 @@ const handleMouseOver = event => {
   }
 };
 
-const handleMouseOut = event => {
-  const target = event.target;
-  if (target.classList.contains('dictionary-term')) {
+const handleMouseOut = (event: MouseEvent) => {
+  const target = event.target as HTMLElement | null;
+  if (target && target.classList.contains('dictionary-term')) {
     // Добавляем задержку перед скрытием, чтобы пользователь успел навести на tooltip
     hoverTimer = setTimeout(() => {
       window.dispatchEvent(

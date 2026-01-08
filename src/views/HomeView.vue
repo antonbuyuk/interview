@@ -42,8 +42,9 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { getSections } from '../api/sections';
 import { PlusIcon } from '@heroicons/vue/24/outline';
 import Skeleton from '../components/Skeleton.vue';
+import type { Section } from '../types/api';
 
-const sections = ref([]);
+const sections = ref<Section[]>([]);
 const loading = ref(true);
 
 const loadSections = async () => {

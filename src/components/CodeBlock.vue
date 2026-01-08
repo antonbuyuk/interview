@@ -23,6 +23,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import hljs from 'highlight.js';
+import { CheckIcon, ClipboardDocumentIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
   code: {
@@ -59,7 +60,7 @@ const highlightedCode = computed(() => {
   }
 });
 
-const escapeHtml = text => {
+const escapeHtml = (text: string): string => {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;

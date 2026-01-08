@@ -103,73 +103,145 @@ import { getSections } from '../api/sections.js';
 import { getQuestions } from '../api/questions.js';
 import { MagnifyingGlassIcon, MicrophoneIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { StopIcon as StopIconSolid } from '@heroicons/vue/24/solid';
+import type { Section, Question } from '../types/api';
 
-const props = defineProps({
-  currentSection: {
-    type: Object,
-    default: null,
-  },
-  questions: {
-    type: Array,
-    default: () => [],
-  },
-});
+// Типы для результатов поиска
+interface LocalSearchResult {
+  id: string;
+  number: number;
+  text: string;
+  score: number;
+}
 
-const emit = defineEmits(['result-click']);
+interface GlobalSearchResult {
+  id: string;
+  sectionTitle: string;
+  questionText: string;
+  path: string;
+  score: number;
+}
+
+interface QuestionSearchItem {
+  id: string;
+  text: string;
+  number: number;
+}
+
+// Расширяем Window интерфейс для Speech Recognition
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: (event: SpeechRecognitionErrorEvent) => void;
+  onend: () => void;
+  start: () => void;
+  stop: () => void;
+}
+
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+
+interface SpeechRecognitionResultList {
+  [index: number]: SpeechRecognitionResult;
+  length: number;
+}
+
+interface SpeechRecognitionResult {
+  [index: number]: SpeechRecognitionAlternative;
+  length: number;
+  isFinal: boolean;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: {
+      new (): SpeechRecognition;
+    };
+    webkitSpeechRecognition: {
+      new (): SpeechRecognition;
+    };
+  }
+}
+
+const props = defineProps<{
+  currentSection: Section | null;
+  questions: Question[];
+}>();
+
+const emit = defineEmits<{
+  'result-click': [id: string];
+}>();
 
 const route = useRoute();
 const searchQuery = ref('');
 const isFocused = ref(false);
-const localResults = ref([]);
-const globalResults = ref([]);
-const searchCache = ref(new Map());
-const currentQuestions = ref([]);
-const pendingQuestionId = ref(null);
+const localResults = ref<LocalSearchResult[]>([]);
+const globalResults = ref<GlobalSearchResult[]>([]);
+const searchCache = ref<Map<string, GlobalSearchResult[]>>(new Map());
+const currentQuestions = ref<QuestionSearchItem[]>([]);
+const pendingQuestionId = ref<string | null>(null);
 const isRecording = ref(false);
-const recognition = ref(null);
+const recognition = ref<SpeechRecognition | null>(null);
 const isSpeechSupported = ref(false);
-const allSections = ref([]);
+const allSections = ref<Section[]>([]);
 
 // Поиск с задержкой (debounce)
-let searchTimeout = null;
+let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
 // Инициализация Speech Recognition API
 const initSpeechRecognition = () => {
   if (typeof window === 'undefined') return;
 
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
+  const SpeechRecognitionClass =
+    (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  if (!SpeechRecognitionClass) {
     isSpeechSupported.value = false;
     return;
   }
 
   isSpeechSupported.value = true;
-  recognition.value = new SpeechRecognition();
-  recognition.value.continuous = false;
-  recognition.value.interimResults = false;
-  recognition.value.lang = 'ru-RU'; // Русский язык
+  recognition.value = new SpeechRecognitionClass();
+  if (recognition.value) {
+    recognition.value.continuous = false;
+    recognition.value.interimResults = false;
+    recognition.value.lang = 'ru-RU'; // Русский язык
 
-  recognition.value.onresult = event => {
-    const transcript = event.results[0][0].transcript;
-    searchQuery.value = transcript.trim();
-    performSearch();
-    isRecording.value = false;
-  };
+    recognition.value.onresult = (event: SpeechRecognitionEvent) => {
+      const firstResult = event.results[0];
+      if (firstResult && firstResult[0]) {
+        const transcript = firstResult[0].transcript;
+        searchQuery.value = transcript.trim();
+        performSearch();
+        isRecording.value = false;
+      }
+    };
 
-  recognition.value.onerror = event => {
-    console.error('Ошибка распознавания речи:', event.error);
-    isRecording.value = false;
+    recognition.value.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error('Ошибка распознавания речи:', event.error);
+      isRecording.value = false;
 
-    if (event.error === 'no-speech') {
-      alert('Речь не распознана. Попробуйте еще раз.');
-    } else if (event.error === 'not-allowed') {
-      alert('Доступ к микрофону запрещен. Разрешите доступ в настройках браузера.');
-    }
-  };
+      if (event.error === 'no-speech') {
+        alert('Речь не распознана. Попробуйте еще раз.');
+      } else if (event.error === 'not-allowed') {
+        alert('Доступ к микрофону запрещен. Разрешите доступ в настройках браузера.');
+      }
+    };
 
-  recognition.value.onend = () => {
-    isRecording.value = false;
-  };
+    recognition.value.onend = () => {
+      isRecording.value = false;
+    };
+  }
 };
 
 // Инициализация при монтировании
@@ -202,7 +274,7 @@ const loadCurrentSectionQuestions = async () => {
   try {
     // Получаем раздел по ID для получения UUID
     const section = await getSections().then(sections =>
-      sections.find(s => s.sectionId === props.currentSection.id)
+      sections.find(s => s.sectionId === props.currentSection?.sectionId)
     );
 
     if (!section) {
@@ -212,7 +284,7 @@ const loadCurrentSectionQuestions = async () => {
 
     // Загружаем вопросы через API
     const questions = await getQuestions(section.id);
-    currentQuestions.value = questions.map(q => ({
+    currentQuestions.value = questions.map((q: Question) => ({
       id: `question-${q.number}`,
       text: q.question,
       number: q.number,
@@ -224,20 +296,21 @@ const loadCurrentSectionQuestions = async () => {
 };
 
 // Функция для разбивки запроса на ключевые слова
-const extractKeywords = query => {
+const extractKeywords = (query: string): string[] => {
   return query
     .toLowerCase()
     .trim()
     .split(/\s+/)
-    .filter(word => word.length > 0)
+    .filter((word: string) => word.length > 0)
     .filter(
-      word => !['и', 'или', 'или', 'the', 'a', 'an', 'и', 'в', 'на', 'с', 'по'].includes(word)
+      (word: string) =>
+        !['и', 'или', 'или', 'the', 'a', 'an', 'и', 'в', 'на', 'с', 'по'].includes(word)
     );
 };
 
 // Поиск по ключевым словам
-const matchesKeywords = (text, keywords) => {
-  if (keywords.length === 0) return false;
+const matchesKeywords = (text: string, keywords: string[]): { matches: boolean; score: number } => {
+  if (keywords.length === 0) return { matches: false, score: 0 };
 
   const lowerText = text.toLowerCase();
 
@@ -278,20 +351,27 @@ const performSearch = async () => {
   }
 
   // Поиск в текущей секции - используем переданные questions или загружаем
-  const questionsToSearch = props.questions.length > 0 ? props.questions : currentQuestions.value;
+  const questionsToSearch: QuestionSearchItem[] =
+    props.questions.length > 0
+      ? props.questions.map(q => ({
+          id: `question-${q.number}`,
+          text: q.question,
+          number: q.number,
+        }))
+      : currentQuestions.value;
 
   if (questionsToSearch.length > 0) {
-    const results = questionsToSearch
+    const results: LocalSearchResult[] = questionsToSearch
       .map((q, index) => {
         const matchResult = matchesKeywords(q.text, keywords);
         return {
           id: q.id || `question-${index + 1}`,
-          number: index + 1,
+          number: q.number || index + 1,
           text: q.text,
           score: matchResult.score,
         };
       })
-      .filter(q => q.score > 0)
+      .filter((q): q is LocalSearchResult => q.score > 0)
       .sort((a, b) => b.score - a.score) // Сортируем по количеству совпадений
       .slice(0, 10); // Ограничиваем до 10 результатов
 
@@ -306,9 +386,9 @@ const performSearch = async () => {
   }
 };
 
-const searchInAllSections = async keywords => {
-  const results = [];
-  const currentSectionId = props.currentSection?.id;
+const searchInAllSections = async (keywords: string[]) => {
+  const results: GlobalSearchResult[] = [];
+  const currentSectionId = props.currentSection?.sectionId;
 
   // Загружаем список всех секций, если еще не загружен
   if (allSections.value.length === 0) {
@@ -329,15 +409,17 @@ const searchInAllSections = async keywords => {
       const cacheKey = `${section.sectionId}:${keywords.join(' ')}`;
       if (searchCache.value.has(cacheKey)) {
         const cached = searchCache.value.get(cacheKey);
-        results.push(...cached);
+        if (cached) {
+          results.push(...cached);
+        }
         continue;
       }
 
       // Загружаем вопросы через API
       const questions = await getQuestions(section.id);
 
-      const sectionResults = questions
-        .map(q => {
+      const sectionResults: GlobalSearchResult[] = questions
+        .map((q: Question) => {
           const matchResult = matchesKeywords(q.question, keywords);
           return {
             id: `question-${q.number}`,
@@ -347,7 +429,7 @@ const searchInAllSections = async keywords => {
             score: matchResult.score,
           };
         })
-        .filter(q => q.score > 0)
+        .filter((q): q is GlobalSearchResult => q.score > 0)
         .sort((a, b) => b.score - a.score) // Сортируем по количеству совпадений
         .slice(0, 3); // По 3 результата из каждой секции
 
@@ -367,7 +449,7 @@ const searchInAllSections = async keywords => {
   globalResults.value = results.slice(0, 10);
 };
 
-const highlightText = (text, query) => {
+const highlightText = (text: string, query: string): string => {
   if (!query) return text;
 
   // Разбиваем запрос на ключевые слова для подсветки
@@ -382,11 +464,11 @@ const highlightText = (text, query) => {
   return highlightedText;
 };
 
-const escapeRegExp = string => {
+const escapeRegExp = (string: string): string => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 };
 
-const scrollToResult = id => {
+const scrollToResult = (id: string) => {
   const element = document.getElementById(id);
   if (element) {
     const offset = 120;
@@ -414,7 +496,7 @@ const closeSearch = () => {
   isFocused.value = false;
 };
 
-const handleGlobalResultClick = questionId => {
+const handleGlobalResultClick = (questionId: string) => {
   pendingQuestionId.value = questionId;
   closeSearch();
 };
@@ -434,7 +516,9 @@ const startVoiceSearch = () => {
 
   try {
     isRecording.value = true;
-    recognition.value.start();
+    if (recognition.value) {
+      recognition.value.start();
+    }
   } catch (err) {
     console.error('Ошибка запуска распознавания:', err);
     isRecording.value = false;
@@ -454,7 +538,8 @@ const scrollToPendingQuestion = () => {
   if (!pendingQuestionId.value) return;
 
   // Ждем загрузки контента и рендеринга DOM
-  const attemptScroll = () => {
+  const attemptScroll = (): boolean => {
+    if (!pendingQuestionId.value) return false;
     const element = document.getElementById(pendingQuestionId.value);
     if (element) {
       const offset = 120;
@@ -520,7 +605,7 @@ watch(
 // Следим за изменением hash в URL
 watch(
   () => route.hash,
-  newHash => {
+  (newHash: string) => {
     if (newHash) {
       const questionId = newHash.substring(1);
       if (questionId) {
@@ -536,7 +621,7 @@ watch(
 // Загружаем вопросы при изменении секции
 watch(
   () => props.currentSection,
-  async newSection => {
+  async (newSection: Section | null) => {
     currentQuestions.value = [];
     if (newSection && searchQuery.value) {
       await loadCurrentSectionQuestions();
