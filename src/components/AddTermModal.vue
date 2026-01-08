@@ -65,7 +65,14 @@ import { createTerm, updateTerm, getTermSuggestions } from '../api/terms';
 
 const props = defineProps({
   isOpen: Boolean,
-  term: Object,
+  term: {
+    type: Object,
+    default: null,
+  },
+  initialTerm: {
+    type: String,
+    default: '',
+  },
 });
 
 const emit = defineEmits(['close', 'saved']);
@@ -106,9 +113,9 @@ watch(
         examples: true,
       };
     } else if (newVal) {
-      // Сброс формы для нового термина
+      // Сброс формы для нового термина или предзаполнение из initialTerm
       formData.value = {
-        term: '',
+        term: props.initialTerm || '',
         translation: '',
       };
       examplesText.value = '';

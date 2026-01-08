@@ -137,6 +137,8 @@ const loadTerms = async () => {
 
 onMounted(() => {
   loadTerms();
+  // Слушаем событие обновления терминов из глобального модального окна
+  window.addEventListener('terms-updated', loadTerms);
 });
 
 // Очищаем таймер при размонтировании компонента
@@ -144,6 +146,7 @@ onBeforeUnmount(() => {
   if (searchDebounceTimer.value) {
     clearTimeout(searchDebounceTimer.value);
   }
+  window.removeEventListener('terms-updated', loadTerms);
 });
 
 // Debounced watch для поиска (500ms)

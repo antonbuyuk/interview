@@ -1,18 +1,19 @@
 <template>
   <div class="secondary-menu">
     <!-- Если не авторизован -->
-    <button v-if="!isAdmin" class="secondary-menu-item" @click="openLoginModal">
+    <button v-if="!isAdmin" class="secondary-menu-item" title="Авторизация" @click="openLoginModal">
       <span class="nav-icon">🔐</span>
     </button>
 
     <template v-else>
-      <button class="secondary-menu-item" @click="openAddQuestion">
+      <button class="secondary-menu-item" title="Добавить вопрос" @click="openAddQuestion">
         <span class="nav-icon">➕</span>
-        <!-- <span>Добавить вопрос</span> -->
       </button>
-      <button class="secondary-menu-item" @click="openManageSections">
+      <button class="secondary-menu-item" title="Настройка раздела" @click="openManageSections">
         <span class="nav-icon">⚙️</span>
-        <!-- <span>Настройка раздела</span> -->
+      </button>
+      <button class="secondary-menu-item" title="Добавить термин" @click="openAddTerm">
+        <span class="nav-icon">📖</span>
       </button>
     </template>
   </div>
@@ -30,6 +31,11 @@ const openAddQuestion = () => {
 
 const openManageSections = () => {
   const event = new CustomEvent('open-manage-sections');
+  window.dispatchEvent(event);
+};
+
+const openAddTerm = () => {
+  const event = new CustomEvent('open-add-term');
   window.dispatchEvent(event);
 };
 </script>

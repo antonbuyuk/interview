@@ -70,6 +70,18 @@
       @saved="handleSectionSaved"
     />
 
+    <!-- Модальное окно для добавления/редактирования термина -->
+    <AddTermModal
+      :is-open="showAddTermModal"
+      :term="editingTerm"
+      :initial-term="initialTerm"
+      @close="closeAddTermModal"
+      @saved="handleTermSaved"
+    />
+
+    <!-- Контекстное меню для выделенного текста -->
+    <TextSelectionMenu :is-admin="isAdmin" @add-to-dictionary="handleAddToDictionaryFromSelection" />
+
     <SecondaryMenu />
   </div>
 </template>
@@ -79,6 +91,8 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import Header from './components/Header.vue';
 import AddSectionModal from './components/AddSectionModal.vue';
+import AddTermModal from './components/AddTermModal.vue';
+import TextSelectionMenu from './components/TextSelectionMenu.vue';
 import { getSections, deleteSection as deleteSectionApi } from './api/sections';
 import { useAdminAuth } from './composables/useAdminAuth';
 import SecondaryMenu from './components/SecondaryMenu.vue';
@@ -90,6 +104,9 @@ const sectionsLoading = ref(false);
 const showSectionsModal = ref(false);
 const showAddSectionModal = ref(false);
 const editingSection = ref(null);
+const showAddTermModal = ref(false);
+const editingTerm = ref(null);
+const initialTerm = ref('');
 const { isAdmin } = useAdminAuth();
 
 const loadSections = async () => {
@@ -165,13 +182,46 @@ const handleSectionSaved = async () => {
   window.dispatchEvent(new CustomEvent('sections-updated'));
 };
 
+const handleOpenAddTerm = () => {
+  if (isAdmin.value) {
+    editingTerm.value = null;
+    initialTerm.value = '';
+    showAddTermModal.value = true;
+  }
+};
+
+const handleAddToDictionaryFromSelection = (selectedText) => {
+  if (isAdmin.value && selectedText) {
+    editingTerm.value = null;
+    initialTerm.value = selectedText.trim();
+    showAddTermModal.value = true;
+  }
+};
+
+const closeAddTermModal = () => {
+  showAddTermModal.value = false;
+  editingTerm.value = null;
+  initialTerm.value = '';
+};
+
+const handleTermSaved = () => {
+  showAddTermModal.value = false;
+  editingTerm.value = null;
+  initialTerm.value = '';
+  // Эмитим событие обновления словаря для VocabularyView
+  window.dispatchEvent(new CustomEvent('terms-updated'));
+};
+
 onMounted(() => {
   // Слушаем событие открытия управления разделами из Sidebar
   window.addEventListener('open-manage-sections', handleOpenManageSections);
+  // Слушаем событие открытия добавления термина из SecondaryMenu
+  window.addEventListener('open-add-term', handleOpenAddTerm);
 });
 
 onUnmounted(() => {
   window.removeEventListener('open-manage-sections', handleOpenManageSections);
+  window.removeEventListener('open-add-term', handleOpenAddTerm);
 });
 </script>
 
