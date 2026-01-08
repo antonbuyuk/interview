@@ -3,7 +3,6 @@
     <!-- Если не авторизован -->
     <button v-if="!isAdmin" class="secondary-menu-item" @click="openLoginModal">
       <span class="nav-icon">🔐</span>
-      <span>Авторизоваться</span>
     </button>
 
     <template v-else>

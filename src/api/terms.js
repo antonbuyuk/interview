@@ -60,3 +60,12 @@ export async function updateTerm(id, termData) {
 export async function deleteTerm(id) {
   return api.delete(`/terms/${id}`);
 }
+
+/**
+ * Получить AI-предложения для термина
+ * @param {string} term - Термин на английском
+ * @returns {Promise<Object>} { translation, phrases, examples }
+ */
+export async function getTermSuggestions(term) {
+  return api.post('/terms/suggestions', { term });
+}
