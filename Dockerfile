@@ -2,6 +2,9 @@ FROM node:22.12.0-alpine
 
 WORKDIR /app
 
+# Устанавливаем OpenSSL для Prisma
+RUN apk add --no-cache openssl openssl-dev
+
 # Копируем файлы зависимостей
 COPY package*.json ./
 COPY prisma ./prisma/

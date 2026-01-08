@@ -1,7 +1,10 @@
 <template>
   <div class="home">
     <div class="home-header">
-      <h1>📚 Шпаргалка: Вопросы для собеседования Frontend Developer</h1>
+      <h1>
+        <RectangleStackIcon class="title-icon" />
+        Шпаргалка: Вопросы для собеседования Frontend Developer
+      </h1>
       <p class="description">
         Подборка вопросов и ответов для подготовки к собеседованиям на позицию Frontend Developer
       </p>
@@ -35,7 +38,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { getSections } from '../api/sections';
-import { PlusIcon } from '@heroicons/vue/24/outline';
+import { PlusIcon, RectangleStackIcon } from '@heroicons/vue/24/outline';
 
 const sections = ref([]);
 
@@ -80,6 +83,26 @@ onUnmounted(() => {
   font-weight: 700;
   margin-bottom: 1rem;
   color: #1e1e1e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+
+  .title-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    color: #42b883;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 2rem;
+
+    .title-icon {
+      width: 2rem;
+      height: 2rem;
+    }
+  }
 }
 
 .description {
