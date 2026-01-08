@@ -2,7 +2,9 @@
   <header class="app-header">
     <div class="header-left">
       <router-link to="/" class="logo-link">
-        <h1 class="header-title">📚 Frontend Interview</h1>
+        <h1 class="header-title">
+          <RectangleStackIcon class="logo-icon" />
+        </h1>
       </router-link>
 
       <!-- Навигация для десктопа -->
@@ -481,9 +483,24 @@ onUnmounted(() => {
   margin: 0;
   color: $text-dark;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .logo-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: $primary-color;
+    flex-shrink: 0;
+  }
 
   @include mobile {
     font-size: 1.125rem;
+
+    .logo-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
   }
 }
 
