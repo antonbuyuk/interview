@@ -20,17 +20,7 @@ const login = async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid password' });
     }
 
-    // Устанавливаем cookie с авторизацией
-    // path: '/' чтобы cookie был доступен для всего сайта
-    // httpOnly: false чтобы фронтенд мог читать cookie
-    // maxAge: 30 дней в миллисекундах
-    res.cookie('is_auth_admin', 'true', {
-      path: '/',
-      httpOnly: false,
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 дней
-      sameSite: 'lax',
-    });
-
+    // Возвращаем успешный ответ - фронтенд сохранит токен в localStorage
     res.json({ success: true, message: 'Admin authenticated successfully' });
   } catch (error) {
     next(error);

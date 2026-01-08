@@ -21,12 +21,17 @@ const API_URL = getApiUrl();
 async function request(endpoint, options = {}) {
   const url = `${API_URL}${endpoint}`;
 
+  // Получаем токен авторизации из localStorage
+  const authToken = localStorage.getItem('is_auth_admin');
+
   const config = {
     headers: {
       'Content-Type': 'application/json',
+      // Отправляем токен в заголовке, если он есть
+      ...(authToken === 'true' && { 'X-Admin-Auth': 'true' }),
       ...options.headers,
     },
-    credentials: 'include', // Включаем отправку cookies
+    credentials: 'include', // Включаем отправку cookies (на случай, если нужны другие cookies)
     ...options,
   };
 
