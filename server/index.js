@@ -18,24 +18,44 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
+// Функция для нормализации origin (убирает trailing slash и приводит к стандартному виду)
+const normalizeOrigin = (origin) => {
+  return origin.replace(/\/$/, '');
+};
+
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Разрешаем запросы без origin (например, Postman, мобильные приложения)
+      // Разрешаем запросы без origin (например, Postman, мобильные приложения, server-to-server)
       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+      // Нормализуем origin для сравнения
+      const normalizedOrigin = normalizeOrigin(origin);
+
+      // Проверяем точное совпадение
+      const exactMatch = allowedOrigins.some(allowed =>
+        normalizeOrigin(allowed) === normalizedOrigin
+      );
+
+      // Проверяем поддомены GitHub Pages (*.github.io)
+      const isGitHubPages = /^https:\/\/[a-zA-Z0-9-]+\.github\.io$/.test(normalizedOrigin);
+
+      if (exactMatch || isGitHubPages) {
         callback(null, true);
       } else {
         // В development разрешаем все
         if (process.env.NODE_ENV === 'development') {
           callback(null, true);
         } else {
+          console.warn(`CORS blocked origin: ${origin}`);
           callback(new Error('Not allowed by CORS'));
         }
       }
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Auth'],
+    exposedHeaders: ['Content-Type'],
   })
 );
 app.use(express.json());
