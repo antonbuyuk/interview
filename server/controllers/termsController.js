@@ -1,5 +1,5 @@
-const prisma = require('../utils/prisma');
-const Groq = require('groq-sdk');
+import prisma from '../utils/prisma.js';
+import Groq from 'groq-sdk';
 
 /**
  * Вспомогательная функция для задержки
@@ -499,7 +499,7 @@ const getTermSuggestions = async (req, res, next) => {
   }
 };
 
-module.exports = {
+export {
   getTerms,
   getTermById,
   getTermByExactName,

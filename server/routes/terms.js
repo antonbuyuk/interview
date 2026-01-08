@@ -1,8 +1,8 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const termsController = require('../controllers/termsController');
-const errorHandler = require('../middleware/errorHandler');
-const authAdmin = require('../middleware/authAdmin');
+import * as termsController from '../controllers/termsController.js';
+import errorHandler from '../middleware/errorHandler.js';
+import authAdmin from '../middleware/authAdmin.js';
 
 router.get('/', termsController.getTerms);
 // Важно: маршрут /by-name/:term должен быть ПЕРЕД /:id, иначе Express будет интерпретировать "by-name" как ID
@@ -15,4 +15,4 @@ router.delete('/:id', authAdmin, termsController.deleteTerm);
 
 router.use(errorHandler);
 
-module.exports = router;
+export default router;

@@ -17,4 +17,4 @@ const authAdmin = (req, res, next) => {
   next();
 };
 
-module.exports = authAdmin;
+export default authAdmin;

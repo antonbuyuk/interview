@@ -1,9 +1,9 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const questionsController = require('../controllers/questionsController');
-const answersController = require('../controllers/answersController');
-const errorHandler = require('../middleware/errorHandler');
-const authAdmin = require('../middleware/authAdmin');
+import * as questionsController from '../controllers/questionsController.js';
+import * as answersController from '../controllers/answersController.js';
+import errorHandler from '../middleware/errorHandler.js';
+import authAdmin from '../middleware/authAdmin.js';
 
 router.get('/', questionsController.getQuestions);
 router.get('/:id', questionsController.getQuestionById);
@@ -18,4 +18,4 @@ router.post('/:questionId/answers', authAdmin, answersController.createAnswer);
 
 router.use(errorHandler);
 
-module.exports = router;
+export default router;

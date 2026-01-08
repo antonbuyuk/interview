@@ -1,8 +1,8 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const sectionsController = require('../controllers/sectionsController');
-const errorHandler = require('../middleware/errorHandler');
-const authAdmin = require('../middleware/authAdmin');
+import * as sectionsController from '../controllers/sectionsController.js';
+import errorHandler from '../middleware/errorHandler.js';
+import authAdmin from '../middleware/authAdmin.js';
 
 router.get('/', sectionsController.getSections);
 router.get('/:id', sectionsController.getSectionById);
@@ -12,4 +12,4 @@ router.delete('/:id', authAdmin, sectionsController.deleteSection);
 
 router.use(errorHandler);
 
-module.exports = router;
+export default router;

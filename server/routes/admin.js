@@ -1,10 +1,10 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const adminController = require('../controllers/adminController');
-const errorHandler = require('../middleware/errorHandler');
+import * as adminController from '../controllers/adminController.js';
+import errorHandler from '../middleware/errorHandler.js';
 
 router.post('/login', adminController.login);
 
 router.use(errorHandler);
 
-module.exports = router;
+export default router;

@@ -1,4 +1,4 @@
-const prisma = require('../utils/prisma');
+import prisma from '../utils/prisma.js';
 
 const getSections = async (req, res, next) => {
   try {
@@ -181,7 +181,7 @@ const deleteSection = async (req, res, next) => {
   }
 };
 
-module.exports = {
+export {
   getSections,
   getSectionById,
   createSection,
