@@ -1,12 +1,12 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const cookieParser = require('cookie-parser');
-const questionsRoutes = require('./routes/questions');
-const answersRoutes = require('./routes/answers');
-const termsRoutes = require('./routes/terms');
-const sectionsRoutes = require('./routes/sections');
-const adminRoutes = require('./routes/admin');
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import questionsRoutes from './routes/questions.js';
+import answersRoutes from './routes/answers.js';
+import termsRoutes from './routes/terms.js';
+import sectionsRoutes from './routes/sections.js';
+import adminRoutes from './routes/admin.js';
 
 const app = express();
 const PORT = process.env.PORT || process.env.API_PORT || 3001;

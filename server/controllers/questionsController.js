@@ -1,5 +1,5 @@
-const prisma = require('../utils/prisma');
-const { translate } = require('@vitalets/google-translate-api');
+import prisma from '../utils/prisma.js';
+import { translate } from '@vitalets/google-translate-api';
 
 const getQuestions = async (req, res, next) => {
   try {
@@ -235,7 +235,7 @@ const translateText = async (req, res, next) => {
   }
 };
 
-module.exports = {
+export {
   getQuestions,
   getQuestionById,
   createQuestion,
