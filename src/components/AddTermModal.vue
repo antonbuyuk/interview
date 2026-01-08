@@ -176,7 +176,11 @@ watch(
           phrasesText.value = suggestions.phrases.join(', ');
         }
 
-        if (!hasUserEdited.value.examples && suggestions.examples && suggestions.examples.length > 0) {
+        if (
+          !hasUserEdited.value.examples &&
+          suggestions.examples &&
+          suggestions.examples.length > 0
+        ) {
           examplesText.value = suggestions.examples.join('\n');
         }
       } catch (error) {
@@ -242,7 +246,7 @@ const handleSubmit = async () => {
     const selectedSection = sections.find(s => s.id === formData.value.category);
 
     const termData = {
-      term: formData.value.term,
+      term: formData.value.term.toLowerCase(),
       translation: formData.value.translation,
       category: formData.value.category,
       categoryTitle: selectedSection ? selectedSection.title : formData.value.category,
