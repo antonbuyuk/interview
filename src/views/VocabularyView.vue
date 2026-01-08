@@ -249,6 +249,7 @@ const deleteTerm = async term => {
     color: $text-dark;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.75rem;
 
     .title-icon {
@@ -477,7 +478,6 @@ const deleteTerm = async term => {
   margin: 0;
   flex: 1;
 }
-
 
 .card-body {
   flex: 1;
