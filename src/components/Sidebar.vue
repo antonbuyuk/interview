@@ -254,7 +254,7 @@ watch(
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  transition: all 0.2s ease;
+  @include transition(all, 0.2s, ease);
   opacity: 0.7;
   display: flex;
   align-items: center;

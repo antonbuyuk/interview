@@ -1,5 +1,3 @@
-import { sections } from './data/sections.js';
-import SectionView from './views/SectionView.vue';
 import HomeView from './views/HomeView.vue';
 import FlashCardsView from './views/FlashCardsView.vue';
 import PracticeModeView from './views/PracticeModeView.vue';
@@ -26,12 +24,6 @@ const routes = [
     name: 'vocabulary',
     component: VocabularyView,
   },
-  ...sections.map(section => ({
-    path: section.path,
-    name: section.id,
-    component: SectionView,
-    props: { section },
-  })),
 ];
 
 export default routes;

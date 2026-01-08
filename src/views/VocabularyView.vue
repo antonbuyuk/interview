@@ -41,9 +41,8 @@
     </div>
 
     <!-- Карточки терминов -->
-    <div v-if="loading" class="loading-state">
-      <div class="spinner"></div>
-      <p>Загрузка словаря...</p>
+    <div v-if="loading" class="vocabulary-grid">
+      <Skeleton v-for="n in 8" :key="`skeleton-${n}`" variant="vocabulary-card" />
     </div>
 
     <div v-else-if="filteredTerms.length === 0" class="empty-state">
@@ -116,6 +115,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { getTerms, deleteTerm as deleteTermApi } from '../api/terms';
 import AddTermModal from '../components/AddTermModal.vue';
+import Skeleton from '../components/Skeleton.vue';
 import { useAdminAuth } from '../composables/useAdminAuth';
 import { useTextToSpeech } from '../composables/useTextToSpeech';
 import {
@@ -435,10 +435,6 @@ const speakTerm = termText => {
 
 .vocabulary-card {
   @include card;
-
-  &:hover {
-    border-color: $primary-color;
-  }
 }
 
 .card-actions-top {

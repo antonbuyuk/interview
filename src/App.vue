@@ -82,6 +82,17 @@
       @saved="handleTermSaved"
     />
 
+    <!-- Модальное окно для добавления/редактирования вопросов -->
+    <AddQuestionModal
+      :is-open="showQuestionModal"
+      :question="editingQuestion"
+      :default-section-id="currentSectionId"
+      :is-admin="isAdmin"
+      @close="closeQuestionModal"
+      @saved="handleQuestionSaved"
+      @deleted="handleQuestionDeleted"
+    />
+
     <!-- Контекстное меню для выделенного текста -->
     <TextSelectionMenu
       :is-admin="isAdmin"
@@ -100,6 +111,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import Header from './components/Header.vue';
 import AddSectionModal from './components/AddSectionModal.vue';
 import AddTermModal from './components/AddTermModal.vue';
+import AddQuestionModal from './components/AddQuestionModal.vue';
 import TextSelectionMenu from './components/TextSelectionMenu.vue';
 import TermTooltip from './components/TermTooltip.vue';
 import { getSections, deleteSection as deleteSectionApi } from './api/sections';
@@ -118,6 +130,9 @@ const editingTerm = ref(null);
 const initialTerm = ref('');
 const hoveredTerm = ref(null);
 const tooltipPosition = ref({ x: 0, y: 0 });
+const showQuestionModal = ref(false);
+const editingQuestion = ref(null);
+const currentSectionId = ref(null);
 const { isAdmin } = useAdminAuth();
 const { loadDictionary, findTermById } = useDictionaryHighlight();
 
@@ -244,6 +259,48 @@ const handleTermTooltipClose = () => {
   hoveredTerm.value = null;
 };
 
+const handleOpenAddQuestion = () => {
+  if (isAdmin.value) {
+    editingQuestion.value = null;
+    showQuestionModal.value = true;
+  }
+};
+
+const handleEditQuestion = event => {
+  if (isAdmin.value && event.detail?.question) {
+    editingQuestion.value = event.detail.question;
+    showQuestionModal.value = true;
+  }
+};
+
+const closeQuestionModal = () => {
+  showQuestionModal.value = false;
+  editingQuestion.value = null;
+};
+
+const handleQuestionSaved = () => {
+  showQuestionModal.value = false;
+  editingQuestion.value = null;
+  // Эмитим событие для обновления контента в SectionView
+  window.dispatchEvent(new CustomEvent('questions-need-reload'));
+};
+
+const handleQuestionDeleted = () => {
+  showQuestionModal.value = false;
+  editingQuestion.value = null;
+  // Эмитим событие для обновления контента в SectionView
+  window.dispatchEvent(new CustomEvent('questions-need-reload'));
+};
+
+const handleCurrentSectionUpdated = event => {
+  // Получаем UUID раздела из события (приоритет sectionId, затем section.id)
+  if (event.detail?.sectionId) {
+    currentSectionId.value = event.detail.sectionId;
+  } else if (event.detail?.section?.id) {
+    currentSectionId.value = event.detail.section.id;
+  }
+};
+
 onMounted(() => {
   // Загружаем словарь один раз при старте приложения
   loadDictionary();
@@ -252,6 +309,12 @@ onMounted(() => {
   window.addEventListener('open-manage-sections', handleOpenManageSections);
   // Слушаем событие открытия добавления термина из SecondaryMenu
   window.addEventListener('open-add-term', handleOpenAddTerm);
+  // Слушаем событие открытия добавления вопроса из SecondaryMenu
+  window.addEventListener('open-add-question', handleOpenAddQuestion);
+  // Слушаем событие редактирования вопроса
+  window.addEventListener('edit-question', handleEditQuestion);
+  // Слушаем событие обновления текущего раздела
+  window.addEventListener('current-section-updated', handleCurrentSectionUpdated);
   // Слушаем событие hover на термине
   window.addEventListener('term-hover', e => handleTermHover(e.detail));
   // Слушаем обновление словаря для перезагрузки
@@ -264,19 +327,25 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('open-manage-sections', handleOpenManageSections);
   window.removeEventListener('open-add-term', handleOpenAddTerm);
+  window.removeEventListener('open-add-question', handleOpenAddQuestion);
+  window.removeEventListener('edit-question', handleEditQuestion);
+  window.removeEventListener('current-section-updated', handleCurrentSectionUpdated);
   window.removeEventListener('term-hover', e => handleTermHover(e.detail));
 });
 </script>
 
 <style lang="scss" scoped>
+@use '../src/styles/_mixins' as *;
+@use '../src/styles/_variables' as *;
+
 .action-btn {
   padding: 0.5rem;
   background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
+  border: 1px solid $border-color;
+  @include rounded-md;
   cursor: pointer;
   font-size: 1rem;
-  transition: all 0.2s ease;
+  @include transition(all, 0.2s, ease);
   width: 36px;
   height: 36px;
   display: flex;
@@ -290,8 +359,8 @@ onUnmounted(() => {
   }
 
   &:hover:not(:disabled) {
-    border-color: #42b883;
-    background: #f0f7ff;
+    border-color: $primary-color;
+    background: $bg-light;
   }
 
   &:disabled {
@@ -300,8 +369,8 @@ onUnmounted(() => {
   }
 
   &.delete-btn:hover:not(:disabled) {
-    border-color: #e74c3c;
-    background: #fee;
+    border-color: $error-color;
+    background: $error-bg;
   }
 }
 </style>

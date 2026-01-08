@@ -35,7 +35,7 @@
 
 @mixin modal-content {
   background: $bg-white;
-  border-radius: 8px;
+  @include rounded-md;
   padding: 2rem;
   width: 90%;
   max-height: 90vh;
@@ -175,7 +175,7 @@
   &:focus {
     outline: none;
     border-color: $primary-color;
-    box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.1);
+    @include shadow-focus;
   }
 }
 
@@ -225,17 +225,52 @@
 
 @mixin card {
   background: $bg-white;
-  border-radius: 8px;
+  @include rounded-md;
   padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  @include shadow-sm;
   border: 1px solid $border-color;
   transition: all 0.3s ease;
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-    border-color: $primary-color;
+    @include shadow-xl;
   }
+}
+
+// ============================================
+// Тени
+// ============================================
+
+@mixin shadow-sm {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+@mixin shadow-md {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+@mixin shadow-lg {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+@mixin shadow-xl {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+@mixin shadow-focus {
+  box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.1);
+}
+
+@mixin shadow-hover {
+  box-shadow: 0 2px 6px rgba(66, 184, 131, 0.3);
+}
+
+// ============================================
+// Скругления
+// ============================================
+
+@mixin rounded-md {
+  border-radius: 8px;
 }
 
 // ============================================

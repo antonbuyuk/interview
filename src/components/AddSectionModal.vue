@@ -72,8 +72,8 @@ import { ref, watch, computed } from 'vue';
 import { createSection, updateSection } from '../api/sections';
 
 const props = defineProps({
-  isOpen: Boolean,
-  section: Object,
+  isOpen: { type: Boolean, default: false },
+  section: { type: Object, default: () => ({}) },
 });
 
 const emit = defineEmits(['close', 'saved']);
@@ -149,12 +149,12 @@ const handleSubmit = async () => {
 
 <style lang="scss" scoped>
 @use '../styles/modals' as *;
-
+@use '../styles/variables' as *;
 .form-hint {
   display: block;
   margin-top: 0.25rem;
   font-size: 0.75rem;
-  color: #666;
+  color: $text-light-gray;
   font-style: italic;
 }
 </style>

@@ -1,8 +1,9 @@
 <template>
   <div class="section-view">
-    <div v-if="loading" class="loading">
-      <div class="spinner"></div>
-      <p>Загрузка...</p>
+    <div v-if="loading" class="section-wrapper">
+      <div class="question-content">
+        <Skeleton v-for="n in 3" :key="`skeleton-${n}`" variant="question" />
+      </div>
     </div>
 
     <div v-else-if="error" class="error">
@@ -19,17 +20,6 @@
         @edit-question="openEditQuestion"
       />
     </div>
-
-    <!-- Модальное окно для добавления/редактирования вопросов -->
-    <AddQuestionModal
-      :is-open="showQuestionModal"
-      :question="editingQuestion"
-      :default-section-id="currentSectionId"
-      :is-admin="isAdmin"
-      @close="closeQuestionModal"
-      @saved="handleQuestionSaved"
-      @deleted="handleQuestionDeleted"
-    />
 
     <!-- Модальное окно для вопросов на мобильных -->
     <div v-if="filterOpen" class="filter-overlay" @click="closeFilter">
@@ -52,16 +42,14 @@
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import QuestionNav from '../components/QuestionNav.vue';
-import AddQuestionModal from '../components/AddQuestionModal.vue';
 import QuestionContent from '../components/QuestionContent.vue';
+import Skeleton from '../components/Skeleton.vue';
 import { useAdminAuth } from '../composables/useAdminAuth';
 import { getQuestions } from '../api/questions';
 import { getSectionById } from '../api/sections';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 // Используем темную тему и переопределим цвета для VS Code стиля
-import 'highlight.js/styles/github-dark.css';
 import '../styles/code.scss';
-import '../styles/vscode-theme.scss';
 import '../styles/highlight-fix.scss';
 
 const props = defineProps({
@@ -79,10 +67,6 @@ const filterOpen = ref(false);
 const fullQuestionsData = ref([]); // Полные данные вопросов для редактирования
 const currentSectionId = ref(null); // UUID текущего раздела
 
-// Модалка для добавления/редактирования вопросов
-const showQuestionModal = ref(false);
-const editingQuestion = ref(null);
-
 // Admin auth
 const { isAdmin } = useAdminAuth();
 
@@ -98,32 +82,13 @@ const handleToggleFilter = event => {
   filterOpen.value = event.detail.open;
 };
 
-// Методы для работы с модалкой вопросов
-const openAddQuestion = async () => {
-  editingQuestion.value = null;
-  showQuestionModal.value = true;
-  // Автоматически заполняем sectionId текущим разделом
-  // Это будет обработано в модалке через prop
-};
-
+// Метод для открытия редактирования вопроса
 const openEditQuestion = question => {
-  editingQuestion.value = question;
-  showQuestionModal.value = true;
-};
-
-const closeQuestionModal = () => {
-  showQuestionModal.value = false;
-  editingQuestion.value = null;
-};
-
-const handleQuestionSaved = () => {
-  // Перезагружаем контент после сохранения
-  loadContent();
-};
-
-const handleQuestionDeleted = () => {
-  // Перезагружаем контент после удаления
-  loadContent();
+  // Эмитим глобальное событие для открытия модалки редактирования
+  const event = new CustomEvent('edit-question', {
+    detail: { question },
+  });
+  window.dispatchEvent(event);
 };
 
 // Передаем количество вопросов в Header через событие
@@ -165,6 +130,12 @@ const loadContent = async () => {
       text: q.question,
     }));
 
+    // Отправляем событие с UUID раздела для App.vue
+    const sectionEvent = new CustomEvent('current-section-updated', {
+      detail: { section: props.section, sectionId: currentSectionId.value },
+    });
+    window.dispatchEvent(sectionEvent);
+
     // Прокручиваем к вопросу, если он указан в hash
     await nextTick();
     if (route.hash) {
@@ -183,31 +154,26 @@ const loadContent = async () => {
   }
 };
 
-// Обработчик открытия добавления вопроса из Header
-const handleOpenAddQuestion = () => {
-  openAddQuestion();
+// Обработчик перезагрузки контента после сохранения/удаления вопроса
+const handleQuestionsNeedReload = () => {
+  loadContent();
 };
 
-// Слушаем события от Header для открытия/закрытия фильтра
+// Слушаем события
 onMounted(() => {
   window.addEventListener('toggle-filter', handleToggleFilter);
-  window.addEventListener('open-add-question', handleOpenAddQuestion);
+  window.addEventListener('questions-need-reload', handleQuestionsNeedReload);
 });
 
 onUnmounted(() => {
   window.removeEventListener('toggle-filter', handleToggleFilter);
-  window.removeEventListener('open-add-question', handleOpenAddQuestion);
+  window.removeEventListener('questions-need-reload', handleQuestionsNeedReload);
 });
 
 watch(
   () => props.section.id,
   () => {
     loadContent();
-    // Передаем текущий раздел в Header
-    const sectionEvent = new CustomEvent('current-section-updated', {
-      detail: { section: props.section },
-    });
-    window.dispatchEvent(sectionEvent);
   },
   { immediate: true }
 );
@@ -307,38 +273,28 @@ watch(
   }
 }
 
-.loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 2rem;
-  text-align: center;
-}
+.question-content {
+  background: $bg-white;
+  border-radius: 12px;
+  padding: 3rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  line-height: 1.8;
+  max-width: 60rem;
+  margin-inline: auto;
+  width: 100%;
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid $primary-color;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
+  @media (max-width: $breakpoint-mobile) {
+    max-width: 100%;
+    padding: 1rem;
+    border-radius: 0;
+    font-size: 0.9375rem;
   }
 }
 
 .error {
   background: #fee;
   border: 1px solid #fcc;
-  border-radius: 8px;
+  @include rounded-md;
   padding: 2rem;
   text-align: center;
   color: #c33;
@@ -397,7 +353,7 @@ watch(
 
   @media (max-width: $breakpoint-mobile) {
     max-height: calc(100vh - 56px - 1rem);
-    border-radius: 8px;
+    @include rounded-md;
   }
 }
 
@@ -449,7 +405,7 @@ watch(
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-  transition: all 0.2s;
+  @include transition;
 
   &:hover {
     background: $border-color;

@@ -98,7 +98,10 @@ watch(
 );
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
 .section-dropdown {
   position: relative;
 }
@@ -122,7 +125,7 @@ watch(
   padding: 0.75rem 1.5rem;
   color: #1e1e1e;
   text-decoration: none;
-  transition: all 0.2s;
+  @include transition;
   border-left: 3px solid transparent;
   cursor: pointer;
 }
@@ -161,8 +164,8 @@ watch(
   max-height: 500px;
   background: #ffffff;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  @include rounded-md;
+  @include shadow-lg;
   z-index: 1000;
   overflow: hidden;
   display: flex;
@@ -205,7 +208,7 @@ watch(
   padding: 0.75rem 1rem;
   text-decoration: none;
   color: #1e1e1e;
-  transition: all 0.2s;
+  @include transition;
   border-bottom: 1px solid #e0e0e0;
 }
 
@@ -235,7 +238,7 @@ watch(
 /* Анимация выпадающего меню */
 .dropdown-enter-active,
 .dropdown-leave-active {
-  transition: all 0.2s ease;
+  @include transition(all, 0.2s, ease);
   opacity: 1;
   transform: translateX(0);
 }

@@ -2,7 +2,7 @@
  * Утилита для извлечения технических терминов из Markdown файлов
  */
 
-import { sections } from '../data/sections.js';
+import { getSections } from '../api/sections';
 
 /**
  * Извлекает технические термины из текста
@@ -263,6 +263,15 @@ function extractPhrases(text, term) {
 export async function extractVocabularyFromMarkdown() {
   const termMap = new Map(); // Для объединения дубликатов
 
+  // Загружаем разделы из БД
+  let sections;
+  try {
+    sections = await getSections();
+  } catch (error) {
+    console.error('Ошибка загрузки разделов:', error);
+    return [];
+  }
+
   // Проходим по всем секциям
   for (const section of sections) {
     try {
@@ -287,7 +296,7 @@ export async function extractVocabularyFromMarkdown() {
           termMap.set(key, {
             term: term,
             translation: '', // Будет заполнено вручную или через словарь
-            category: section.id,
+            category: section.sectionId,
             categoryTitle: section.title,
             examples: examples,
             phrases: phrases,
@@ -306,8 +315,8 @@ export async function extractVocabularyFromMarkdown() {
           if (!existing.categories) {
             existing.categories = [existing.category];
           }
-          if (!existing.categories.includes(section.id)) {
-            existing.categories.push(section.id);
+          if (!existing.categories.includes(section.sectionId)) {
+            existing.categories.push(section.sectionId);
           }
         }
       });

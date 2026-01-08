@@ -35,7 +35,6 @@ const props = defineProps({
   },
 });
 
-const codeRef = ref(null);
 const isCopied = ref(false);
 
 const highlightedCode = computed(() => {
@@ -98,24 +97,25 @@ const handleCopy = async () => {
 
 <style lang="scss" scoped>
 @use '../styles/variables' as *;
+@use '../styles/mixins' as *;
 
 .code-block {
   position: relative;
   background: $code-bg-dark !important;
-  border-radius: 8px;
+  @include rounded-md;
   padding: 1.25rem 1.5rem;
   padding-top: 2.75rem;
   overflow-x: auto;
   margin: 1.5rem 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s ease;
+  box-shadow: $shadow-md;
+  border: 1px solid $border-color;
+  @include transition(all, 0.3s, ease);
   font-size: 0.875rem;
   line-height: 1.5;
 
   &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: $shadow-lg;
+    border-color: $border-color;
   }
 
   // Красивый скроллбар для блоков кода
@@ -124,18 +124,18 @@ const handleCopy = async () => {
   }
 
   &::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.03);
+    background: $bg-light;
     border-radius: 10px;
     margin: 0.5rem 0;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: $text-light-gray;
     border-radius: 10px;
     border: 2px solid $code-bg-dark;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: $text-lighter-gray;
     }
   }
 
@@ -167,56 +167,6 @@ const handleCopy = async () => {
       color: $code-text !important;
       background: transparent !important;
     }
-
-    // Переопределяем цвета темы для лучшей читаемости
-    :deep(.hljs-comment),
-    :deep(.hljs-quote) {
-      color: #6a9955 !important;
-      font-style: italic !important;
-    }
-
-    :deep(.hljs-keyword),
-    :deep(.hljs-selector-tag) {
-      color: #569cd6 !important;
-    }
-
-    :deep(.hljs-string),
-    :deep(.hljs-meta .hljs-meta-string) {
-      color: #ce9178 !important;
-    }
-
-    :deep(.hljs-number),
-    :deep(.hljs-literal) {
-      color: #b5cea8 !important;
-    }
-
-    :deep(.hljs-function),
-    :deep(.hljs-title:not(.hljs-class):not(.hljs-type)) {
-      color: #dcdcaa !important;
-    }
-
-    :deep(.hljs-type),
-    :deep(.hljs-class) {
-      color: #4ec9b0 !important;
-    }
-
-    :deep(.hljs-variable),
-    :deep(.hljs-params) {
-      color: #9cdcfe !important;
-    }
-
-    :deep(.hljs-property),
-    :deep(.hljs-attr) {
-      color: #92c5f7 !important;
-    }
-
-    :deep(.hljs-built_in) {
-      color: #569cd6 !important;
-    }
-
-    :deep(.hljs-regexp) {
-      color: #d16969 !important;
-    }
   }
 }
 
@@ -224,14 +174,14 @@ const handleCopy = async () => {
   position: absolute;
   top: 0.75rem;
   right: 0.75rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: $bg-light;
+  border: 1px solid $border-color;
   border-radius: 6px;
   padding: 0.5rem 0.75rem;
-  color: #abb2bf;
+  color: $text-light-gray;
   cursor: pointer;
   font-size: 1rem;
-  transition: all 0.2s ease;
+  @include transition(all, 0.2s, ease);
   z-index: 10;
   backdrop-filter: blur(10px);
   display: flex;
@@ -246,16 +196,16 @@ const handleCopy = async () => {
   }
 
   &:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: $bg-light;
+    border-color: $border-color;
     color: #fff;
     transform: scale(1.05);
   }
 
   &.copied {
-    background: rgba(98, 239, 152, 0.2);
-    border-color: rgba(98, 239, 152, 0.4);
-    color: #62ef98;
+    background: $success-bg;
+    border-color: $success-color;
+    color: $success-color;
     font-size: 0.875rem;
   }
 

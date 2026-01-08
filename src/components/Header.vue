@@ -360,7 +360,7 @@ onUnmounted(() => {
   background: $bg-white;
   color: $text-dark;
   z-index: 102;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  @include shadow-md;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -491,8 +491,8 @@ onUnmounted(() => {
   max-height: 500px;
   background: $bg-white;
   border: 1px solid $border-color;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  @include rounded-md;
+  @include shadow-lg;
   z-index: 1000;
   overflow: hidden;
   display: flex;
@@ -654,7 +654,7 @@ onUnmounted(() => {
   font-size: 0.625rem;
   font-weight: 600;
   padding: 0.125rem 0.25rem;
-  border-radius: 8px;
+  @include rounded-md;
   min-width: 16px;
   text-align: center;
   line-height: 1.2;
@@ -735,7 +735,7 @@ onUnmounted(() => {
   width: 280px;
   height: calc(100vh - 56px);
   background: $bg-white;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  @include shadow-md;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -841,7 +841,7 @@ onUnmounted(() => {
 // Transitions
 .dropdown-enter-active,
 .dropdown-leave-active {
-  transition: all 0.2s ease;
+  @include transition(all, 0.2s, ease);
   opacity: 1;
   transform: translateY(0);
 }

@@ -1,6 +1,7 @@
 @use './variables' as *;
 @use './mixins' as *;
 @use './modals' as *;
+@use './vscode-theme' as *;
 
 * {
   margin: 0;
@@ -52,7 +53,7 @@ body {
 }
 
 .modal-body {
-  padding: 1.5rem;
+  padding: 1.5rem 0;
 }
 
 .add-section-btn {
@@ -66,7 +67,7 @@ body {
   font-weight: 500;
   cursor: pointer;
   margin-bottom: 1.5rem;
-  transition: all 0.2s ease;
+  @include transition(all, 0.2s, ease);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -98,8 +99,8 @@ body {
   padding: 1rem;
   background: #f8f9fa;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  @include rounded-md;
+  @include transition(all, 0.2s, ease);
 
   &:hover {
     border-color: #42b883;

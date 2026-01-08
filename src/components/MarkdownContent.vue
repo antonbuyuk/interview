@@ -116,7 +116,7 @@ const handleMouseOut = event => {
 
 <style lang="scss" scoped>
 @use '../styles/variables' as *;
-
+@use '../styles/mixins' as *;
 .markdown-content {
   :deep(h1) {
     font-size: 2rem;
@@ -288,7 +288,7 @@ const handleMouseOut = event => {
   :deep(pre) {
     position: relative;
     background: $code-bg-dark !important;
-    border-radius: 8px;
+    @include rounded-md;
     padding: 1.25rem 1.5rem;
     padding-top: 2.75rem;
     overflow-x: auto;

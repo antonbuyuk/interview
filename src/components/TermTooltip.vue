@@ -246,8 +246,8 @@ defineExpose({
   width: max-content;
   background: white;
   border: 1px solid $border-color;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  @include rounded-md;
+  @include shadow-xl;
   pointer-events: auto;
   animation: fadeIn 0.2s ease-out;
   overflow: visible;
@@ -278,7 +278,7 @@ defineExpose({
 
 .tooltip-header {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid $border-color;
   background: $bg-light;
 }
 
@@ -332,7 +332,7 @@ defineExpose({
 
 .tooltip-footer {
   padding: 0.5rem 1rem;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid $border-color;
   background: $bg-light;
 }
 
@@ -346,16 +346,16 @@ defineExpose({
   background: $primary-color;
   color: white;
   border: none;
-  border-radius: 6px;
+  @include rounded-md;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  @include transition(all, 0.2s, ease);
 
   &:hover {
-    background: #35a372;
+    background: $primary-hover;
     transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(66, 184, 131, 0.3);
+    @include shadow-hover;
   }
 
   &:active {

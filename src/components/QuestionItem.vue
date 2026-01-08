@@ -140,6 +140,7 @@ const handleEdit = () => {
 
 <style lang="scss" scoped>
 @use '../styles/variables' as *;
+@use '../styles/mixins' as *;
 
 .question-item {
   margin-bottom: 2rem;
@@ -189,7 +190,7 @@ const handleEdit = () => {
     padding: 0.375rem 0.625rem;
     cursor: pointer;
     font-size: 0.875rem;
-    transition: all 0.2s ease;
+    @include transition(all, 0.2s, ease);
     flex-shrink: 0;
     opacity: 0.7;
     display: flex;
@@ -233,7 +234,7 @@ const handleEdit = () => {
 :deep(.dictionary-term) {
   position: relative;
   cursor: help;
-  transition: all 0.2s ease;
+  @include transition(all, 0.2s, ease);
   background-color: rgba(66, 184, 131, 0.15);
   padding: 0.125rem 0.25rem;
   border-radius: 3px;
