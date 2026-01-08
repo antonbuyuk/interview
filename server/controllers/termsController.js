@@ -1,4 +1,5 @@
 const prisma = require('../utils/prisma');
+const OpenAI = require('openai');
 
 const getTerms = async (req, res, next) => {
   try {
@@ -192,10 +193,93 @@ const deleteTerm = async (req, res, next) => {
   }
 };
 
+const getTermSuggestions = async (req, res, next) => {
+  try {
+    const { term } = req.body;
+
+    // Валидация: термин должен быть не пустым и минимум 2 символа
+    if (!term || typeof term !== 'string' || term.trim().length < 2) {
+      return res.status(400).json({ error: 'Term must be at least 2 characters long' });
+    }
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return res.status(503).json({ error: 'OpenAI API key is not configured' });
+    }
+
+    const openai = new OpenAI({ apiKey });
+
+    const prompt = `Ты помощник для создания словаря технических терминов на английском языке.
+
+Для английского термина "${term.trim()}" предоставь:
+1. Перевод на русский язык (краткий и точный)
+2. 3-5 распространенных словосочетаний с этим термином (на английском)
+3. 3-5 примеров предложений с использованием термина (на английском)
+
+Верни ответ ТОЛЬКО в формате JSON без дополнительных комментариев:
+{
+  "translation": "перевод на русский",
+  "phrases": ["словосочетание 1", "словосочетание 2", "словосочетание 3"],
+  "examples": ["пример предложения 1", "пример предложения 2", "пример предложения 3"]
+}`;
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'system',
+          content: 'Ты помощник для создания словаря технических терминов. Всегда отвечай только валидным JSON без дополнительных комментариев.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 500,
+    });
+
+    const content = completion.choices[0]?.message?.content;
+    if (!content) {
+      return res.status(500).json({ error: 'Failed to get response from OpenAI' });
+    }
+
+    // Парсим JSON ответ
+    let suggestions;
+    try {
+      // Убираем возможные markdown code blocks
+      const cleanedContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      suggestions = JSON.parse(cleanedContent);
+    } catch (parseError) {
+      console.error('Failed to parse OpenAI response:', content);
+      return res.status(500).json({ error: 'Failed to parse AI response' });
+    }
+
+    // Валидация структуры ответа
+    if (!suggestions.translation || !Array.isArray(suggestions.phrases) || !Array.isArray(suggestions.examples)) {
+      return res.status(500).json({ error: 'Invalid response format from AI' });
+    }
+
+    res.json({
+      translation: suggestions.translation.trim(),
+      phrases: suggestions.phrases.filter(p => p && p.trim()).map(p => p.trim()),
+      examples: suggestions.examples.filter(e => e && e.trim()).map(e => e.trim()),
+    });
+  } catch (error) {
+    console.error('Error getting term suggestions:', error);
+    // Если ошибка от OpenAI, возвращаем 503, иначе 500
+    if (error.status === 401 || error.status === 429) {
+      return res.status(503).json({ error: 'OpenAI service unavailable' });
+    }
+    next(error);
+  }
+};
+
 module.exports = {
   getTerms,
   getTermById,
   createTerm,
   updateTerm,
   deleteTerm,
+  getTermSuggestions,
 };
