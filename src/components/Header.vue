@@ -10,105 +10,64 @@
       <!-- Навигация для десктопа -->
       <nav v-if="!isMobile" class="desktop-nav">
         <!-- Дропдаун "Разделы" -->
-        <div
-          class="nav-dropdown"
-          @mouseenter="
-            cancelHideSectionsDropdown();
-            showSectionsDropdown = true;
-          "
-          @mouseleave="hideSectionsDropdown"
-        >
+        <div class="nav-dropdown">
           <button class="nav-dropdown-btn" :class="{ active: isSectionsActive }">
             <span>Разделы</span>
             <span class="dropdown-arrow">▼</span>
           </button>
-          <transition name="dropdown">
-            <div
-              v-if="showSectionsDropdown && sections.length > 0"
-              class="dropdown-menu sections-dropdown"
-              @mouseenter="cancelHideSectionsDropdown()"
-              @mouseleave="hideSectionsDropdown"
-            >
-              <div v-if="isAdmin" class="dropdown-header">
-                <span class="dropdown-title">Разделы</span>
-                <button
-                  class="manage-sections-btn"
-                  title="Управление разделами"
-                  @click="openManageSections"
-                >
-                  <Cog6ToothIcon class="icon-small" />
-                </button>
-              </div>
-              <div class="dropdown-list">
-                <router-link
-                  v-for="section in sections"
-                  :key="section.id"
-                  :to="section.path"
-                  class="dropdown-item"
-                  :class="{ active: isSectionActive(section.path) }"
-                  @click="hideSectionsDropdown"
-                >
-                  <span class="section-title">{{ section.title }}</span>
-                </router-link>
-              </div>
+          <div v-if="sections.length > 0" class="dropdown-menu sections-dropdown">
+            <div class="dropdown-list">
+              <router-link
+                v-for="section in sections"
+                :key="section.id"
+                :to="section.path"
+                class="dropdown-item"
+                :class="{ active: isSectionActive(section.path) }"
+                @click="hideSectionsDropdown"
+              >
+                <span class="section-title">{{ section.title }}</span>
+              </router-link>
             </div>
-          </transition>
+          </div>
         </div>
 
         <!-- Дропдаун "Тренировка" -->
-        <div
-          class="nav-dropdown"
-          @mouseenter="
-            cancelHideTrainingDropdown();
-            showTrainingDropdown = true;
-          "
-          @mouseleave="hideTrainingDropdown"
-        >
+        <div class="nav-dropdown">
           <button class="nav-dropdown-btn" :class="{ active: isTrainingActive }">
             <span>Тренировка</span>
             <span class="dropdown-arrow">▼</span>
           </button>
-          <transition name="dropdown">
-            <div
-              v-if="showTrainingDropdown"
-              class="dropdown-menu training-dropdown"
-              @mouseenter="
-                cancelHideTrainingDropdown();
-                showTrainingDropdown = true;
-              "
-              @mouseleave="hideTrainingDropdown"
-            >
-              <div class="dropdown-list">
-                <router-link
-                  to="/training/flash-cards"
-                  class="dropdown-item"
-                  :class="{ active: route.path === '/training/flash-cards' }"
-                  @click="hideTrainingDropdown"
-                >
-                  <RectangleStackIcon class="nav-icon" />
-                  <span>Флэш-карточки</span>
-                </router-link>
-                <router-link
-                  to="/training/practice"
-                  class="dropdown-item"
-                  :class="{ active: route.path === '/training/practice' }"
-                  @click="hideTrainingDropdown"
-                >
-                  <ClockIcon class="nav-icon" />
-                  <span>Режим самопроверки</span>
-                </router-link>
-                <router-link
-                  to="/vocabulary"
-                  class="dropdown-item"
-                  :class="{ active: route.path === '/vocabulary' }"
-                  @click="hideTrainingDropdown"
-                >
-                  <BookOpenIcon class="nav-icon" />
-                  <span>Словарь терминов</span>
-                </router-link>
-              </div>
+          <div class="dropdown-menu training-dropdown">
+            <div class="dropdown-list">
+              <router-link
+                to="/training/flash-cards"
+                class="dropdown-item"
+                :class="{ active: route.path === '/training/flash-cards' }"
+                @click="hideTrainingDropdown"
+              >
+                <RectangleStackIcon class="nav-icon" />
+                <span>Флэш-карточки</span>
+              </router-link>
+              <router-link
+                to="/training/practice"
+                class="dropdown-item"
+                :class="{ active: route.path === '/training/practice' }"
+                @click="hideTrainingDropdown"
+              >
+                <ClockIcon class="nav-icon" />
+                <span>Режим самопроверки</span>
+              </router-link>
+              <router-link
+                to="/vocabulary"
+                class="dropdown-item"
+                :class="{ active: route.path === '/vocabulary' }"
+                @click="hideTrainingDropdown"
+              >
+                <BookOpenIcon class="nav-icon" />
+                <span>Словарь терминов</span>
+              </router-link>
             </div>
-          </transition>
+          </div>
         </div>
       </nav>
 
@@ -230,6 +189,7 @@
     <!-- Модальное окно авторизации -->
     <AdminLoginModal
       :is-open="showLoginModal"
+      is-small
       @close="closeLoginModal"
       @success="closeLoginModal"
     />
@@ -395,6 +355,10 @@ watch(
   }
 );
 
+const handleOpenLoginModal = () => {
+  showLoginModal.value = true;
+};
+
 onMounted(() => {
   checkMobile();
   window.addEventListener('resize', checkMobile);
@@ -422,11 +386,15 @@ onMounted(() => {
   window.addEventListener('current-section-updated', event => {
     currentSection.value = event.detail.section || null;
   });
+
+  // Слушаем события открытия модального окна авторизации
+  window.addEventListener('open-login-modal', handleOpenLoginModal);
 });
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile);
   window.removeEventListener('sections-updated', loadSections);
+  window.removeEventListener('open-login-modal', handleOpenLoginModal);
   document.removeEventListener('click', handleUserMenuClickOutside);
 });
 </script>
@@ -516,6 +484,7 @@ onUnmounted(() => {
 
 .nav-dropdown {
   position: relative;
+  cursor: pointer;
 
   // Невидимая область для плавного перехода курсора
   &::after {
@@ -527,6 +496,12 @@ onUnmounted(() => {
     height: 0.75rem;
     background: transparent;
     pointer-events: auto;
+  }
+
+  &:hover {
+    .dropdown-menu {
+      display: block;
+    }
   }
 }
 
@@ -542,6 +517,7 @@ onUnmounted(() => {
   font-weight: 500;
   cursor: pointer;
   border-radius: 6px;
+  cursor: pointer;
   @include transition;
 
   &:hover {
@@ -560,7 +536,7 @@ onUnmounted(() => {
 
 .dropdown-menu {
   position: absolute;
-  top: calc(100% + 0.5rem);
+  top: calc(100%);
   left: 0;
   min-width: 240px;
   max-width: 320px;
@@ -573,6 +549,7 @@ onUnmounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  display: none;
 }
 
 .dropdown-header {
