@@ -69,21 +69,21 @@
                 v-if="isSupported"
                 class="tts-btn"
                 title="Озвучить вопрос"
-                @click.stop="speakQuestion(currentQuestion.question)"
+                @click.stop="speakQuestion(currentQuestion?.question)"
               >
                 🔊
               </button>
             </div>
-            <div class="card-text" v-html="currentQuestion.question"></div>
+            <div class="card-text" v-html="currentQuestion?.question"></div>
           </div>
           <div v-else class="card-back">
             <div class="card-header">
               <div class="card-label">Answer EN</div>
               <button
-                v-if="isSupported && currentQuestion.answerEn"
+                v-if="isSupported && currentQuestion?.answerEn"
                 class="tts-btn"
                 title="Озвучить ответ"
-                @click.stop="speakAnswer(currentQuestion.answerEn)"
+                @click.stop="speakAnswer(currentQuestion?.answerEn)"
               >
                 🔊
               </button>

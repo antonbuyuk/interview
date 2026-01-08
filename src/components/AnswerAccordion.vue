@@ -21,25 +21,14 @@ import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import MarkdownContent from './MarkdownContent.vue';
 import { ChevronRightIcon } from '@heroicons/vue/24/outline';
 
-const props = defineProps({
-  type: {
-    type: String,
-    required: true,
-    validator: value => ['ru', 'en', 'senior'].includes(value),
-  },
-  content: {
-    type: String,
-    required: true,
-    default: '',
-  },
-  defaultOpen: {
-    type: Boolean,
-    default: false,
-  },
-});
+const props = defineProps<{
+  type: 'ru' | 'en' | 'senior';
+  content: string;
+  defaultOpen?: boolean;
+}>();
 
 const isOpen = ref(props.defaultOpen);
-const innerRef = ref(null);
+const innerRef = ref<HTMLElement | null>(null);
 const maxHeight = ref('0');
 
 const label = computed(() => {
@@ -58,7 +47,10 @@ const label = computed(() => {
 const updateMaxHeight = async () => {
   await nextTick();
   if (innerRef.value && isOpen.value) {
-    maxHeight.value = `${innerRef.value.scrollHeight}px`;
+    const scrollHeight = innerRef.value.scrollHeight;
+    if (scrollHeight !== undefined) {
+      maxHeight.value = `${scrollHeight}px`;
+    }
   }
 };
 
@@ -69,8 +61,8 @@ const toggle = async () => {
 
 watch(
   () => innerRef.value?.scrollHeight,
-  () => {
-    if (isOpen.value) {
+  (scrollHeight: number | undefined) => {
+    if (isOpen.value && scrollHeight !== undefined) {
       updateMaxHeight();
     }
   }

@@ -50,7 +50,6 @@
                 to="/training/practice"
                 class="dropdown-item"
                 :class="{ active: route.path === '/training/practice' }"
-                @click="hideTrainingDropdown"
               >
                 <ClockIcon class="nav-icon" />
                 <span>Режим самопроверки</span>
@@ -59,7 +58,6 @@
                 to="/vocabulary"
                 class="dropdown-item"
                 :class="{ active: route.path === '/vocabulary' }"
-                @click="hideTrainingDropdown"
               >
                 <BookOpenIcon class="nav-icon" />
                 <span>Словарь терминов</span>
@@ -83,7 +81,7 @@
     <div class="header-right">
       <!-- Поиск -->
       <div class="search-wrapper">
-        <Search :current-section="currentSection" :questions="currentQuestions" />
+        <Search :current-section="currentSection || undefined" :questions="currentQuestions" />
       </div>
 
       <!-- English Only Toggle -->
@@ -200,6 +198,7 @@ import {
   Cog6ToothIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline';
+import type { Section, Question } from '../types/api';
 
 const route = useRoute();
 const isMobile = ref(false);
@@ -208,12 +207,12 @@ const filterOpen = ref(false);
 const mobileMenuOpen = ref(false);
 const questionsCount = ref(0);
 const showLoginModal = ref(false);
-const sections = ref([]);
-const currentSection = ref(null);
-const currentQuestions = ref([]);
+const sections = ref<Section[]>([]);
+const currentSection = ref<Section | null>(null);
+const currentQuestions = ref<Question[]>([]);
 
 const { isAdmin } = useAdminAuth();
-const { englishOnly } = useTrainingMode();
+const { englishOnly, settings } = useTrainingMode();
 
 const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768;
@@ -225,14 +224,15 @@ const hideUserMenu = () => {
   }, 200);
 };
 
-const handleUserMenuClickOutside = event => {
-  if (!event.target.closest('.user-menu-dropdown')) {
+const handleUserMenuClickOutside = (event: Event) => {
+  const target = event.target as HTMLElement;
+  if (!target.closest('.user-menu-dropdown')) {
     showUserMenu.value = false;
   }
 };
 
 const toggleEnglishOnly = () => {
-  englishOnly.value = !englishOnly.value;
+  settings.value.englishOnly = !settings.value.englishOnly;
 };
 
 const toggleFilter = () => {
@@ -268,7 +268,7 @@ const loadSections = async () => {
   }
 };
 
-const isSectionActive = path => {
+const isSectionActive = (path: string): boolean => {
   return route.path === path || route.path.startsWith(path + '#');
 };
 
@@ -321,18 +321,21 @@ onMounted(() => {
   });
 
   // Слушаем обновления количества вопросов
-  window.addEventListener('questions-count-updated', event => {
-    questionsCount.value = event.detail.count;
+  window.addEventListener('questions-count-updated', (event: Event) => {
+    const customEvent = event as CustomEvent<{ count: number }>;
+    questionsCount.value = customEvent.detail.count;
   });
 
   // Слушаем события для установки текущих вопросов
-  window.addEventListener('current-questions-updated', event => {
-    currentQuestions.value = event.detail.questions || [];
+  window.addEventListener('current-questions-updated', (event: Event) => {
+    const customEvent = event as CustomEvent<{ questions?: Question[] }>;
+    currentQuestions.value = customEvent.detail.questions || [];
   });
 
   // Слушаем события для установки текущего раздела
-  window.addEventListener('current-section-updated', event => {
-    currentSection.value = event.detail.section || null;
+  window.addEventListener('current-section-updated', (event: Event) => {
+    const customEvent = event as CustomEvent<{ section?: Section }>;
+    currentSection.value = customEvent.detail.section || null;
   });
 
   // Слушаем события открытия модального окна авторизации

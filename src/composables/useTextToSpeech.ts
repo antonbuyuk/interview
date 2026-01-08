@@ -56,7 +56,7 @@ export function useTextToSpeech(): UseTextToSpeechReturn {
     // Пытаемся найти качественный британский английский голос
     if (!selectedVoice.value && voices.length > 0) {
       // Приоритет: en-GB голоса с качественными синтезаторами
-      type VoicePredicate = (voice: SpeechSynthesisVoice) => boolean;
+      type VoicePredicate = (_voice: SpeechSynthesisVoice) => boolean;
       const preferredVoices: VoicePredicate[] = [
         // Google TTS голоса (обычно высокого качества)
         voice => voice.lang === 'en-GB' && voice.name.toLowerCase().includes('google'),
