@@ -1,11 +1,17 @@
 <template>
-  <div class="markdown-content" v-html="htmlContent"></div>
+  <div
+    class="markdown-content"
+    @mouseover="handleMouseOver"
+    @mouseout="handleMouseOut"
+    v-html="highlightedContent"
+  />
 </template>
 
 <script setup>
 import { computed } from 'vue';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
+import { useDictionaryHighlight } from '../composables/useDictionaryHighlight';
 
 const props = defineProps({
   markdown: {
@@ -14,6 +20,10 @@ const props = defineProps({
     default: '',
   },
 });
+
+defineEmits(['term-hover']);
+
+const { highlightTermsInHTML } = useDictionaryHighlight();
 
 // Настройка marked для подсветки синтаксиса
 const highlightFunction = function (code, lang) {
@@ -49,6 +59,59 @@ const htmlContent = computed(() => {
   }
   return marked.parse(props.markdown);
 });
+
+const highlightedContent = computed(() => {
+  const html = htmlContent.value;
+  if (!html) return '';
+  return highlightTermsInHTML(html);
+});
+
+let hoverTimer = null;
+
+const handleMouseOver = event => {
+  const target = event.target;
+  if (target.classList.contains('dictionary-term')) {
+    // Отменяем предыдущий таймер скрытия
+    if (hoverTimer) {
+      clearTimeout(hoverTimer);
+      hoverTimer = null;
+    }
+
+    const termId = target.getAttribute('data-term-id');
+    const termName = target.getAttribute('data-term');
+    if (termId && termName) {
+      const rect = target.getBoundingClientRect();
+      window.dispatchEvent(
+        new CustomEvent('term-hover', {
+          detail: {
+            term: { id: termId, term: termName },
+            position: {
+              x: rect.left + rect.width / 2,
+              y: rect.top,
+            },
+          },
+        })
+      );
+    }
+  }
+};
+
+const handleMouseOut = event => {
+  const target = event.target;
+  if (target.classList.contains('dictionary-term')) {
+    // Добавляем задержку перед скрытием, чтобы пользователь успел навести на tooltip
+    hoverTimer = setTimeout(() => {
+      window.dispatchEvent(
+        new CustomEvent('term-hover', {
+          detail: null,
+        })
+      );
+      hoverTimer = null;
+    }, 200);
+  }
+};
+
+// Словарь загружается глобально в App.vue
 </script>
 
 <style lang="scss" scoped>

@@ -126,7 +126,10 @@
       </div>
 
       <div class="practice-actions">
-        <button class="action-btn" @click="restartPractice">🔄 Начать заново</button>
+        <button class="action-btn" @click="restartPractice">
+          <ArrowPathIcon class="icon-inline" />
+          Начать заново
+        </button>
         <button class="action-btn" @click="stopPractice">
           <StopIcon class="icon-inline" />
           Завершить
@@ -165,7 +168,7 @@ import { useTextToSpeech } from '../composables/useTextToSpeech';
 import { getQuestions } from '../api/questions';
 import { getSectionById } from '../api/sections';
 import { sections } from '../data/sections.js';
-import { ClockIcon, StopIcon } from '@heroicons/vue/24/outline';
+import { ClockIcon, StopIcon, ArrowPathIcon } from '@heroicons/vue/24/outline';
 
 const { practiceTimerDuration, ttsEnabled } = useTrainingMode();
 const { isSupported, speakQuestion, speakAnswer, stop: stopTTS } = useTextToSpeech();
@@ -548,6 +551,8 @@ onUnmounted(() => {
   border-radius: 12px;
   padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: visible;
 
   @media (max-width: $breakpoint-mobile) {
     padding: 1.5rem;
@@ -739,6 +744,10 @@ onUnmounted(() => {
   border-radius: 8px;
   padding: 1.5rem;
   margin-bottom: 2rem;
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: visible;
 }
 
 .answer-text {
@@ -838,6 +847,9 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  min-width: 0;
+  overflow: visible;
+  white-space: nowrap;
 
   .icon-inline {
     width: 1.125rem;

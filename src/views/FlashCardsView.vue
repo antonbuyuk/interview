@@ -111,7 +111,10 @@
       </div>
 
       <div class="card-actions">
-        <button class="action-btn" @click="restartTraining">🔄 Начать заново</button>
+        <button class="action-btn" @click="restartTraining">
+          <ArrowPathIcon class="icon-inline" />
+          Начать заново
+        </button>
         <button class="action-btn" @click="stopTraining">
           <StopIcon class="icon-inline" />
           Завершить
@@ -150,7 +153,7 @@ import { useTextToSpeech } from '../composables/useTextToSpeech';
 import { getQuestions } from '../api/questions';
 import { getSectionById } from '../api/sections';
 import { sections } from '../data/sections.js';
-import { RectangleStackIcon, StopIcon } from '@heroicons/vue/24/outline';
+import { RectangleStackIcon, StopIcon, ArrowPathIcon } from '@heroicons/vue/24/outline';
 
 const { flashCardDuration, ttsEnabled } = useTrainingMode();
 const { isSupported, speakQuestion, speakAnswer, stop: stopTTS } = useTextToSpeech();

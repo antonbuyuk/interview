@@ -84,3 +84,14 @@ export async function updateAnswer(id, answerData) {
 export async function deleteAnswer(id) {
   return api.delete(`/answers/${id}`);
 }
+
+/**
+ * Перевести текст
+ * @param {string} text - Текст для перевода
+ * @param {string} from - Язык источника (по умолчанию 'ru')
+ * @param {string} to - Язык назначения (по умолчанию 'en')
+ * @returns {Promise<Object>} { translatedText: string }
+ */
+export async function translateText(text, from = 'ru', to = 'en') {
+  return api.post('/questions/translate', { text, from, to });
+}

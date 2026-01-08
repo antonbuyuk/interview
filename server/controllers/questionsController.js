@@ -1,4 +1,5 @@
 const prisma = require('../utils/prisma');
+const { translate } = require('@vitalets/google-translate-api');
 
 const getQuestions = async (req, res, next) => {
   try {
@@ -53,7 +54,7 @@ const getQuestionById = async (req, res, next) => {
 
 const createQuestion = async (req, res, next) => {
   try {
-    const { sectionId, number, question, questionRaw, codeBlocks, rawMarkdown, answers } = req.body;
+    const { sectionId, number, question, questionRaw, questionEn, codeBlocks, rawMarkdown, answers } = req.body;
 
     // Check if section exists
     const section = await prisma.section.findUnique({
@@ -86,6 +87,7 @@ const createQuestion = async (req, res, next) => {
         number,
         question,
         questionRaw,
+        questionEn: questionEn || null,
         codeBlocks: codeBlocks || null,
         rawMarkdown,
         answers: answers
@@ -112,7 +114,7 @@ const createQuestion = async (req, res, next) => {
 const updateQuestion = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { sectionId, number, question, questionRaw, codeBlocks, rawMarkdown } = req.body;
+    const { sectionId, number, question, questionRaw, questionEn, codeBlocks, rawMarkdown } = req.body;
 
     // Получаем текущий вопрос для проверки изменений
     const currentQuestion = await prisma.question.findUnique({
@@ -167,6 +169,7 @@ const updateQuestion = async (req, res, next) => {
         ...(number !== undefined && { number }),
         ...(question !== undefined && { question }),
         ...(questionRaw !== undefined && { questionRaw }),
+        ...(questionEn !== undefined && { questionEn }),
         ...(codeBlocks !== undefined && { codeBlocks }),
         ...(rawMarkdown !== undefined && { rawMarkdown }),
       },
@@ -196,10 +199,37 @@ const deleteQuestion = async (req, res, next) => {
   }
 };
 
+const translateText = async (req, res, next) => {
+  try {
+    const { text, from = 'ru', to = 'en' } = req.body;
+
+    if (!text || text.trim() === '') {
+      return res.status(400).json({ error: 'Text is required' });
+    }
+
+    try {
+      const result = await translate(text, { from, to });
+      res.json({ translatedText: result.text });
+    } catch (translateError) {
+      // Если ошибка rate limit, возвращаем специальный код
+      if (translateError.message.includes('Too Many Requests')) {
+        return res.status(429).json({
+          error: 'Translation service is temporarily unavailable. Please try again later.',
+          code: 'RATE_LIMIT',
+        });
+      }
+      throw translateError;
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getQuestions,
   getQuestionById,
   createQuestion,
   updateQuestion,
   deleteQuestion,
+  translateText,
 };
