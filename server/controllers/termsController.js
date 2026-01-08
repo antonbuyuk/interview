@@ -1,5 +1,5 @@
 const prisma = require('../utils/prisma');
-const OpenAI = require('openai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const getTerms = async (req, res, next) => {
   try {
@@ -202,12 +202,24 @@ const getTermSuggestions = async (req, res, next) => {
       return res.status(400).json({ error: 'Term must be at least 2 characters long' });
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return res.status(503).json({ error: 'OpenAI API key is not configured' });
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey || apiKey.trim() === '') {
+      console.error('GEMINI_API_KEY is not set or is empty');
+      return res.status(503).json({
+        error: 'Gemini API key is not configured',
+        message: 'Please set GEMINI_API_KEY environment variable'
+      });
     }
 
-    const openai = new OpenAI({ apiKey });
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 500,
+        responseMimeType: 'application/json',
+      },
+    });
 
     const prompt = `Ты помощник для создания словаря технических терминов на английском языке.
 
@@ -216,43 +228,36 @@ const getTermSuggestions = async (req, res, next) => {
 2. 3-5 распространенных словосочетаний с этим термином (на английском)
 3. 3-5 примеров предложений с использованием термина (на английском)
 
-Верни ответ ТОЛЬКО в формате JSON без дополнительных комментариев:
+ВАЖНО: Верни ответ ТОЛЬКО в формате JSON без дополнительных комментариев, markdown разметки или пояснений. Только чистый JSON:
 {
   "translation": "перевод на русский",
   "phrases": ["словосочетание 1", "словосочетание 2", "словосочетание 3"],
   "examples": ["пример предложения 1", "пример предложения 2", "пример предложения 3"]
 }`;
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content: 'Ты помощник для создания словаря технических терминов. Всегда отвечай только валидным JSON без дополнительных комментариев.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 500,
-    });
+    console.log('Sending request to Gemini for term:', term.trim());
 
-    const content = completion.choices[0]?.message?.content;
+    const result = await model.generateContent(prompt);
+
+    console.log('Gemini response received');
+
+    const response = result.response;
+    const content = response.text();
+
     if (!content) {
-      return res.status(500).json({ error: 'Failed to get response from OpenAI' });
+      return res.status(500).json({ error: 'Failed to get response from Gemini' });
     }
 
     // Парсим JSON ответ
     let suggestions;
     try {
-      // Убираем возможные markdown code blocks
+      // Убираем возможные markdown code blocks (на случай если модель их добавит)
       const cleanedContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       suggestions = JSON.parse(cleanedContent);
     } catch (parseError) {
-      console.error('Failed to parse OpenAI response:', content);
-      return res.status(500).json({ error: 'Failed to parse AI response' });
+      console.error('Failed to parse Gemini response:', content);
+      console.error('Parse error:', parseError.message);
+      return res.status(500).json({ error: 'Failed to parse AI response', details: parseError.message });
     }
 
     // Валидация структуры ответа
@@ -267,10 +272,59 @@ const getTermSuggestions = async (req, res, next) => {
     });
   } catch (error) {
     console.error('Error getting term suggestions:', error);
-    // Если ошибка от OpenAI, возвращаем 503, иначе 500
-    if (error.status === 401 || error.status === 429) {
-      return res.status(503).json({ error: 'OpenAI service unavailable' });
+
+    // Извлекаем статус код из разных возможных мест
+    const statusCode = error.status || error.statusCode || error.response?.status || error.code;
+
+    console.error('Error details:', {
+      message: error.message,
+      status: error.status,
+      statusCode: error.statusCode,
+      responseStatus: error.response?.status,
+      code: error.code,
+      type: error.constructor.name,
+      name: error.name
+    });
+
+    // Обработка ошибок Gemini API
+    if (statusCode === 401 || error.message?.includes('401') || error.message?.includes('API_KEY_INVALID') || error.message?.includes('Invalid API key')) {
+      return res.status(503).json({
+        error: 'Gemini authentication failed',
+        message: 'Invalid API key. Please check GEMINI_API_KEY environment variable'
+      });
     }
+
+    if (statusCode === 429 || error.message?.includes('429') || error.message?.includes('rate limit') || error.message?.includes('RESOURCE_EXHAUSTED')) {
+      return res.status(503).json({
+        error: 'Gemini rate limit exceeded',
+        message: 'Too many requests. Please try again later'
+      });
+    }
+
+    if (statusCode === 500 || statusCode === 502 || statusCode === 503) {
+      return res.status(503).json({
+        error: 'Gemini service error',
+        message: `Gemini API returned error ${statusCode}. Please try again later`
+      });
+    }
+
+    // Обработка сетевых ошибок и таймаутов
+    if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT' || error.message?.includes('timeout')) {
+      return res.status(503).json({
+        error: 'Gemini connection failed',
+        message: 'Could not connect to Gemini API. Please check your internet connection and try again'
+      });
+    }
+
+    // Если это ошибка Gemini, но статус неизвестен
+    if (error.message && (error.message.includes('Gemini') || error.message.includes('GoogleGenerativeAI'))) {
+      return res.status(503).json({
+        error: 'Gemini service unavailable',
+        message: error.message || 'An error occurred while communicating with Gemini API'
+      });
+    }
+
+    // Для остальных ошибок используем стандартный обработчик
     next(error);
   }
 };
