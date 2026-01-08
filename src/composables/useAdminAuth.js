@@ -1,5 +1,7 @@
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { api } from '../api/client';
+
+const STORAGE_KEY = 'is_auth_admin';
 
 /**
  * Composable для работы с авторизацией администратора
@@ -10,17 +12,56 @@ export function useAdminAuth() {
   const error = ref(null);
 
   /**
-   * Проверяет наличие cookie is_auth_admin
+   * Проверяет наличие токена в localStorage
    */
   const checkAuthStatus = () => {
-    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-      const [key, value] = cookie.trim().split('=');
-      acc[key] = value;
-      return acc;
-    }, {});
-
-    isAdmin.value = cookies.is_auth_admin === 'true';
+    const stored = localStorage.getItem(STORAGE_KEY);
+    isAdmin.value = stored === 'true';
     return isAdmin.value;
+  };
+
+  /**
+   * Сохраняет токен авторизации в localStorage
+   */
+  const saveAuthToken = () => {
+    localStorage.setItem(STORAGE_KEY, 'true');
+    isAdmin.value = true;
+    // Уведомляем другие вкладки об изменении
+    window.dispatchEvent(
+      new CustomEvent('admin-auth-changed', {
+        detail: { isAdmin: true },
+      })
+    );
+  };
+
+  /**
+   * Удаляет токен авторизации из localStorage
+   */
+  const removeAuthToken = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    isAdmin.value = false;
+    // Уведомляем другие вкладки об изменении
+    window.dispatchEvent(
+      new CustomEvent('admin-auth-changed', {
+        detail: { isAdmin: false },
+      })
+    );
+  };
+
+  /**
+   * Обработчик события изменения авторизации (для синхронизации между вкладками)
+   */
+  const handleAuthChange = event => {
+    isAdmin.value = event.detail.isAdmin;
+  };
+
+  /**
+   * Обработчик события storage (для синхронизации между вкладками)
+   */
+  const handleStorageChange = event => {
+    if (event.key === STORAGE_KEY) {
+      checkAuthStatus();
+    }
   };
 
   /**
@@ -34,8 +75,8 @@ export function useAdminAuth() {
       const response = await api.post('/admin/login', { password });
 
       if (response.success) {
-        // Проверяем статус после успешной авторизации
-        checkAuthStatus();
+        // Сохраняем токен в localStorage
+        saveAuthToken();
         return { success: true };
       } else {
         throw new Error('Login failed');
@@ -52,33 +93,23 @@ export function useAdminAuth() {
    * Выход из системы администратора
    */
   const logout = () => {
-    // Удаляем cookie
-    document.cookie = 'is_auth_admin=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    isAdmin.value = false;
+    removeAuthToken();
   };
 
   // Проверяем статус при монтировании
   onMounted(() => {
     checkAuthStatus();
+    // Слушаем изменения localStorage для синхронизации между вкладками
+    window.addEventListener('storage', handleStorageChange);
+    // Слушаем кастомные события для синхронизации между вкладками
+    window.addEventListener('admin-auth-changed', handleAuthChange);
   });
 
-  // Слушаем изменения cookies (для синхронизации между вкладками)
-  const checkInterval = setInterval(() => {
-    const wasAdmin = isAdmin.value;
-    checkAuthStatus();
-    // Если статус изменился, это может быть результат авторизации в другой вкладке
-    if (wasAdmin !== isAdmin.value) {
-      // Можно добавить событие для уведомления компонентов
-      window.dispatchEvent(
-        new CustomEvent('admin-auth-changed', {
-          detail: { isAdmin: isAdmin.value },
-        })
-      );
-    }
-  }, 1000); // Проверяем каждую секунду
-
-  // Очищаем интервал при размонтировании (хотя это composable, а не компонент)
-  // В реальности интервал будет работать пока компонент использует composable
+  // Очищаем слушатели при размонтировании
+  onUnmounted(() => {
+    window.removeEventListener('storage', handleStorageChange);
+    window.removeEventListener('admin-auth-changed', handleAuthChange);
+  });
 
   return {
     isAdmin: computed(() => isAdmin.value),
