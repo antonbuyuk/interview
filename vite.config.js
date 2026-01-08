@@ -10,10 +10,14 @@ const base = process.env.NODE_ENV === 'production' || process.env.CI ? '/intervi
 
 // Плагин для копирования index.html в 404.html после сборки
 const copy404Plugin = () => {
+  let outDir = 'dist';
+
   return {
     name: 'copy-404',
+    configResolved(config) {
+      outDir = config.build.outDir || 'dist';
+    },
     closeBundle() {
-      const outDir = this.config.build.outDir || 'dist';
       const indexPath = join(outDir, 'index.html');
       const notFoundPath = join(outDir, '404.html');
 
