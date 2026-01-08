@@ -44,6 +44,11 @@ const openAddTerm = () => {
   const event = new CustomEvent('open-add-term');
   window.dispatchEvent(event);
 };
+
+const openLoginModal = () => {
+  const event = new CustomEvent('open-login-modal');
+  window.dispatchEvent(event);
+};
 </script>
 
 <style lang="scss" scoped>

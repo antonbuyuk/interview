@@ -1,6 +1,6 @@
 <template>
   <div v-if="isOpen" class="modal-overlay" @click="close">
-    <div class="modal-content" @click.stop>
+    <div class="modal-content" :class="{ 'is-small': isSmall }" @click.stop>
       <div class="modal-header">
         <h2>Авторизация администратора</h2>
         <button class="close-btn" @click="close">
@@ -45,6 +45,7 @@ import { useAdminAuth } from '../composables/useAdminAuth';
 
 const props = defineProps({
   isOpen: Boolean,
+  isSmall: Boolean,
 });
 
 const emit = defineEmits(['close', 'success']);

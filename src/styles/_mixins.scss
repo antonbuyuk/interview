@@ -37,10 +37,17 @@
   background: $bg-white;
   border-radius: 8px;
   padding: 2rem;
-  max-width: 75rem;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
+
+  &.is-small {
+    max-width: 40rem;
+  }
+
+  &.is-default {
+    max-width: 75rem;
+  }
 
   @include mobile {
     padding: 1.5rem;
