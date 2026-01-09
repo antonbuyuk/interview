@@ -99,6 +99,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
+import { storeToRefs } from 'pinia';
 import { useSectionsStore } from '../stores/sections';
 import { getQuestions } from '../api/questions.js';
 import { MagnifyingGlassIcon, MicrophoneIcon, XMarkIcon } from '@heroicons/vue/24/outline';
@@ -195,7 +196,7 @@ const isRecording = ref(false);
 const recognition = ref<SpeechRecognition | null>(null);
 const isSpeechSupported = ref(false);
 const sectionsStore = useSectionsStore();
-const { sections: allSections } = sectionsStore;
+const { sections: allSections } = storeToRefs(sectionsStore);
 
 // Поиск с задержкой (debounce)
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
