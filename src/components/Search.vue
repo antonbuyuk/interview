@@ -275,7 +275,7 @@ const loadCurrentSectionQuestions = async () => {
   try {
     // Получаем раздел из store по sectionId
     const section = allSections.value.find(
-      s => s.sectionId === props.currentSection?.sectionId
+      (s: Section) => s.sectionId === props.currentSection?.sectionId
     );
 
     if (!section) {
@@ -396,7 +396,7 @@ const searchInAllSections = async (keywords: string[]) => {
     return;
   }
 
-  for (const section of allSections.value) {
+  for (const section of allSections.value as Section[]) {
     // Пропускаем текущую секцию
     if (section.sectionId === currentSectionId) continue;
 

@@ -369,7 +369,7 @@ import {
 } from '../api/questions';
 import { useSectionsStore } from '../stores/sections';
 import { TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline';
-import type { Section, Question, CreateAnswerRequest } from '../types/api';
+import type { Question, CreateAnswerRequest } from '../types/api';
 
 // Инициализация Turndown для конвертации HTML в Markdown
 const turndownService = new TurndownService({
