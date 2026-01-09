@@ -44,8 +44,13 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     method: options.method,
   };
 
-  if (config.body && typeof config.body === 'object') {
-    config.body = JSON.stringify(config.body);
+  // Устанавливаем body из options
+  if (options.body !== undefined) {
+    if (typeof options.body === 'object') {
+      config.body = JSON.stringify(options.body);
+    } else {
+      config.body = options.body as BodyInit;
+    }
   }
 
   try {

@@ -199,6 +199,14 @@ watch(
           errorType = responseError.response?.data?.error || '';
         }
 
+        // Игнорируем ошибку о слишком коротком термине - это нормальное поведение
+        if (
+          errorMessage.includes('at least 2 characters') ||
+          errorMessage.includes('Term must be')
+        ) {
+          return;
+        }
+
         // Показываем предупреждение только для критических ошибок (квота, авторизация)
         if (errorType.includes('quota') || errorType.includes('authentication')) {
           console.warn('AI недоступен:', errorMessage);
