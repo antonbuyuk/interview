@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { getSectionById } from '../api/sections.js';
+import { useSectionsStore } from '../stores/sections';
 import { getQuestions } from '../api/questions.js';
 import type { Section } from '../types/api';
 
@@ -28,6 +28,7 @@ const props = defineProps<{
 }>();
 
 const route = useRoute();
+const sectionsStore = useSectionsStore();
 
 const showDropdown = ref(false);
 const questions = ref<QuestionItem[]>([]);
@@ -67,8 +68,8 @@ const loadQuestions = async () => {
 
   isLoading.value = true;
   try {
-    // Получаем раздел по ID для получения UUID
-    const section = await getSectionById(props.section.id);
+    // Получаем раздел из store по ID
+    const section = sectionsStore.getSectionById(props.section.id);
 
     if (!section) {
       questions.value = [];

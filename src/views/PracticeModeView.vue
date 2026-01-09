@@ -166,7 +166,7 @@ import { marked } from 'marked';
 import { useTrainingMode } from '../composables/useTrainingMode';
 import { useTextToSpeech } from '../composables/useTextToSpeech';
 import { getQuestions } from '../api/questions';
-import { getSections, getSectionById } from '../api/sections';
+import { useSectionsStore } from '../stores/sections';
 import { ClockIcon, StopIcon, ArrowPathIcon } from '@heroicons/vue/24/outline';
 import type { Section, Question, CodeBlock } from '../types/api';
 
@@ -187,6 +187,8 @@ interface QuestionForTraining {
 
 const { practiceTimerDuration } = useTrainingMode();
 const { isSupported, speakQuestion, speakAnswer, stop: stopTTS } = useTextToSpeech();
+const sectionsStore = useSectionsStore();
+const { sections } = sectionsStore;
 
 const loading = ref(false);
 const error = ref<string | null>(null);
@@ -198,7 +200,6 @@ const showCorrectAnswer = ref(false);
 const userAnswer = ref('');
 const allQuestions = ref<QuestionForTraining[]>([]);
 const timeLeft = ref(0);
-const sections = ref<Section[]>([]);
 
 let timerInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -209,13 +210,6 @@ const filteredQuestions = computed(() => {
   return allQuestions.value.filter(q => q.sectionId === selectedSection.value);
 });
 
-const loadSections = async () => {
-  try {
-    sections.value = await getSections();
-  } catch (error) {
-    console.error('Ошибка загрузки разделов:', error);
-  }
-};
 
 const currentQuestion = computed(() => {
   if (filteredQuestions.value.length === 0) return null;
@@ -293,8 +287,13 @@ const loadQuestions = async () => {
 
     for (const section of sectionsToLoad) {
       try {
-        // Получаем раздел из БД по sectionId
-        const dbSection = await getSectionById(section.sectionId);
+        // Получаем раздел из store по ID
+        const dbSection = sectionsStore.getSectionById(section.id);
+
+        if (!dbSection) {
+          console.warn(`Раздел ${section.title} не найден в store`);
+          continue;
+        }
 
         // Загружаем вопросы через API
         const questions = await getQuestions(dbSection.id);
@@ -438,7 +437,7 @@ watch(practiceTimerDuration, () => {
 });
 
 onMounted(() => {
-  loadSections();
+  // Секции уже загружены в App.vue через store
 });
 
 onUnmounted(() => {

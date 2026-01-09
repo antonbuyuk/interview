@@ -46,7 +46,7 @@ import QuestionContent from '../components/QuestionContent.vue';
 import Skeleton from '../components/Skeleton.vue';
 import { useAdminAuth } from '../composables/useAdminAuth';
 import { getQuestions } from '../api/questions';
-import { getSectionById } from '../api/sections';
+import { useSectionsStore } from '../stores/sections';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import type { Section, Question } from '../types/api';
 // Используем темную тему и переопределим цвета для VS Code стиля
@@ -69,6 +69,7 @@ const questions = ref<QuestionNavItem[]>([]);
 const filterOpen = ref(false);
 const fullQuestionsData = ref<Question[]>([]); // Полные данные вопросов для редактирования
 const currentSectionId = ref<string | null>(null); // UUID текущего раздела
+const sectionsStore = useSectionsStore();
 
 // Admin auth
 const { isAdmin } = useAdminAuth();
@@ -118,8 +119,15 @@ const loadContent = async () => {
   error.value = null;
 
   try {
-    // Получаем раздел по sectionId для получения UUID
-    const section = await getSectionById(props.section.id);
+    // Получаем раздел из store по ID
+    const section = sectionsStore.getSectionById(props.section.id);
+
+    if (!section) {
+      error.value = 'Раздел не найден';
+      loading.value = false;
+      return;
+    }
+
     currentSectionId.value = section.id;
 
     // Загружаем вопросы через API

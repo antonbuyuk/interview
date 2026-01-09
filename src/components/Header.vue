@@ -183,9 +183,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { storeToRefs } from 'pinia';
 import { useAdminAuth } from '../composables/useAdminAuth';
 import { useTrainingMode } from '../composables/useTrainingMode';
-import { getSections } from '../api/sections';
+import { useSectionsStore } from '../stores/sections';
 import AdminLoginModal from './AdminLoginModal.vue';
 import Search from './Search.vue';
 import {
@@ -207,12 +208,13 @@ const filterOpen = ref(false);
 const mobileMenuOpen = ref(false);
 const questionsCount = ref(0);
 const showLoginModal = ref(false);
-const sections = ref<Section[]>([]);
 const currentSection = ref<Section | null>(null);
 const currentQuestions = ref<Question[]>([]);
 
 const { isAdmin } = useAdminAuth();
 const { englishOnly, settings } = useTrainingMode();
+const sectionsStore = useSectionsStore();
+const { sections } = storeToRefs(sectionsStore);
 
 const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768;
@@ -260,20 +262,12 @@ const openManageSections = () => {
   hideUserMenu();
 };
 
-const loadSections = async () => {
-  try {
-    sections.value = await getSections();
-  } catch (error) {
-    console.error('Ошибка загрузки разделов:', error);
-  }
-};
-
 const isSectionActive = (path: string): boolean => {
   return route.path === path || route.path.startsWith(path + '#');
 };
 
 const isSectionsActive = computed(() => {
-  return sections.value.some(section => isSectionActive(section.path));
+  return sections.value.some((section: Section) => isSectionActive(section.path));
 });
 
 const isTrainingActive = computed(() => {
@@ -286,14 +280,14 @@ const isTrainingActive = computed(() => {
 
 const showQuestionFilter = computed(() => {
   // Показываем фильтр только на страницах разделов
-  return sections.value.some(section => route.path.startsWith(section.path));
+  return sections.value.some((section: Section) => route.path.startsWith(section.path));
 });
 
 // Определяем текущий раздел при изменении маршрута
 watch(
   () => route.path,
   () => {
-    const section = sections.value.find(s => route.path.startsWith(s.path));
+    const section = sections.value.find((s: Section) => route.path.startsWith(s.path));
     if (section) {
       currentSection.value = section;
     }
@@ -307,13 +301,16 @@ const handleOpenLoginModal = () => {
   showLoginModal.value = true;
 };
 
+const handleSectionsUpdated = () => {
+  sectionsStore.refreshSections();
+};
+
 onMounted(() => {
   checkMobile();
   window.addEventListener('resize', checkMobile);
-  loadSections();
 
   // Слушаем события обновления разделов
-  window.addEventListener('sections-updated', loadSections);
+  window.addEventListener('sections-updated', handleSectionsUpdated);
 
   // Слушаем события закрытия фильтра
   window.addEventListener('filter-closed', () => {
@@ -344,7 +341,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile);
-  window.removeEventListener('sections-updated', loadSections);
+  window.removeEventListener('sections-updated', handleSectionsUpdated);
   window.removeEventListener('open-login-modal', handleOpenLoginModal);
   document.removeEventListener('click', handleUserMenuClickOutside);
 });

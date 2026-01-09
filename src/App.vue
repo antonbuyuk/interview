@@ -118,15 +118,16 @@ import AddTermModal from './components/AddTermModal.vue';
 import AddQuestionModal from './components/AddQuestionModal.vue';
 import TextSelectionMenu from './components/TextSelectionMenu.vue';
 import TermTooltip from './components/TermTooltip.vue';
-import { getSections, deleteSection as deleteSectionApi } from './api/sections';
+import { deleteSection as deleteSectionApi } from './api/sections';
+import { useSectionsStore } from './stores/sections';
 import { useAdminAuth } from './composables/useAdminAuth';
 import { useDictionaryHighlight } from './composables/useDictionaryHighlight';
 import SecondaryMenu from './components/SecondaryMenu.vue';
 import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import type { Section, Question, Term } from './types/api';
 
-const sections = ref<Section[]>([]);
-const sectionsLoading = ref(false);
+const sectionsStore = useSectionsStore();
+const { sections, loading: sectionsLoading, refreshSections } = sectionsStore;
 const showSectionsModal = ref(false);
 const showAddSectionModal = ref(false);
 const editingSection = ref<Section | null>(null);
@@ -141,23 +142,9 @@ const currentSectionId = ref<string | null>(null);
 const { isAdmin } = useAdminAuth();
 const { loadDictionary, findTermById } = useDictionaryHighlight();
 
-const loadSections = async () => {
-  sectionsLoading.value = true;
-  try {
-    sections.value = await getSections();
-  } catch (error) {
-    console.error('Ошибка загрузки разделов:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
-    alert('Ошибка загрузки разделов: ' + errorMessage);
-  } finally {
-    sectionsLoading.value = false;
-  }
-};
-
 const handleOpenManageSections = () => {
   if (isAdmin.value) {
     showSectionsModal.value = true;
-    loadSections();
   }
 };
 
@@ -197,7 +184,7 @@ const deleteSection = async (section: Section) => {
   try {
     await deleteSectionApi(section.id);
     // Обновляем список разделов
-    await loadSections();
+    await refreshSections();
     // Эмитим событие обновления разделов для Sidebar
     window.dispatchEvent(new CustomEvent('sections-updated'));
   } catch (error) {
@@ -215,7 +202,7 @@ const deleteSection = async (section: Section) => {
 };
 
 const handleSectionSaved = async () => {
-  await loadSections();
+  await refreshSections();
   showAddSectionModal.value = false;
   editingSection.value = null;
   // Эмитим событие обновления разделов для Sidebar
@@ -316,7 +303,14 @@ const handleCurrentSectionUpdated = (event: Event) => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
+  // Загружаем секции один раз при старте приложения
+  try {
+    await sectionsStore.loadSections();
+  } catch (error) {
+    console.error('Ошибка загрузки секций:', error);
+  }
+
   // Загружаем словарь один раз при старте приложения
   loadDictionary();
 
@@ -342,6 +336,14 @@ onMounted(() => {
   window.addEventListener('terms-updated', () => {
     const { refreshDictionary } = useDictionaryHighlight();
     refreshDictionary();
+  });
+  // Слушаем обновление секций для перезагрузки
+  window.addEventListener('sections-updated', async () => {
+    try {
+      await sectionsStore.refreshSections();
+    } catch (error) {
+      console.error('Ошибка обновления секций:', error);
+    }
   });
 });
 
