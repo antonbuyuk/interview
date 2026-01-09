@@ -163,6 +163,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { marked } from 'marked';
+import { storeToRefs } from 'pinia';
 import { useTrainingMode } from '../composables/useTrainingMode';
 import { useTextToSpeech } from '../composables/useTextToSpeech';
 import { getQuestions } from '../api/questions';
@@ -188,7 +189,7 @@ interface QuestionForTraining {
 const { practiceTimerDuration } = useTrainingMode();
 const { isSupported, speakQuestion, speakAnswer, stop: stopTTS } = useTextToSpeech();
 const sectionsStore = useSectionsStore();
-const { sections } = sectionsStore;
+const { sections } = storeToRefs(sectionsStore);
 
 const loading = ref(false);
 const error = ref<string | null>(null);
@@ -209,7 +210,6 @@ const filteredQuestions = computed(() => {
   }
   return allQuestions.value.filter(q => q.sectionId === selectedSection.value);
 });
-
 
 const currentQuestion = computed(() => {
   if (filteredQuestions.value.length === 0) return null;
@@ -283,7 +283,7 @@ const loadQuestions = async () => {
     const sectionsToLoad =
       selectedSection.value === 'all'
         ? sections.value
-        : sections.value.filter(s => s.sectionId === selectedSection.value);
+        : sections.value.filter((s: Section) => s.sectionId === selectedSection.value);
 
     for (const section of sectionsToLoad) {
       try {
