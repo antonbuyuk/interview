@@ -38,41 +38,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import { getSections } from '../api/sections';
+import { useSectionsStore } from '../stores/sections';
 import { PlusIcon } from '@heroicons/vue/24/outline';
 import Skeleton from '../components/Skeleton.vue';
-import type { Section } from '../types/api';
+import { storeToRefs } from 'pinia';
 
-const sections = ref<Section[]>([]);
-const loading = ref(true);
-
-const loadSections = async () => {
-  try {
-    loading.value = true;
-    sections.value = await getSections();
-  } catch (error) {
-    console.error('Ошибка загрузки разделов:', error);
-  } finally {
-    loading.value = false;
-  }
-};
+const sectionsStore = useSectionsStore();
+const { sections, loading } = storeToRefs(sectionsStore);
 
 const openManageSections = () => {
   // Эмитим событие для открытия модального окна управления разделами
   window.dispatchEvent(new CustomEvent('open-manage-sections'));
 };
-
-onMounted(() => {
-  loadSections();
-
-  // Обновляем разделы при изменении
-  window.addEventListener('sections-updated', loadSections);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('sections-updated', loadSections);
-});
 </script>
 
 <style lang="scss" scoped>

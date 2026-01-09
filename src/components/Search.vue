@@ -99,7 +99,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { getSections } from '../api/sections.js';
+import { useSectionsStore } from '../stores/sections';
 import { getQuestions } from '../api/questions.js';
 import { MagnifyingGlassIcon, MicrophoneIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { StopIcon as StopIconSolid } from '@heroicons/vue/24/solid';
@@ -194,7 +194,8 @@ const pendingQuestionId = ref<string | null>(null);
 const isRecording = ref(false);
 const recognition = ref<SpeechRecognition | null>(null);
 const isSpeechSupported = ref(false);
-const allSections = ref<Section[]>([]);
+const sectionsStore = useSectionsStore();
+const { sections: allSections } = sectionsStore;
 
 // Поиск с задержкой (debounce)
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -272,9 +273,9 @@ const loadCurrentSectionQuestions = async () => {
   }
 
   try {
-    // Получаем раздел по ID для получения UUID
-    const section = await getSections().then(sections =>
-      sections.find(s => s.sectionId === props.currentSection?.sectionId)
+    // Получаем раздел из store по sectionId
+    const section = allSections.value.find(
+      s => s.sectionId === props.currentSection?.sectionId
     );
 
     if (!section) {
@@ -390,14 +391,9 @@ const searchInAllSections = async (keywords: string[]) => {
   const results: GlobalSearchResult[] = [];
   const currentSectionId = props.currentSection?.sectionId;
 
-  // Загружаем список всех секций, если еще не загружен
+  // Используем секции из store (они уже загружены в App.vue)
   if (allSections.value.length === 0) {
-    try {
-      allSections.value = await getSections();
-    } catch (err) {
-      console.error('Ошибка загрузки секций:', err);
-      return;
-    }
+    return;
   }
 
   for (const section of allSections.value) {

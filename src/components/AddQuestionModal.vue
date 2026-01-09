@@ -367,7 +367,7 @@ import {
   getQuestions,
   translateText,
 } from '../api/questions';
-import { getSections } from '../api/sections';
+import { useSectionsStore } from '../stores/sections';
 import { TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import type { Section, Question, CreateAnswerRequest } from '../types/api';
 
@@ -393,8 +393,8 @@ const emit = defineEmits<{
 const loading = ref(false);
 const deleting = ref(false);
 const translating = ref(false);
-const sections = ref<Section[]>([]);
-const sectionsLoading = ref(false);
+const sectionsStore = useSectionsStore();
+const { sections, loading: sectionsLoading } = sectionsStore;
 const activeTab = ref<'ru' | 'en' | 'senior'>('ru');
 
 const formData = ref({
@@ -438,20 +438,6 @@ const editorSenior = useEditor({
   },
 });
 
-// Загрузка секций из API
-const loadSections = async () => {
-  sectionsLoading.value = true;
-  try {
-    sections.value = await getSections();
-  } catch (error) {
-    console.error('Ошибка загрузки секций:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
-    alert('Ошибка загрузки секций: ' + errorMessage);
-  } finally {
-    sectionsLoading.value = false;
-  }
-};
-
 // Вычисление следующего номера вопроса для выбранного раздела
 const calculateNextQuestionNumber = async (sectionId: string): Promise<number> => {
   if (!sectionId) {
@@ -472,7 +458,7 @@ const calculateNextQuestionNumber = async (sectionId: string): Promise<number> =
 };
 
 onMounted(() => {
-  loadSections();
+  // Секции уже загружены в App.vue через store
 });
 
 onBeforeUnmount(() => {

@@ -58,7 +58,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { getSections } from '../api/sections';
+import { useSectionsStore } from '../stores/sections';
 import SectionDropdown from './SectionDropdown.vue';
 import { useAdminAuth } from '../composables/useAdminAuth';
 import {
@@ -68,11 +68,11 @@ import {
   BookOpenIcon,
   Cog6ToothIcon,
 } from '@heroicons/vue/24/outline';
-import type { Section } from '../types/api';
 
 const route = useRoute();
 const isOpen = ref(false);
-const sections = ref<Section[]>([]);
+const sectionsStore = useSectionsStore();
+const { sections } = sectionsStore;
 const { isAdmin } = useAdminAuth();
 
 const closeSidebar = () => {
@@ -86,14 +86,6 @@ const handleToggleSidebar = (event: Event) => {
   isOpen.value = customEvent.detail.open;
 };
 
-const loadSections = async () => {
-  try {
-    sections.value = await getSections();
-  } catch (error) {
-    console.error('Ошибка загрузки разделов:', error);
-  }
-};
-
 const openManageSections = () => {
   // Эмитим событие для открытия модального окна управления разделами
   const event = new CustomEvent('open-manage-sections');
@@ -102,15 +94,10 @@ const openManageSections = () => {
 
 onMounted(() => {
   window.addEventListener('toggle-sidebar', handleToggleSidebar);
-  loadSections();
-
-  // Обновляем разделы при изменении
-  window.addEventListener('sections-updated', loadSections);
 });
 
 onUnmounted(() => {
   window.removeEventListener('toggle-sidebar', handleToggleSidebar);
-  window.removeEventListener('sections-updated', loadSections);
 });
 
 watch(
