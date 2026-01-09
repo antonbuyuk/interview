@@ -78,7 +78,13 @@ export async function deleteTerm(id: string): Promise<void> {
  * Получить AI-предложения для термина
  */
 export async function getTermSuggestions(term: string): Promise<TermSuggestionsResponse> {
+  const trimmedTerm = term?.trim()?.toLowerCase() || '';
+
+  if (!trimmedTerm || trimmedTerm.length < 2) {
+    throw new Error('Term must be at least 2 characters long');
+  }
+
   return api.post<TermSuggestionsResponse>('/terms/suggestions', {
-    term: term.toLowerCase(),
+    term: trimmedTerm,
   } as TermSuggestionsRequest);
 }
