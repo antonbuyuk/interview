@@ -81,6 +81,14 @@ app.use('/api/terms', termsRoutes);
 app.use('/api/sections', sectionsRoutes);
 app.use('/api/admin', adminRoutes);
 
+// Логирование для диагностики роутов
+console.log('Routes registered:');
+console.log('  - /api/questions');
+console.log('  - /api/answers');
+console.log('  - /api/terms (with /by-name/:term)');
+console.log('  - /api/sections');
+console.log('  - /api/admin');
+
 // Health check
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

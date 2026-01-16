@@ -41,10 +41,15 @@ export async function getTermByExactName(term: string): Promise<Term | null> {
     const encodedTerm = encodeURIComponent(term.trim());
     return await api.get<Term>(`/terms/by-name/${encodedTerm}`);
   } catch (error) {
-    // Если термин не найден (404), возвращаем null
-    if (error instanceof Error && 'response' in error) {
-      const httpError = error as Error & { response?: { status?: number } };
-      if (httpError.response?.status === 404) {
+    // Если термин не найден (404), возвращаем null (это нормальная ситуация)
+    if (error instanceof Error) {
+      // Проверяем ApiError
+      if ('status' in error && (error as { status: number }).status === 404) {
+        return null;
+      }
+      // Проверяем другие форматы ошибок
+      const errorMessage = error.message || '';
+      if (errorMessage.includes('404') || errorMessage.includes('not found')) {
         return null;
       }
     }
