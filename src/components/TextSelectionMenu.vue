@@ -94,8 +94,16 @@ const checkTermExists = async (termText: string) => {
       const term = await getTermByExactName(termToCheck);
       foundTerm.value = term || null;
     } catch (error) {
-      console.error('Ошибка проверки термина:', error);
-      // При ошибке считаем что термин не найден
+      // Игнорируем 404 ошибки (термин не найден - это нормально)
+      const isNotFoundError =
+        (error instanceof Error && 'status' in error && (error as { status: number }).status === 404) ||
+        (error instanceof Error && error.message.includes('404')) ||
+        (error instanceof Error && error.message.includes('not found'));
+      
+      if (!isNotFoundError) {
+        console.error('Ошибка проверки термина:', error);
+      }
+      // При любой ошибке считаем что термин не найден
       foundTerm.value = null;
     } finally {
       checkingTerm.value = false;
