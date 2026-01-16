@@ -129,12 +129,12 @@ if (process.env.DISABLE_SWAGGER !== 'true') {
   try {
     // Используем createRequire для загрузки CommonJS модуля в ES модулях
     const swaggerUi = require('swagger-ui-express');
-    
+
     if (!swaggerUi || !swaggerSpec) {
       logger.error('Swagger modules not loaded correctly');
       throw new Error('Swagger modules not available');
     }
-    
+
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
       customCss: '.swagger-ui .topbar { display: none }',
       customSiteTitle: 'Interview Questions API',

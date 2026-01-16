@@ -3,13 +3,23 @@
  */
 
 // Обновляем версию кеша для принудительного обновления на localhost
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `interview-app-${CACHE_VERSION}`;
 const STATIC_CACHE_NAME = `interview-static-${CACHE_VERSION}`;
 const API_CACHE_NAME = `interview-api-${CACHE_VERSION}`;
 
 // Файлы для кеширования при установке
-const STATIC_ASSETS = ['/', '/index.html', '/vocabulary'];
+const STATIC_ASSETS = [
+  '/',
+  '/index.html',
+  '/vocabulary',
+  '/manifest.json',
+  '/favicon-16x16.svg',
+  '/favicon-32x32.svg',
+  '/apple-touch-icon.svg',
+  '/android-chrome-192x192.svg',
+  '/android-chrome-512x512.svg',
+];
 
 // Установка Service Worker
 self.addEventListener('install', event => {
@@ -56,7 +66,8 @@ self.addEventListener('fetch', event => {
     url.pathname.endsWith('.jpg') ||
     url.pathname.endsWith('.svg') ||
     url.pathname.endsWith('.woff') ||
-    url.pathname.endsWith('.woff2')
+    url.pathname.endsWith('.woff2') ||
+    url.pathname === '/manifest.json'
   ) {
     event.respondWith(
       caches.match(request).then(response => {
