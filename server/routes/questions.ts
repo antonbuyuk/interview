@@ -1,9 +1,10 @@
 import express from 'express';
-const router = express.Router();
 import * as questionsController from '../controllers/questionsController.js';
 import * as answersController from '../controllers/answersController.js';
 import errorHandler from '../middleware/errorHandler.js';
 import authAdmin from '../middleware/authAdmin.js';
+
+const router = express.Router();
 
 router.get('/', questionsController.getQuestions);
 router.get('/:id', questionsController.getQuestionById);

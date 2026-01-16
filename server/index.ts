@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import express from 'express';
+import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import questionsRoutes from './routes/questions.js';
@@ -7,35 +7,38 @@ import answersRoutes from './routes/answers.js';
 import termsRoutes from './routes/terms.js';
 import sectionsRoutes from './routes/sections.js';
 import adminRoutes from './routes/admin.js';
+import errorHandler from './middleware/errorHandler.js';
+import type { ExtendedRequest } from './types/express';
 
 const app = express();
-const PORT = process.env.PORT || process.env.API_PORT || 3001;
+const PORT: number = Number(process.env.PORT) || Number(process.env.API_PORT) || 3001;
 
 // Middleware
-const allowedOrigins = [
+const allowedOrigins: (string | undefined)[] = [
   'http://localhost:3000',
   'https://antonbuyuk.github.io',
   process.env.FRONTEND_URL,
-].filter(Boolean);
+].filter((origin): origin is string => Boolean(origin));
 
 // Функция для нормализации origin (убирает trailing slash и приводит к стандартному виду)
-const normalizeOrigin = (origin) => {
+const normalizeOrigin = (origin: string): string => {
   return origin.replace(/\/$/, '');
 };
 
 app.use(
   cors({
-    origin: function (origin, callback) {
+    origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
       // Разрешаем запросы без origin (например, Postman, мобильные приложения, server-to-server)
-      if (!origin) return callback(null, true);
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
 
       // Нормализуем origin для сравнения
       const normalizedOrigin = normalizeOrigin(origin);
 
       // Проверяем точное совпадение
-      const exactMatch = allowedOrigins.some(allowed =>
-        normalizeOrigin(allowed) === normalizedOrigin
-      );
+      const exactMatch = allowedOrigins.some(allowed => normalizeOrigin(allowed) === normalizedOrigin);
 
       // Проверяем поддомены GitHub Pages (*.github.io)
       const isGitHubPages = /^https:\/\/[a-zA-Z0-9-]+\.github\.io$/.test(normalizedOrigin);
@@ -70,21 +73,15 @@ app.use('/api/sections', sectionsRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Error handling middleware
-app.use((err, _req, res, _next) => {
-  console.error('Error:', err);
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
-  });
-});
+app.use(errorHandler);
 
 // 404 handler
-app.use((_req, res) => {
+app.use((_req: ExtendedRequest, res: Response) => {
   res.status(404).json({ error: 'Route not found' });
 });
 

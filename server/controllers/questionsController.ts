@@ -1,7 +1,19 @@
 import prisma from '../utils/prisma.js';
 import { translate } from '@vitalets/google-translate-api';
+import type { Response, NextFunction } from 'express';
+import type { ExtendedRequest } from '../types/express';
+import type {
+  GetQuestionsQuery,
+  CreateQuestionBody,
+  UpdateQuestionBody,
+  TranslateTextBody,
+} from '../types/api';
 
-const getQuestions = async (req, res, next) => {
+const getQuestions = async (
+  req: ExtendedRequest<unknown, unknown, unknown, GetQuestionsQuery>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { sectionId } = req.query;
 
@@ -26,7 +38,11 @@ const getQuestions = async (req, res, next) => {
   }
 };
 
-const getQuestionById = async (req, res, next) => {
+const getQuestionById = async (
+  req: ExtendedRequest<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -43,7 +59,8 @@ const getQuestionById = async (req, res, next) => {
     });
 
     if (!question) {
-      return res.status(404).json({ error: 'Question not found' });
+      res.status(404).json({ error: 'Question not found' });
+      return;
     }
 
     res.json(question);
@@ -52,7 +69,11 @@ const getQuestionById = async (req, res, next) => {
   }
 };
 
-const createQuestion = async (req, res, next) => {
+const createQuestion = async (
+  req: ExtendedRequest<unknown, unknown, CreateQuestionBody>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const {
       sectionId,
@@ -71,7 +92,8 @@ const createQuestion = async (req, res, next) => {
     });
 
     if (!section) {
-      return res.status(404).json({ error: 'Section not found' });
+      res.status(404).json({ error: 'Section not found' });
+      return;
     }
 
     // Check if question number already exists in section
@@ -85,9 +107,10 @@ const createQuestion = async (req, res, next) => {
     });
 
     if (existing) {
-      return res
-        .status(409)
-        .json({ error: 'Question with this number already exists in this section' });
+      res.status(409).json({
+        error: 'Question with this number already exists in this section',
+      });
+      return;
     }
 
     const newQuestion = await prisma.question.create({
@@ -120,7 +143,11 @@ const createQuestion = async (req, res, next) => {
   }
 };
 
-const updateQuestion = async (req, res, next) => {
+const updateQuestion = async (
+  req: ExtendedRequest<{ id: string }, unknown, UpdateQuestionBody>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { id } = req.params;
     const { sectionId, number, question, questionRaw, questionEn, codeBlocks, rawMarkdown } =
@@ -132,7 +159,8 @@ const updateQuestion = async (req, res, next) => {
     });
 
     if (!currentQuestion) {
-      return res.status(404).json({ error: 'Question not found' });
+      res.status(404).json({ error: 'Question not found' });
+      return;
     }
 
     // Если изменяется раздел или номер, проверяем уникальность
@@ -155,9 +183,10 @@ const updateQuestion = async (req, res, next) => {
 
       // Если найден другой вопрос (не текущий) с таким номером в целевом разделе
       if (existing && existing.id !== id) {
-        return res
-          .status(409)
-          .json({ error: 'Question with this number already exists in this section' });
+        res.status(409).json({
+          error: 'Question with this number already exists in this section',
+        });
+        return;
       }
 
       // Проверяем, что раздел существует
@@ -167,7 +196,8 @@ const updateQuestion = async (req, res, next) => {
         });
 
         if (!section) {
-          return res.status(404).json({ error: 'Section not found' });
+          res.status(404).json({ error: 'Section not found' });
+          return;
         }
       }
     }
@@ -195,7 +225,11 @@ const updateQuestion = async (req, res, next) => {
   }
 };
 
-const deleteQuestion = async (req, res, next) => {
+const deleteQuestion = async (
+  req: ExtendedRequest<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -209,12 +243,17 @@ const deleteQuestion = async (req, res, next) => {
   }
 };
 
-const translateText = async (req, res, next) => {
+const translateText = async (
+  req: ExtendedRequest<unknown, unknown, TranslateTextBody>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { text, from = 'ru', to = 'en' } = req.body;
 
     if (!text || text.trim() === '') {
-      return res.status(400).json({ error: 'Text is required' });
+      res.status(400).json({ error: 'Text is required' });
+      return;
     }
 
     try {
@@ -222,11 +261,15 @@ const translateText = async (req, res, next) => {
       res.json({ translatedText: result.text });
     } catch (translateError) {
       // Если ошибка rate limit, возвращаем специальный код
-      if (translateError.message.includes('Too Many Requests')) {
-        return res.status(429).json({
+      if (
+        translateError instanceof Error &&
+        translateError.message.includes('Too Many Requests')
+      ) {
+        res.status(429).json({
           error: 'Translation service is temporarily unavailable. Please try again later.',
           code: 'RATE_LIMIT',
         });
+        return;
       }
       throw translateError;
     }
@@ -235,11 +278,4 @@ const translateText = async (req, res, next) => {
   }
 };
 
-export {
-  getQuestions,
-  getQuestionById,
-  createQuestion,
-  updateQuestion,
-  deleteQuestion,
-  translateText,
-};
+export { getQuestions, getQuestionById, createQuestion, updateQuestion, deleteQuestion, translateText };

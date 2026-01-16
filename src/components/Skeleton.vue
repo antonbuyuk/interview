@@ -132,6 +132,7 @@ const textLines = computed(() => {
 </script>
 
 <style lang="scss" scoped>
+@use 'sass:color';
 @use '../styles/variables' as *;
 @use '../styles/mixins' as *;
 
@@ -147,7 +148,12 @@ const textLines = computed(() => {
 // Базовый элемент скелетона - линия
 .skeleton__line {
   height: 1rem;
-  background: linear-gradient(90deg, $bg-light 0%, lighten($bg-light, 2%) 50%, $bg-light 100%);
+  background: linear-gradient(
+    90deg,
+    $bg-light 0%,
+    color.scale($bg-light, $lightness: 2%) 50%,
+    $bg-light 100%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
   border-radius: 4px;
@@ -237,7 +243,12 @@ const textLines = computed(() => {
 .skeleton__badge {
   width: 80px;
   height: 1.5rem;
-  background: linear-gradient(90deg, $bg-light 0%, lighten($bg-light, 2%) 50%, $bg-light 100%);
+  background: linear-gradient(
+    90deg,
+    $bg-light 0%,
+    color.scale($bg-light, $lightness: 2%) 50%,
+    $bg-light 100%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
   border-radius: 12px;
@@ -272,9 +283,9 @@ const textLines = computed(() => {
   height: 150px;
   background: linear-gradient(
     90deg,
-    darken($bg-light, 2%) 0%,
-    lighten($bg-light, 1%) 50%,
-    darken($bg-light, 2%) 100%
+    color.scale($bg-light, $lightness: -2%) 0%,
+    color.scale($bg-light, $lightness: 1%) 50%,
+    color.scale($bg-light, $lightness: -2%) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
@@ -286,7 +297,7 @@ const textLines = computed(() => {
 .skeleton__answer {
   margin-top: 1.5rem;
   padding: 1rem;
-  background: lighten($bg-light, 1%);
+  background: color.scale($bg-light, $lightness: 1%);
   @include rounded-md;
   &.is-type {
     &--ru {
@@ -304,7 +315,12 @@ const textLines = computed(() => {
 .skeleton__button {
   width: 32px;
   height: 32px;
-  background: linear-gradient(90deg, $bg-light 0%, lighten($bg-light, 2%) 50%, $bg-light 100%);
+  background: linear-gradient(
+    90deg,
+    $bg-light 0%,
+    color.scale($bg-light, $lightness: 2%) 50%,
+    $bg-light 100%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
   border-radius: 6px;
@@ -359,7 +375,12 @@ const textLines = computed(() => {
 .skeleton__tag {
   width: 80px;
   height: 1.75rem;
-  background: linear-gradient(90deg, $bg-light 0%, lighten($bg-light, 2%) 50%, $bg-light 100%);
+  background: linear-gradient(
+    90deg,
+    $bg-light 0%,
+    color.scale($bg-light, $lightness: 2%) 50%,
+    $bg-light 100%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
   border-radius: 4px;

@@ -70,13 +70,24 @@
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { ref, watch, computed } from 'vue';
 import { createSection, updateSection } from '../api/sections';
+import type { Section } from '../types/api';
 
-const props = defineProps({
-  isOpen: { type: Boolean, default: false },
-  section: { type: Object, default: () => ({}) },
+interface Props {
+  isOpen?: boolean;
+  section?: Section;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  isOpen: false,
+  section: undefined,
 });
 
-const emit = defineEmits(['close', 'saved']);
+interface Emits {
+  (e: 'close'): void;
+  (e: 'saved'): void;
+}
+
+const emit = defineEmits<Emits>();
 
 const loading = ref(false);
 const formData = ref({
@@ -130,7 +141,7 @@ const handleSubmit = async () => {
       dir: formData.value.dir,
     };
 
-    if (editingSection.value) {
+    if (editingSection.value && props.section) {
       await updateSection(props.section.id, sectionData);
     } else {
       await createSection(sectionData);

@@ -1,7 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  log: (process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error']) as (
+    | 'query'
+    | 'error'
+    | 'warn'
+  )[],
 });
 
 // Graceful shutdown

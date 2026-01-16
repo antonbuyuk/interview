@@ -181,10 +181,4 @@ const deleteSection = async (req, res, next) => {
   }
 };
 
-export {
-  getSections,
-  getSectionById,
-  createSection,
-  updateSection,
-  deleteSection,
-};
+export { getSections, getSectionById, createSection, updateSection, deleteSection };

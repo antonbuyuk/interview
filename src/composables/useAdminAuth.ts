@@ -1,5 +1,5 @@
 import { ref, computed, onMounted, onUnmounted, type ComputedRef } from 'vue';
-import { api } from '../api/client';
+import { api, ApiError } from '../api/client';
 import type { LoginRequest, LoginResponse } from '../types/api';
 
 const STORAGE_KEY = 'is_auth_admin';
@@ -90,10 +90,17 @@ export function useAdminAuth(): UseAdminAuthReturn {
         saveAuthToken();
         return { success: true };
       } else {
-        throw new Error('Login failed');
+        const errorMessage = response.error || 'Login failed';
+        error.value = errorMessage;
+        return { success: false, error: errorMessage };
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Ошибка авторизации';
+      const errorMessage =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : 'Ошибка авторизации';
       error.value = errorMessage;
       return { success: false, error: errorMessage };
     } finally {

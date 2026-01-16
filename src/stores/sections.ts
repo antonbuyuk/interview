@@ -1,12 +1,25 @@
 import { defineStore } from 'pinia';
-import { ref, computed, type Ref } from 'vue';
+import { ref, computed, type Ref, type ComputedRef } from 'vue';
 import { getSections } from '../api/sections';
 import type { Section } from '../types/api';
+import { ApiError } from '../api/client';
 
-export const useSectionsStore = defineStore('sections', () => {
-  const sections: Ref<Section[]> = ref([]);
-  const loading: Ref<boolean> = ref(false);
-  const error: Ref<string | null> = ref(null);
+// Типы для возвращаемых значений store
+export interface SectionsStoreReturn {
+  sections: ComputedRef<Section[]>;
+  loading: ComputedRef<boolean>;
+  error: ComputedRef<string | null>;
+  loadSections: (force?: boolean) => Promise<void>;
+  refreshSections: () => Promise<void>;
+  getSectionById: (id: string) => Section | undefined;
+  getSectionByPath: (path: string) => Section | undefined;
+  getSectionsArray: () => Section[];
+}
+
+export const useSectionsStore = defineStore('sections', (): SectionsStoreReturn => {
+  const sections: Ref<Section[]> = ref<Section[]>([]);
+  const loading: Ref<boolean> = ref<boolean>(false);
+  const error: Ref<string | null> = ref<string | null>(null);
 
   // Промис текущей загрузки для предотвращения дублирования запросов
   let loadPromise: Promise<Section[]> | null = null;
@@ -28,13 +41,19 @@ export const useSectionsStore = defineStore('sections', () => {
       error.value = null;
 
       loadPromise = getSections()
-        .then(data => {
+        .then((data: Section[]) => {
           sections.value = data;
           loadPromise = null;
           return data;
         })
-        .catch(err => {
-          error.value = err instanceof Error ? err.message : 'Неизвестная ошибка';
+        .catch((err: unknown) => {
+          const errorMessage =
+            err instanceof ApiError
+              ? err.message
+              : err instanceof Error
+                ? err.message
+                : 'Неизвестная ошибка';
+          error.value = errorMessage;
           console.error('Ошибка загрузки разделов:', err);
           loadPromise = null;
           throw err;
@@ -44,8 +63,14 @@ export const useSectionsStore = defineStore('sections', () => {
         });
 
       await loadPromise;
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Неизвестная ошибка';
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : 'Неизвестная ошибка';
+      error.value = errorMessage;
       console.error('Ошибка загрузки разделов:', err);
       loadPromise = null;
       throw err;
