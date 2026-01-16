@@ -1,6 +1,13 @@
 import prisma from '../utils/prisma.js';
+import type { Response, NextFunction } from 'express';
+import type { ExtendedRequest } from '../types/express';
+import type { CreateSectionBody, UpdateSectionBody } from '../types/api';
 
-const getSections = async (req, res, next) => {
+const getSections = async (
+  req: ExtendedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const sections = await prisma.section.findMany({
       include: {
@@ -21,7 +28,11 @@ const getSections = async (req, res, next) => {
   }
 };
 
-const getSectionById = async (req, res, next) => {
+const getSectionById = async (
+  req: ExtendedRequest<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -58,7 +69,8 @@ const getSectionById = async (req, res, next) => {
     }
 
     if (!section) {
-      return res.status(404).json({ error: 'Section not found' });
+      res.status(404).json({ error: 'Section not found' });
+      return;
     }
 
     res.json(section);
@@ -67,7 +79,11 @@ const getSectionById = async (req, res, next) => {
   }
 };
 
-const createSection = async (req, res, next) => {
+const createSection = async (
+  req: ExtendedRequest<unknown, unknown, CreateSectionBody>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { sectionId, title, path, dir } = req.body;
 
@@ -77,7 +93,8 @@ const createSection = async (req, res, next) => {
     });
 
     if (existing) {
-      return res.status(409).json({ error: 'Section with this sectionId already exists' });
+      res.status(409).json({ error: 'Section with this sectionId already exists' });
+      return;
     }
 
     const newSection = await prisma.section.create({
@@ -102,7 +119,11 @@ const createSection = async (req, res, next) => {
   }
 };
 
-const updateSection = async (req, res, next) => {
+const updateSection = async (
+  req: ExtendedRequest<{ id: string }, unknown, UpdateSectionBody>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { id } = req.params;
     const { sectionId, title, path, dir } = req.body;
@@ -117,7 +138,8 @@ const updateSection = async (req, res, next) => {
       });
 
       if (existing) {
-        return res.status(409).json({ error: 'Section with this sectionId already exists' });
+        res.status(409).json({ error: 'Section with this sectionId already exists' });
+        return;
       }
     }
 
@@ -144,7 +166,11 @@ const updateSection = async (req, res, next) => {
   }
 };
 
-const deleteSection = async (req, res, next) => {
+const deleteSection = async (
+  req: ExtendedRequest<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -161,14 +187,16 @@ const deleteSection = async (req, res, next) => {
     });
 
     if (!section) {
-      return res.status(404).json({ error: 'Section not found' });
+      res.status(404).json({ error: 'Section not found' });
+      return;
     }
 
     if (section._count.questions > 0) {
-      return res.status(409).json({
+      res.status(409).json({
         error:
           'Cannot delete section with existing questions. Please delete or move questions first.',
       });
+      return;
     }
 
     await prisma.section.delete({

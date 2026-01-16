@@ -1,6 +1,6 @@
 import express from 'express';
 const router = express.Router();
-import * as termsController from '../controllers/termsController.js';
+import * as termsController from '../controllers/termsController';
 import errorHandler from '../middleware/errorHandler.js';
 import authAdmin from '../middleware/authAdmin.js';
 

@@ -1,5 +1,6 @@
 import prisma from '../utils/prisma.js';
 import { translate } from '@vitalets/google-translate-api';
+import { Prisma } from '@prisma/client';
 import type { Response, NextFunction } from 'express';
 import type { ExtendedRequest } from '../types/express';
 import type {
@@ -119,8 +120,8 @@ const createQuestion = async (
           number: targetNumber,
           question,
           questionRaw,
-          questionEn: questionEn || null,
-          codeBlocks: codeBlocks || null,
+          questionEn: questionEn || undefined,
+          codeBlocks: codeBlocks || undefined,
           rawMarkdown,
           answers: answers
             ? {
@@ -245,12 +246,18 @@ const updateQuestion = async (
         return tx.question.update({
           where: { id },
           data: {
-            ...(isSectionChanging && { sectionId: newSectionId }),
+            ...(isSectionChanging && {
+              section: {
+                connect: { id: newSectionId },
+              },
+            }),
             number: newNumber,
             ...(question !== undefined && { question }),
             ...(questionRaw !== undefined && { questionRaw }),
             ...(questionEn !== undefined && { questionEn }),
-            ...(codeBlocks !== undefined && { codeBlocks }),
+            ...(codeBlocks !== undefined && {
+              codeBlocks: codeBlocks === null ? Prisma.JsonNull : codeBlocks,
+            }),
             ...(rawMarkdown !== undefined && { rawMarkdown }),
           },
           include: {
@@ -271,7 +278,9 @@ const updateQuestion = async (
         ...(question !== undefined && { question }),
         ...(questionRaw !== undefined && { questionRaw }),
         ...(questionEn !== undefined && { questionEn }),
-        ...(codeBlocks !== undefined && { codeBlocks }),
+        ...(codeBlocks !== undefined && {
+          codeBlocks: codeBlocks === null ? Prisma.JsonNull : codeBlocks,
+        }),
         ...(rawMarkdown !== undefined && { rawMarkdown }),
       },
       include: {

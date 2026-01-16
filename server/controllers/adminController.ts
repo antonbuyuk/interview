@@ -1,23 +1,34 @@
 /**
  * Контроллер для авторизации администратора
  */
-const login = async (req, res, next) => {
+import type { Response, NextFunction } from 'express';
+import type { ExtendedRequest } from '../types/express';
+import type { LoginBody } from '../types/api';
+
+const login = async (
+  req: ExtendedRequest<unknown, unknown, LoginBody>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { password } = req.body;
 
     if (!password) {
-      return res.status(400).json({ error: 'Password is required' });
+      res.status(400).json({ error: 'Password is required' });
+      return;
     }
 
     const adminPassword = process.env.IS_ADMIN_PASS;
 
     if (!adminPassword) {
       console.error('IS_ADMIN_PASS is not set in environment variables');
-      return res.status(500).json({ error: 'Server configuration error' });
+      res.status(500).json({ error: 'Server configuration error' });
+      return;
     }
 
     if (password !== adminPassword) {
-      return res.status(401).json({ error: 'Invalid password' });
+      res.status(401).json({ error: 'Invalid password' });
+      return;
     }
 
     // Возвращаем успешный ответ - фронтенд сохранит токен в localStorage
