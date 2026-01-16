@@ -20,9 +20,15 @@ const allowedOrigins: (string | undefined)[] = [
   process.env.FRONTEND_URL,
 ].filter((origin): origin is string => Boolean(origin));
 
-// Функция для нормализации origin (убирает trailing slash и приводит к стандартному виду)
+// Функция для нормализации origin (убирает trailing slash и путь, оставляет только домен)
 const normalizeOrigin = (origin: string): string => {
-  return origin.replace(/\/$/, '');
+  try {
+    const url = new URL(origin);
+    return `${url.protocol}//${url.host}`;
+  } catch {
+    // Если не удалось распарсить как URL, просто убираем trailing slash
+    return origin.replace(/\/$/, '');
+  }
 };
 
 app.use(
@@ -34,13 +40,16 @@ app.use(
         return;
       }
 
-      // Нормализуем origin для сравнения
+      // Нормализуем origin для сравнения (убираем путь, оставляем только домен)
       const normalizedOrigin = normalizeOrigin(origin);
 
-      // Проверяем точное совпадение
-      const exactMatch = allowedOrigins.some(allowed => normalizeOrigin(allowed) === normalizedOrigin);
+      // Проверяем точное совпадение с нормализованными allowedOrigins
+      const exactMatch = allowedOrigins.some(allowed => {
+        if (!allowed) return false;
+        return normalizeOrigin(allowed) === normalizedOrigin;
+      });
 
-      // Проверяем поддомены GitHub Pages (*.github.io)
+      // Проверяем поддомены GitHub Pages (*.github.io) - без учета пути
       const isGitHubPages = /^https:\/\/[a-zA-Z0-9-]+\.github\.io$/.test(normalizedOrigin);
 
       if (exactMatch || isGitHubPages) {
@@ -50,13 +59,13 @@ app.use(
         if (process.env.NODE_ENV === 'development') {
           callback(null, true);
         } else {
-          console.warn(`CORS blocked origin: ${origin}`);
+          console.warn(`CORS blocked origin: ${origin} (normalized: ${normalizedOrigin})`);
           callback(new Error('Not allowed by CORS'));
         }
       }
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Auth'],
     exposedHeaders: ['Content-Type'],
   })
