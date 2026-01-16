@@ -114,8 +114,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { getTerms, deleteTerm as deleteTermApi } from '../api/terms';
-import AddTermModal from '../components/AddTermModal.vue';
-import Skeleton from '../components/Skeleton.vue';
+import AddTermModal from '../components/modals/AddTermModal.vue';
+import Skeleton from '../components/ui/Skeleton.vue';
 import { useAdminAuth } from '../composables/useAdminAuth';
 import { useTextToSpeech } from '../composables/useTextToSpeech';
 import {

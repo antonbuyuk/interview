@@ -64,9 +64,7 @@ const createAnswer = async (
     });
 
     if (existing) {
-      res
-        .status(409)
-        .json({ error: 'Answer with this type already exists for this question' });
+      res.status(409).json({ error: 'Answer with this type already exists for this question' });
       return;
     }
 

@@ -1,6 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router';
-import HomeView from './views/HomeView.vue';
-import VocabularyView from './views/VocabularyView.vue';
+import HomeView from '../views/HomeView.vue';
+import VocabularyView from '../views/VocabularyView.vue';
 
 const routes: RouteRecordRaw[] = [
   {

@@ -1,8 +1,8 @@
 import express from 'express';
-import * as questionsController from '../controllers/questionsController.js';
-import * as answersController from '../controllers/answersController.js';
-import errorHandler from '../middleware/errorHandler.js';
-import authAdmin from '../middleware/authAdmin.js';
+import * as questionsController from '../controllers/questionsController';
+import * as answersController from '../controllers/answersController';
+import errorHandler from '../middleware/errorHandler';
+import authAdmin from '../middleware/authAdmin';
 
 const router = express.Router();
 

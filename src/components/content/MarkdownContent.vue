@@ -12,7 +12,7 @@
 import { computed } from 'vue';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
-import { useDictionaryHighlight } from '../composables/useDictionaryHighlight';
+import { useDictionaryHighlight } from '../../composables/useDictionaryHighlight';
 
 const props = defineProps({
   markdown: {
@@ -117,8 +117,8 @@ const handleMouseOut = (event: MouseEvent) => {
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/variables' as *;
-@use '../styles/mixins' as *;
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
 .markdown-content {
   :deep(h1) {
     font-size: 2rem;

@@ -1,8 +1,8 @@
 import express from 'express';
 const router = express.Router();
 import * as termsController from '../controllers/termsController';
-import errorHandler from '../middleware/errorHandler.js';
-import authAdmin from '../middleware/authAdmin.js';
+import errorHandler from '../middleware/errorHandler';
+import authAdmin from '../middleware/authAdmin';
 
 router.get('/', termsController.getTerms);
 // Важно: маршрут /by-name/:term должен быть ПЕРЕД /:id, иначе Express будет интерпретировать "by-name" как ID

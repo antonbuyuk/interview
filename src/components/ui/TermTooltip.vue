@@ -54,7 +54,7 @@ const tooltipStyle = ref<Record<string, string>>({});
 const hideTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 const showTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 const isHoveringTooltip = ref(false); // Флаг для отслеживания наведения на tooltip
-const currentTerm = ref<import('../types/api').Term | null>(null); // Локальная копия term для сохранения при наведении
+const currentTerm = ref<import('../../types/api').Term | null>(null); // Локальная копия term для сохранения при наведении
 const offset = 50; // Отступ от курсора
 const hideDelay = 300; // Задержка перед скрытием (мс)
 
@@ -105,7 +105,7 @@ const handleMouseEnter = () => {
   }
   // Сохраняем текущий term, чтобы tooltip не исчез
   if (props.term) {
-    currentTerm.value = props.term as import('../types/api').Term;
+    currentTerm.value = props.term as import('../../types/api').Term;
   }
 };
 
@@ -130,7 +130,7 @@ const show = () => {
 
   // Сохраняем term локально
   if (props.term) {
-    currentTerm.value = props.term as import('../types/api').Term;
+    currentTerm.value = props.term as import('../../types/api').Term;
   }
 
   // Небольшая задержка перед показом для плавности
@@ -210,7 +210,7 @@ const handleMouseMove = () => {
 
 onMounted(() => {
   if (props.term) {
-    currentTerm.value = props.term as import('../types/api').Term;
+    currentTerm.value = props.term as import('../../types/api').Term;
     show();
   }
   window.addEventListener('mousemove', handleMouseMove);
@@ -236,8 +236,8 @@ defineExpose({
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/variables' as *;
-@use '../styles/mixins' as *;
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
 
 .term-tooltip {
   position: fixed;

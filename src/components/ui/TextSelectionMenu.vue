@@ -48,8 +48,8 @@
 <script setup lang="ts">
 import { computed, ref, watch, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useTextSelection } from '../composables/useTextSelection';
-import { getTermByExactName } from '../api/terms';
+import { useTextSelection } from '../../composables/useTextSelection';
+import { getTermByExactName } from '../../api/terms';
 import { BookOpenIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
@@ -64,7 +64,7 @@ const emit = defineEmits(['add-to-dictionary']);
 const router = useRouter();
 const { selectedText, showMenu, menuPosition, clearSelection } = useTextSelection();
 
-const foundTerm = ref<import('../types/api').Term | null>(null);
+const foundTerm = ref<import('../../types/api').Term | null>(null);
 const checkingTerm = ref(false);
 const checkDebounceTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 
@@ -155,8 +155,8 @@ const shouldShowMenu = computed(() => props.isAdmin && showMenu.value && selecte
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/variables' as *;
-@use '../styles/mixins' as *;
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
 
 .text-selection-menu {
   position: fixed;

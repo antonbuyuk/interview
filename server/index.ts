@@ -14,11 +14,10 @@ const app = express();
 const PORT: number = Number(process.env.PORT) || Number(process.env.API_PORT) || 3001;
 
 // Middleware
-const allowedOrigins: (string)[] = [
+const allowedOrigins: string[] = [
   ...(process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
-    : []
-  ),
+    : []),
   process.env.FRONTEND_URL,
 ].filter((origin): origin is string => Boolean(origin));
 

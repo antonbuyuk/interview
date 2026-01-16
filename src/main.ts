@@ -2,7 +2,7 @@ import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import { createRouter, createWebHistory, type Router } from 'vue-router';
 import App from './App.vue';
-import routes from './routes';
+import routes from './router/routes';
 import './styles/app.scss';
 import { useSectionsStore } from './stores/sections';
 import SectionView from './views/SectionView.vue';

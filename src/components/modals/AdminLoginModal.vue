@@ -41,7 +41,7 @@
 <script setup lang="ts">
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { ref, watch } from 'vue';
-import { useAdminAuth } from '../composables/useAdminAuth';
+import { useAdminAuth } from '../../composables/useAdminAuth';
 
 const props = defineProps({
   isOpen: Boolean,
@@ -96,8 +96,8 @@ watch(
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/variables' as *;
-@use '../styles/modals' as *;
+@use '../../styles/variables' as *;
+@use '../../styles/modals' as *;
 
 .error-message {
   padding: 0.75rem;

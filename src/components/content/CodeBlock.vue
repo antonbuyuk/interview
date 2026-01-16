@@ -97,8 +97,8 @@ const handleCopy = async () => {
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/variables' as *;
-@use '../styles/mixins' as *;
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
 
 .code-block {
   position: relative;

@@ -113,13 +113,19 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
 
-const Header = defineAsyncComponent(() => import('./components/Header.vue'));
-const AddSectionModal = defineAsyncComponent(() => import('./components/AddSectionModal.vue'));
-const AddTermModal = defineAsyncComponent(() => import('./components/AddTermModal.vue'));
-const AddQuestionModal = defineAsyncComponent(() => import('./components/AddQuestionModal.vue'));
-const TextSelectionMenu = defineAsyncComponent(() => import('./components/TextSelectionMenu.vue'));
-const TermTooltip = defineAsyncComponent(() => import('./components/TermTooltip.vue'));
-const SecondaryMenu = defineAsyncComponent(() => import('./components/SecondaryMenu.vue'));
+const Header = defineAsyncComponent(() => import('./components/ui/Header.vue'));
+const AddSectionModal = defineAsyncComponent(
+  () => import('./components/modals/AddSectionModal.vue')
+);
+const AddTermModal = defineAsyncComponent(() => import('./components/modals/AddTermModal.vue'));
+const AddQuestionModal = defineAsyncComponent(
+  () => import('./components/modals/AddQuestionModal.vue')
+);
+const TextSelectionMenu = defineAsyncComponent(
+  () => import('./components/ui/TextSelectionMenu.vue')
+);
+const TermTooltip = defineAsyncComponent(() => import('./components/ui/TermTooltip.vue'));
+const SecondaryMenu = defineAsyncComponent(() => import('./components/ui/SecondaryMenu.vue'));
 
 import { deleteSection as deleteSectionApi } from './api/sections';
 import { useSectionsStore } from './stores/sections';

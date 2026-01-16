@@ -69,8 +69,8 @@
 <script setup lang="ts">
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { ref, watch, computed } from 'vue';
-import { createSection, updateSection } from '../api/sections';
-import type { Section } from '../types/api';
+import { createSection, updateSection } from '../../api/sections';
+import type { Section } from '../../types/api';
 
 interface Props {
   isOpen?: boolean;
@@ -160,8 +160,8 @@ const handleSubmit = async () => {
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/modals' as *;
-@use '../styles/variables' as *;
+@use '../../styles/modals' as *;
+@use '../../styles/variables' as *;
 .form-hint {
   display: block;
   margin-top: 0.25rem;

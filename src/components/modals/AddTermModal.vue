@@ -64,7 +64,7 @@
 <script setup lang="ts">
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { ref, watch, computed } from 'vue';
-import { createTerm, updateTerm, getTermSuggestions } from '../api/terms';
+import { createTerm, updateTerm, getTermSuggestions } from '../../api/terms';
 
 const props = defineProps({
   isOpen: Boolean,
@@ -294,8 +294,8 @@ const handleSubmit = async () => {
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/modals' as *;
-@use '../styles/variables' as *;
+@use '../../styles/modals' as *;
+@use '../../styles/variables' as *;
 
 .input-with-loader {
   position: relative;

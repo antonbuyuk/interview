@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
-import MarkdownContent from './MarkdownContent.vue';
+import MarkdownContent from '../content/MarkdownContent.vue';
 import { ChevronRightIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps<{
@@ -76,8 +76,8 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/variables' as *;
-@use '../styles/mixins' as *;
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
 
 .answer {
   &-accordion {
