@@ -30,41 +30,15 @@
           </div>
         </div>
 
-        <!-- Дропдаун "Тренировка" -->
-        <div class="nav-dropdown">
-          <button class="nav-dropdown-btn" :class="{ active: isTrainingActive }">
-            <span>Тренировка</span>
-            <span class="dropdown-arrow">▼</span>
-          </button>
-          <div class="dropdown-menu training-dropdown">
-            <div class="dropdown-list">
-              <router-link
-                to="/training/flash-cards"
-                class="dropdown-item"
-                :class="{ active: route.path === '/training/flash-cards' }"
-              >
-                <RectangleStackIcon class="nav-icon" />
-                <span>Флэш-карточки</span>
-              </router-link>
-              <router-link
-                to="/training/practice"
-                class="dropdown-item"
-                :class="{ active: route.path === '/training/practice' }"
-              >
-                <ClockIcon class="nav-icon" />
-                <span>Режим самопроверки</span>
-              </router-link>
-              <router-link
-                to="/vocabulary"
-                class="dropdown-item"
-                :class="{ active: route.path === '/vocabulary' }"
-              >
-                <BookOpenIcon class="nav-icon" />
-                <span>Словарь терминов</span>
-              </router-link>
-            </div>
-          </div>
-        </div>
+        <!-- Ссылка "Словарь" -->
+        <router-link
+          to="/vocabulary"
+          class="nav-link"
+          :class="{ active: route.path === '/vocabulary' }"
+        >
+          <BookOpenIcon class="nav-icon" />
+          <span>Словарь</span>
+        </router-link>
       </nav>
 
       <!-- Мобильное меню -->
@@ -124,25 +98,10 @@
               <HomeIcon class="nav-icon" />
               <span>Главная</span>
             </router-link>
-            <div class="mobile-nav-section">
-              <h4 class="mobile-nav-section-title">Тренировка</h4>
-              <router-link
-                to="/training/flash-cards"
-                class="mobile-nav-item"
-                @click="closeMobileMenu"
-              >
-                <RectangleStackIcon class="nav-icon" />
-                <span>Флэш-карточки</span>
-              </router-link>
-              <router-link to="/training/practice" class="mobile-nav-item" @click="closeMobileMenu">
-                <ClockIcon class="nav-icon" />
-                <span>Режим самопроверки</span>
-              </router-link>
-              <router-link to="/vocabulary" class="mobile-nav-item" @click="closeMobileMenu">
-                <BookOpenIcon class="nav-icon" />
-                <span>Словарь терминов</span>
-              </router-link>
-            </div>
+            <router-link to="/vocabulary" class="mobile-nav-item" @click="closeMobileMenu">
+              <BookOpenIcon class="nav-icon" />
+              <span>Словарь</span>
+            </router-link>
             <div class="mobile-nav-section">
               <div class="mobile-nav-section-header">
                 <h4 class="mobile-nav-section-title">Разделы</h4>
@@ -192,7 +151,6 @@ import Search from './Search.vue';
 import {
   HomeIcon,
   RectangleStackIcon,
-  ClockIcon,
   BookOpenIcon,
   Bars3Icon,
   ClipboardDocumentListIcon,
@@ -270,12 +228,8 @@ const isSectionsActive = computed(() => {
   return sections.value.some((section: Section) => isSectionActive(section.path));
 });
 
-const isTrainingActive = computed(() => {
-  return (
-    route.path === '/training/flash-cards' ||
-    route.path === '/training/practice' ||
-    route.path === '/vocabulary'
-  );
+const isVocabularyActive = computed(() => {
+  return route.path === '/vocabulary';
 });
 
 const showQuestionFilter = computed(() => {
@@ -479,6 +433,35 @@ onUnmounted(() => {
   .dropdown-arrow {
     font-size: 0.75rem;
     transition: transform 0.2s;
+  }
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  color: $text-dark;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 6px;
+  @include transition;
+
+  .nav-icon {
+    width: 1rem;
+    height: 1rem;
+    color: inherit;
+  }
+
+  &:hover {
+    background: $bg-light;
+  }
+
+  &.active {
+    color: $primary-color;
   }
 }
 
