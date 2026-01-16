@@ -54,6 +54,13 @@ export interface TranslateTextBody {
 }
 
 /**
+ * Типы для запросов администратора
+ */
+export interface LoginBody {
+  password: string;
+}
+
+/**
  * Типы для запросов разделов
  */
 export interface CreateSectionBody {
@@ -90,4 +97,8 @@ export interface UpdateTermBody {
 export interface GetTermsQuery {
   search?: string;
   sortBy?: string;
+}
+
+export interface GetTermSuggestionsBody {
+  term: string;
 }

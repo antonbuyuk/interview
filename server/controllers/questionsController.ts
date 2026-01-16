@@ -1,5 +1,6 @@
 import prisma from '../utils/prisma.js';
 import { translate } from '@vitalets/google-translate-api';
+import { Prisma } from '@prisma/client';
 import type { Response, NextFunction } from 'express';
 import type { ExtendedRequest } from '../types/express';
 import type {
@@ -76,15 +77,8 @@ const createQuestion = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const {
-      sectionId,
-      question,
-      questionRaw,
-      questionEn,
-      codeBlocks,
-      rawMarkdown,
-      answers,
-    } = req.body;
+    const { sectionId, question, questionRaw, questionEn, codeBlocks, rawMarkdown, answers } =
+      req.body;
 
     // Check if section exists
     const section = await prisma.section.findUnique({
@@ -110,7 +104,7 @@ const createQuestion = async (
     });
 
     // Use transaction to atomically shift questions and create new one
-    const newQuestion = await prisma.$transaction(async (tx) => {
+    const newQuestion = await prisma.$transaction(async tx => {
       // Shift existing questions by +1
       for (const q of questionsToShift) {
         await tx.question.update({
@@ -126,8 +120,8 @@ const createQuestion = async (
           number: targetNumber,
           question,
           questionRaw,
-          questionEn: questionEn || null,
-          codeBlocks: codeBlocks || null,
+          questionEn: questionEn || undefined,
+          codeBlocks: codeBlocks || undefined,
           rawMarkdown,
           answers: answers
             ? {
@@ -200,7 +194,7 @@ const updateQuestion = async (
       // If moving to a higher number in the same section, shift questions in range (oldNumber, newNumber] down
       // If moving to a lower number in the same section, shift questions in range [newNumber, oldNumber) up
       let questionsToShift;
-      
+
       if (isSectionChanging) {
         // Moving to a different section: shift all questions with number >= targetNumber in new section
         questionsToShift = await prisma.question.findMany({
@@ -234,12 +228,12 @@ const updateQuestion = async (
       }
 
       // Use transaction to atomically shift questions and update current one
-      const updatedQuestion = await prisma.$transaction(async (tx) => {
+      const updatedQuestion = await prisma.$transaction(async tx => {
         // Shift other questions
         for (const q of questionsToShift) {
           // If moving to different section, always shift up
           // If moving within same section, shift based on direction
-          const shiftAmount = isSectionChanging ? 1 : (newNumber > oldNumber ? -1 : 1);
+          const shiftAmount = isSectionChanging ? 1 : newNumber > oldNumber ? -1 : 1;
           await tx.question.update({
             where: { id: q.id },
             data: {
@@ -252,12 +246,18 @@ const updateQuestion = async (
         return tx.question.update({
           where: { id },
           data: {
-            ...(isSectionChanging && { sectionId: newSectionId }),
+            ...(isSectionChanging && {
+              section: {
+                connect: { id: newSectionId },
+              },
+            }),
             number: newNumber,
             ...(question !== undefined && { question }),
             ...(questionRaw !== undefined && { questionRaw }),
             ...(questionEn !== undefined && { questionEn }),
-            ...(codeBlocks !== undefined && { codeBlocks }),
+            ...(codeBlocks !== undefined && {
+              codeBlocks: codeBlocks === null ? Prisma.JsonNull : codeBlocks,
+            }),
             ...(rawMarkdown !== undefined && { rawMarkdown }),
           },
           include: {
@@ -278,7 +278,9 @@ const updateQuestion = async (
         ...(question !== undefined && { question }),
         ...(questionRaw !== undefined && { questionRaw }),
         ...(questionEn !== undefined && { questionEn }),
-        ...(codeBlocks !== undefined && { codeBlocks }),
+        ...(codeBlocks !== undefined && {
+          codeBlocks: codeBlocks === null ? Prisma.JsonNull : codeBlocks,
+        }),
         ...(rawMarkdown !== undefined && { rawMarkdown }),
       },
       include: {
@@ -329,10 +331,7 @@ const translateText = async (
       res.json({ translatedText: result.text });
     } catch (translateError) {
       // Если ошибка rate limit, возвращаем специальный код
-      if (
-        translateError instanceof Error &&
-        translateError.message.includes('Too Many Requests')
-      ) {
+      if (translateError instanceof Error && translateError.message.includes('Too Many Requests')) {
         res.status(429).json({
           error: 'Translation service is temporarily unavailable. Please try again later.',
           code: 'RATE_LIMIT',
@@ -382,7 +381,7 @@ const reorderQuestions = async (
     // Use transaction to atomically update all question numbers
     // First, set all questions to temporary negative numbers to avoid unique constraint conflicts
     // Then set the correct numbers
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async tx => {
       // Step 1: Set all questions to temporary negative numbers
       for (let i = 0; i < questionIds.length; i++) {
         await tx.question.update({

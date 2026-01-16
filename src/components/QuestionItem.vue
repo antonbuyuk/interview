@@ -167,7 +167,6 @@ const handleEdit = () => {
   &__header {
     font-size: 1.25rem;
     font-weight: 600;
-    margin: 2rem 0 1rem 0;
     padding-top: 1rem;
     padding-bottom: 0.5rem;
     color: $primary-color;
@@ -178,6 +177,10 @@ const handleEdit = () => {
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
+
+    &:not(:last-child) {
+      margin-bottom: 2rem;
+    }
 
     &[id] {
       &::before {

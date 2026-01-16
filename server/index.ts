@@ -3,20 +3,22 @@ import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import questionsRoutes from './routes/questions.js';
-import answersRoutes from './routes/answers.js';
-import termsRoutes from './routes/terms.js';
-import sectionsRoutes from './routes/sections.js';
-import adminRoutes from './routes/admin.js';
-import errorHandler from './middleware/errorHandler.js';
+import answersRoutes from './routes/answers';
+import termsRoutes from './routes/terms';
+import sectionsRoutes from './routes/sections';
+import adminRoutes from './routes/admin';
+import errorHandler from './middleware/errorHandler';
 import type { ExtendedRequest } from './types/express';
 
 const app = express();
 const PORT: number = Number(process.env.PORT) || Number(process.env.API_PORT) || 3001;
 
 // Middleware
-const allowedOrigins: (string | undefined)[] = [
-  'http://localhost:3000',
-  'https://antonbuyuk.github.io',
+const allowedOrigins: (string)[] = [
+  ...(process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
+    : []
+  ),
   process.env.FRONTEND_URL,
 ].filter((origin): origin is string => Boolean(origin));
 
@@ -33,7 +35,10 @@ const normalizeOrigin = (origin: string): string => {
 
 app.use(
   cors({
-    origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    origin: function (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void
+    ) {
       // Разрешаем запросы без origin (например, Postman, мобильные приложения, server-to-server)
       if (!origin) {
         callback(null, true);
@@ -81,14 +86,6 @@ app.use('/api/terms', termsRoutes);
 app.use('/api/sections', sectionsRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Логирование для диагностики роутов
-console.log('Routes registered:');
-console.log('  - /api/questions');
-console.log('  - /api/answers');
-console.log('  - /api/terms (with /by-name/:term)');
-console.log('  - /api/sections');
-console.log('  - /api/admin');
-
 // Health check
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -102,6 +99,24 @@ app.use((_req: ExtendedRequest, res: Response) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
+
+// Graceful shutdown
+const gracefulShutdown = (signal: string) => {
+  console.log(`\n${signal} received. Shutting down gracefully...`);
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+
+  // Force close after 10 seconds
+  setTimeout(() => {
+    console.error('Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));

@@ -17,8 +17,7 @@ pre code.hljs {
 .hljs-selector-tag,
 .hljs-built_in,
 .hljs-name,
-pre code .hljs-name
-pre code .hljs-keyword,
+pre code .hljs-name pre code .hljs-keyword,
 pre code .hljs-selector-tag {
   color: $hljs-keyword !important;
 }
@@ -109,4 +108,3 @@ pre code .hljs-strong {
 pre code .hljs-emphasis {
   font-style: italic !important;
 }
-

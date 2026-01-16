@@ -1,20 +1,33 @@
 import prisma from '../utils/prisma.js';
 import Groq from 'groq-sdk';
+import type { Response, NextFunction } from 'express';
+import type { ExtendedRequest } from '../types/express';
+import type {
+  CreateTermBody,
+  UpdateTermBody,
+  GetTermsQuery,
+  GetTermSuggestionsBody,
+} from '../types/api';
 
 /**
  * Вспомогательная функция для задержки
  */
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number): Promise<void> =>
+  new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * Выполняет запрос к Groq API с повторными попытками при временных ошибках
- * @param {Function} requestFn - Функция, выполняющая запрос к API
- * @param {number} maxRetries - Максимальное количество попыток (по умолчанию 3)
- * @param {number} initialDelay - Начальная задержка в мс (по умолчанию 1000)
- * @returns {Promise} Результат запроса
+ * @param requestFn - Функция, выполняющая запрос к API
+ * @param maxRetries - Максимальное количество попыток (по умолчанию 3)
+ * @param initialDelay - Начальная задержка в мс (по умолчанию 1000)
+ * @returns Результат запроса
  */
-async function retryRequest(requestFn, maxRetries = 3, initialDelay = 1000) {
-  let lastError;
+async function retryRequest<T>(
+  requestFn: () => Promise<T>,
+  maxRetries = 3,
+  initialDelay = 1000
+): Promise<T> {
+  let lastError: Error | unknown;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
@@ -23,8 +36,11 @@ async function retryRequest(requestFn, maxRetries = 3, initialDelay = 1000) {
       lastError = error;
 
       // Извлекаем статус код
-      const statusCode = error.status || error.statusCode || error.response?.status;
-      const errorMessage = error.message || '';
+      const statusCode =
+        (error as { status?: number }).status ||
+        (error as { statusCode?: number }).statusCode ||
+        (error as { response?: { status?: number } }).response?.status;
+      const errorMessage = (error as Error).message || '';
 
       // Проверяем, стоит ли повторять запрос
       // НЕ повторяем при ошибках авторизации (401) или клиентских ошибках (400)
@@ -45,9 +61,9 @@ async function retryRequest(requestFn, maxRetries = 3, initialDelay = 1000) {
         statusCode === 502 ||
         statusCode === 429 ||
         statusCode === 500 ||
-        error.code === 'ETIMEDOUT' ||
-        error.code === 'ECONNREFUSED' ||
-        error.code === 'ENOTFOUND' ||
+        (error as { code?: string }).code === 'ETIMEDOUT' ||
+        (error as { code?: string }).code === 'ECONNREFUSED' ||
+        (error as { code?: string }).code === 'ENOTFOUND' ||
         errorMessage.includes('503') ||
         errorMessage.includes('502') ||
         errorMessage.includes('500') ||
@@ -75,11 +91,21 @@ async function retryRequest(requestFn, maxRetries = 3, initialDelay = 1000) {
   throw lastError;
 }
 
-const getTerms = async (req, res, next) => {
+const getTerms = async (
+  req: ExtendedRequest<unknown, unknown, unknown, GetTermsQuery>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { search, sortBy = 'term' } = req.query;
 
-    const where = {};
+    const where: {
+      OR?: Array<{
+        term?: { contains: string; mode: 'insensitive' };
+        translation?: { contains: string; mode: 'insensitive' };
+        phrases?: { some: { phrase: { contains: string; mode: 'insensitive' } } };
+      }>;
+    } = {};
 
     if (search) {
       where.OR = [
@@ -89,7 +115,7 @@ const getTerms = async (req, res, next) => {
       ];
     }
 
-    const orderBy = {};
+    const orderBy: { term?: 'asc'; translation?: 'asc' } = {};
     switch (sortBy) {
       case 'term':
         orderBy.term = 'asc';
@@ -116,7 +142,11 @@ const getTerms = async (req, res, next) => {
   }
 };
 
-const getTermById = async (req, res, next) => {
+const getTermById = async (
+  req: ExtendedRequest<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -129,7 +159,8 @@ const getTermById = async (req, res, next) => {
     });
 
     if (!term) {
-      return res.status(404).json({ error: 'Term not found' });
+      res.status(404).json({ error: 'Term not found' });
+      return;
     }
 
     res.json(term);
@@ -138,13 +169,18 @@ const getTermById = async (req, res, next) => {
   }
 };
 
-const getTermByExactName = async (req, res, next) => {
+const getTermByExactName = async (
+  req: ExtendedRequest<{ term: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { term: termName } = req.params;
     console.log('getTermByExactName called with term:', termName);
 
     if (!termName || termName.trim().length === 0) {
-      return res.status(400).json({ error: 'Term name is required' });
+      res.status(400).json({ error: 'Term name is required' });
+      return;
     }
 
     const trimmedTerm = termName.trim().toLowerCase();
@@ -165,7 +201,8 @@ const getTermByExactName = async (req, res, next) => {
     });
 
     if (!terms || terms.length === 0) {
-      return res.status(404).json({ error: 'Term not found' });
+      res.status(404).json({ error: 'Term not found' });
+      return;
     }
 
     res.json(terms[0]);
@@ -175,7 +212,11 @@ const getTermByExactName = async (req, res, next) => {
   }
 };
 
-const createTerm = async (req, res, next) => {
+const createTerm = async (
+  req: ExtendedRequest<unknown, unknown, CreateTermBody>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { term, translation, examples, phrases } = req.body;
 
@@ -185,7 +226,8 @@ const createTerm = async (req, res, next) => {
     });
 
     if (existing) {
-      return res.status(409).json({ error: 'Term already exists' });
+      res.status(409).json({ error: 'Term already exists' });
+      return;
     }
 
     const newTerm = await prisma.term.create({
@@ -219,7 +261,11 @@ const createTerm = async (req, res, next) => {
   }
 };
 
-const updateTerm = async (req, res, next) => {
+const updateTerm = async (
+  req: ExtendedRequest<{ id: string }, unknown, UpdateTermBody>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { id } = req.params;
     const { term, translation, examples, phrases } = req.body;
@@ -234,12 +280,18 @@ const updateTerm = async (req, res, next) => {
       });
 
       if (existing) {
-        return res.status(409).json({ error: 'Term with this name already exists' });
+        res.status(409).json({ error: 'Term with this name already exists' });
+        return;
       }
     }
 
     // Update term and handle examples/phrases
-    const updateData = {
+    const updateData: {
+      term?: string;
+      translation?: string;
+      examples?: { create: Array<{ example: string }> };
+      phrases?: { create: Array<{ phrase: string }> };
+    } = {
       ...(term !== undefined && { term }),
       ...(translation !== undefined && { translation }),
     };
@@ -279,7 +331,11 @@ const updateTerm = async (req, res, next) => {
   }
 };
 
-const deleteTerm = async (req, res, next) => {
+const deleteTerm = async (
+  req: ExtendedRequest<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -293,22 +349,28 @@ const deleteTerm = async (req, res, next) => {
   }
 };
 
-const getTermSuggestions = async (req, res, next) => {
+const getTermSuggestions = async (
+  req: ExtendedRequest<unknown, unknown, GetTermSuggestionsBody>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { term } = req.body;
 
     // Валидация: термин должен быть не пустым и минимум 2 символа
     if (!term || typeof term !== 'string' || term.trim().length < 2) {
-      return res.status(400).json({ error: 'Term must be at least 2 characters long' });
+      res.status(400).json({ error: 'Term must be at least 2 characters long' });
+      return;
     }
 
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey || apiKey.trim() === '') {
       console.error('GROQ_API_KEY is not set or is empty');
-      return res.status(503).json({
+      res.status(503).json({
         error: 'Groq API key is not configured',
         message: 'Please set GROQ_API_KEY environment variable',
       });
+      return;
     }
 
     const groq = new Groq({ apiKey });
@@ -359,11 +421,16 @@ const getTermSuggestions = async (req, res, next) => {
     const content = result.choices[0]?.message?.content;
 
     if (!content) {
-      return res.status(500).json({ error: 'Failed to get response from Groq' });
+      res.status(500).json({ error: 'Failed to get response from Groq' });
+      return;
     }
 
     // Парсим JSON ответ
-    let suggestions;
+    let suggestions: {
+      translation: string;
+      phrases: string[];
+      examples: string[];
+    };
     try {
       // Убираем возможные markdown code blocks (на случай если модель их добавит)
       const cleanedContent = content
@@ -373,10 +440,12 @@ const getTermSuggestions = async (req, res, next) => {
       suggestions = JSON.parse(cleanedContent);
     } catch (parseError) {
       console.error('Failed to parse Groq response:', content);
-      console.error('Parse error:', parseError.message);
-      return res
-        .status(500)
-        .json({ error: 'Failed to parse AI response', details: parseError.message });
+      console.error('Parse error:', (parseError as Error).message);
+      res.status(500).json({
+        error: 'Failed to parse AI response',
+        details: (parseError as Error).message,
+      });
+      return;
     }
 
     // Валидация структуры ответа
@@ -385,7 +454,8 @@ const getTermSuggestions = async (req, res, next) => {
       !Array.isArray(suggestions.phrases) ||
       !Array.isArray(suggestions.examples)
     ) {
-      return res.status(500).json({ error: 'Invalid response format from AI' });
+      res.status(500).json({ error: 'Invalid response format from AI' });
+      return;
     }
 
     res.json({
@@ -401,18 +471,22 @@ const getTermSuggestions = async (req, res, next) => {
     );
 
     // Извлекаем статус код из разных возможных мест
-    const statusCode = error.status || error.statusCode || error.response?.status || error.code;
-    const errorMessage = error.message || 'Unknown error';
+    const statusCode =
+      (error as { status?: number }).status ||
+      (error as { statusCode?: number }).statusCode ||
+      (error as { response?: { status?: number } }).response?.status ||
+      (error as { code?: number }).code;
+    const errorMessage = (error as Error).message || 'Unknown error';
 
     console.error('Error details:', {
       message: errorMessage,
-      status: error.status,
-      statusCode: error.statusCode,
-      responseStatus: error.response?.status,
-      code: error.code,
-      type: error.constructor.name,
-      name: error.name,
-      stack: error.stack,
+      status: (error as { status?: number }).status,
+      statusCode: (error as { statusCode?: number }).statusCode,
+      responseStatus: (error as { response?: { status?: number } }).response?.status,
+      code: (error as { code?: number }).code,
+      type: (error as { constructor?: { name?: string } }).constructor?.name,
+      name: (error as { name?: string }).name,
+      stack: (error as { stack?: string }).stack,
     });
 
     // Обработка ошибок Groq API - проверка API ключа
@@ -423,11 +497,12 @@ const getTermSuggestions = async (req, res, next) => {
       errorMessage.includes('Invalid API key') ||
       errorMessage.includes('API key not valid')
     ) {
-      return res.status(503).json({
+      res.status(503).json({
         error: 'Groq authentication failed',
         message:
           'Invalid API key. Please check GROQ_API_KEY environment variable and ensure it is correct.',
       });
+      return;
     }
 
     // Обработка ошибок квоты и лимитов
@@ -438,34 +513,37 @@ const getTermSuggestions = async (req, res, next) => {
       errorMessage.includes('RESOURCE_EXHAUSTED') ||
       errorMessage.includes('quota')
     ) {
-      return res.status(503).json({
+      res.status(503).json({
         error: 'Groq rate limit exceeded',
         message: 'Too many requests or quota exceeded. Please try again later.',
       });
+      return;
     }
 
     // Обработка ошибок сервера Groq
     if (statusCode === 500 || statusCode === 502 || statusCode === 503) {
-      return res.status(503).json({
+      res.status(503).json({
         error: 'Groq service error',
         message: `Groq API returned error ${statusCode}. Please try again later.`,
       });
+      return;
     }
 
     // Обработка сетевых ошибок и таймаутов
     if (
-      error.code === 'ECONNREFUSED' ||
-      error.code === 'ETIMEDOUT' ||
-      error.code === 'ENOTFOUND' ||
+      (error as { code?: string }).code === 'ECONNREFUSED' ||
+      (error as { code?: string }).code === 'ETIMEDOUT' ||
+      (error as { code?: string }).code === 'ENOTFOUND' ||
       errorMessage.includes('timeout') ||
       errorMessage.includes('ECONNREFUSED') ||
       errorMessage.includes('fetch failed')
     ) {
-      return res.status(503).json({
+      res.status(503).json({
         error: 'Groq connection failed',
         message:
           'Could not connect to Groq API. Please check your internet connection and try again.',
       });
+      return;
     }
 
     // Обработка ошибок "Error fetching from" - обычно это проблемы с API ключом или сетью
@@ -473,25 +551,29 @@ const getTermSuggestions = async (req, res, next) => {
       // Проверяем, установлен ли API ключ
       const apiKey = process.env.GROQ_API_KEY;
       if (!apiKey || apiKey.trim() === '') {
-        return res.status(503).json({
+        res.status(503).json({
           error: 'Groq API key not configured',
-          message: 'GROQ_API_KEY environment variable is not set. Please add it to your .env file.',
+          message:
+            'GROQ_API_KEY environment variable is not set. Please add it to your .env file.',
         });
+        return;
       }
 
-      return res.status(503).json({
+      res.status(503).json({
         error: 'Groq service unavailable',
         message:
           'Failed to connect to Groq API. Please check: 1) Your API key is correct, 2) You have internet connection, 3) Groq service is available.',
       });
+      return;
     }
 
     // Если это ошибка Groq, но статус неизвестен
     if (errorMessage.includes('Groq')) {
-      return res.status(503).json({
+      res.status(503).json({
         error: 'Groq service unavailable',
         message: errorMessage || 'An error occurred while communicating with Groq API',
       });
+      return;
     }
 
     // Для остальных ошибок используем стандартный обработчик
