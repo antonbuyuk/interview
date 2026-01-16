@@ -1,4 +1,8 @@
 import 'dotenv/config';
+// Инициализация Sentry должна быть в самом начале
+import { initSentry } from './utils/sentry.js';
+initSentry();
+
 import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -9,6 +13,13 @@ import sectionsRoutes from './routes/sections';
 import adminRoutes from './routes/admin';
 import errorHandler from './middleware/errorHandler';
 import type { ExtendedRequest } from './types/express';
+import logger from './utils/logger.js';
+import Sentry from './utils/sentry.js';
+import { createRequire } from 'module';
+import { swaggerSpec } from './utils/swagger.js';
+
+// Создаем require функцию для использования в ES модулях
+const require = createRequire(import.meta.url);
 
 const app = express();
 const PORT: number = Number(process.env.PORT) || Number(process.env.API_PORT) || 3001;
@@ -63,7 +74,7 @@ app.use(
         if (process.env.NODE_ENV === 'development') {
           callback(null, true);
         } else {
-          console.warn(`CORS blocked origin: ${origin} (normalized: ${normalizedOrigin})`);
+          logger.warn({ origin, normalizedOrigin }, 'CORS blocked origin');
           callback(new Error('Not allowed by CORS'));
         }
       }
@@ -78,6 +89,33 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Content Security Policy headers для защиты от XSS
+app.use((_req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " + // unsafe-inline и unsafe-eval для Vue
+      "style-src 'self' 'unsafe-inline'; " +
+      "img-src 'self' data: https:; " +
+      "font-src 'self' data:; " +
+      "connect-src 'self' https://api.groq.com; " + // Для Groq API
+      "frame-ancestors 'none'; " +
+      "base-uri 'self';"
+  );
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  next();
+});
+
+// Performance monitoring
+import { performanceMiddleware } from './middleware/performance.js';
+app.use(performanceMiddleware);
+
+// Rate limiting - применяем общий лимитер ко всем API запросам
+import { generalLimiter } from './middleware/rateLimiter.js';
+app.use('/api', generalLimiter);
+
 // Routes
 app.use('/api/questions', questionsRoutes);
 app.use('/api/answers', answersRoutes);
@@ -85,9 +123,53 @@ app.use('/api/terms', termsRoutes);
 app.use('/api/sections', sectionsRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Health check
+// Swagger UI для API документации
+// Доступен всегда, кроме случая когда явно отключен через DISABLE_SWAGGER=true
+if (process.env.DISABLE_SWAGGER !== 'true') {
+  try {
+    // Используем createRequire для загрузки CommonJS модуля в ES модулях
+    const swaggerUi = require('swagger-ui-express');
+    
+    if (!swaggerUi || !swaggerSpec) {
+      logger.error('Swagger modules not loaded correctly');
+      throw new Error('Swagger modules not available');
+    }
+    
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+      customCss: '.swagger-ui .topbar { display: none }',
+      customSiteTitle: 'Interview Questions API',
+    }));
+    logger.info('Swagger UI available at /api-docs');
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    logger.error({ error: errorMessage, stack: errorStack }, 'Swagger UI not available');
+    console.error('Swagger UI error:', errorMessage);
+    if (errorStack) {
+      console.error('Stack:', errorStack);
+    }
+  }
+}
+
+// Тестовый роут для проверки работы сервера
+app.get('/api-docs/test', (_req: Request, res: Response) => {
+  res.json({ message: 'Swagger route test - server is working', path: '/api-docs' });
+});
+
+// Health check с метриками
 app.get('/api/health', (_req: Request, res: Response) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  const memoryUsage = process.memoryUsage();
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: {
+      rss: Math.round(memoryUsage.rss / 1024 / 1024), // MB
+      heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024), // MB
+      heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024), // MB
+      external: Math.round(memoryUsage.external / 1024 / 1024), // MB
+    },
+  });
 });
 
 // Error handling middleware
@@ -99,20 +181,20 @@ app.use((_req: ExtendedRequest, res: Response) => {
 });
 
 const server = app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  logger.info({ port: PORT }, '🚀 Server running');
 });
 
 // Graceful shutdown
 const gracefulShutdown = (signal: string) => {
-  console.log(`\n${signal} received. Shutting down gracefully...`);
+  logger.info({ signal }, 'Shutting down gracefully...');
   server.close(() => {
-    console.log('Server closed');
+    logger.info('Server closed');
     process.exit(0);
   });
 
   // Force close after 10 seconds
   setTimeout(() => {
-    console.error('Forced shutdown after timeout');
+    logger.error('Forced shutdown after timeout');
     process.exit(1);
   }, 10000);
 };

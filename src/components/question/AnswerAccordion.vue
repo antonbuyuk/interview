@@ -89,19 +89,19 @@ onMounted(() => {
       margin-top: 1rem;
 
       &-toggle {
-        background: $answer-ru-bg;
-        border-color: $answer-ru-border;
-        color: $answer-ru-color;
+        background: var(--answer-ru-bg);
+        border-color: var(--answer-ru-border);
+        color: var(--answer-ru-color);
 
         &:hover {
-          background: $answer-ru-hover-bg;
-          border-color: $answer-ru-hover-border;
-          color: $answer-ru-hover-color;
+          background: var(--answer-ru-hover-bg);
+          border-color: var(--answer-ru-hover-border);
+          color: var(--answer-ru-hover-color);
         }
       }
 
       &-inner {
-        border-top-color: $answer-ru-border;
+        border-top-color: var(--answer-ru-border);
       }
     }
 
@@ -109,19 +109,19 @@ onMounted(() => {
       margin-top: 1rem;
 
       &-toggle {
-        background: $answer-en-bg;
-        border-color: $answer-en-border;
-        color: $answer-en-color;
+        background: var(--answer-en-bg);
+        border-color: var(--answer-en-border);
+        color: var(--answer-en-color);
 
         &:hover {
-          background: $answer-en-hover-bg;
-          border-color: $answer-en-hover-border;
-          color: $answer-en-hover-color;
+          background: var(--answer-en-hover-bg);
+          border-color: var(--answer-en-hover-border);
+          color: var(--answer-en-hover-color);
         }
       }
 
       &-inner {
-        border-top-color: $answer-en-border;
+        border-top-color: var(--answer-en-border);
       }
     }
 
@@ -129,19 +129,19 @@ onMounted(() => {
       margin-top: 1rem;
 
       &-toggle {
-        background: $senior-bg;
-        border-color: $senior-border;
-        color: $senior-color;
+        background: var(--senior-bg);
+        border-color: var(--senior-border);
+        color: var(--senior-color);
 
         &:hover {
-          background: $senior-hover-bg;
-          border-color: $senior-hover-border;
-          color: $senior-hover-color;
+          background: var(--senior-hover-bg);
+          border-color: var(--senior-hover-border);
+          color: var(--senior-hover-color);
         }
       }
 
       &-inner {
-        border-top-color: $senior-border;
+        border-top-color: var(--senior-border);
       }
     }
 
@@ -155,25 +155,25 @@ onMounted(() => {
       gap: 0.5rem;
       width: 100%;
       padding: 0.75rem 1rem;
-      background: $bg-light;
-      border: 1px solid $border-color;
+      background: var(--bg-light);
+      border: 1px solid var(--border-color);
       border-radius: 6px;
       cursor: pointer;
       font-size: 0.875rem;
       font-weight: 500;
-      color: $text-gray;
+      color: var(--text-gray);
       @include transition(all, 0.2s, ease);
       user-select: none;
       margin: 0;
       font-family: inherit;
 
       &:hover {
-        background: #e9ecef;
-        border-color: $primary-color;
-        color: $primary-color;
+        background: var(--hover-bg-strong);
+        border-color: var(--primary-color);
+        color: var(--primary-color);
 
         .answer-accordion-icon {
-          color: $primary-color;
+          color: var(--primary-color);
         }
       }
 
@@ -191,7 +191,7 @@ onMounted(() => {
     &-icon {
       display: inline-block;
       transition: transform 0.3s ease;
-      color: $text-lighter-gray;
+      color: var(--text-lighter-gray);
       width: 0.75rem;
       height: 0.75rem;
       flex-shrink: 0;
@@ -209,17 +209,15 @@ onMounted(() => {
 
     &-inner {
       padding: 1rem 0;
-      border-top: 1px solid $border-color;
+      border-top: 1px solid var(--border-color);
       margin-top: 0.5rem;
 
       // Подсветка кода внутри аккордеонов
       :deep(pre) {
-        background: $code-bg-dark !important;
-
         code,
         code.hljs {
           background: transparent !important;
-          color: $code-text !important;
+          color: #d4d4d4 !important;
         }
       }
     }

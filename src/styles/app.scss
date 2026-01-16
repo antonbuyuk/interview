@@ -1,7 +1,158 @@
+@use 'sass:color';
 @use './variables' as *;
 @use './mixins' as *;
 @use './modals' as *;
 @use './vscode-theme' as *;
+// Поддержка темной темы через CSS переменные
+:root {
+  --text-color: #{$text-color};
+  --text-dark: #{$text-dark};
+  --text-gray: #{$text-gray};
+  --text-light-gray: #{$text-light-gray};
+  --text-lighter-gray: #{$text-lighter-gray};
+  --bg-light: #{$bg-light};
+  --bg-white: #{$bg-white};
+  --bg-code: #{$bg-code};
+  --border-color: #{$border-color};
+  --primary-color: #{$primary-color};
+  --primary-hover: #{$primary-hover};
+
+  // Цвета типов ответов
+  --answer-en-bg: #{$answer-en-bg};
+  --answer-en-border: #{$answer-en-border};
+  --answer-en-color: #{$answer-en-color};
+  --answer-en-hover-bg: #{$answer-en-hover-bg};
+  --answer-en-hover-border: #{$answer-en-hover-border};
+  --answer-en-hover-color: #{$answer-en-hover-color};
+
+  --answer-ru-bg: #{$answer-ru-bg};
+  --answer-ru-border: #{$answer-ru-border};
+  --answer-ru-color: #{$answer-ru-color};
+  --answer-ru-hover-bg: #{$answer-ru-hover-bg};
+  --answer-ru-hover-border: #{$answer-ru-hover-border};
+  --answer-ru-hover-color: #{$answer-ru-hover-color};
+
+  --senior-bg: #{$senior-bg};
+  --senior-border: #{$senior-border};
+  --senior-color: #{$senior-color};
+  --senior-hover-bg: #{$senior-hover-bg};
+  --senior-hover-border: #{$senior-hover-border};
+  --senior-hover-color: #{$senior-hover-color};
+
+  // Цвета ошибок и уведомлений
+  --error-bg: #{$error-bg};
+  --error-border: #{$error-border};
+  --error-color: #{$error-color};
+
+  --success-bg: #{$success-bg};
+  --success-border: #{$success-border};
+  --success-color: #{$success-color};
+
+  --warning-color: #{$warning-color};
+  --warning-bg: #fef3c7;
+  --warning-border: #fbbf24;
+  --warning-text: #92400e;
+
+  // Акцентные цвета
+  --accent-bg: #f0f7ff;
+  --accent-border: #4da6ff;
+  --accent-text: #0066cc;
+  --accent-hover-bg: #e0f0ff;
+
+  // Дополнительные фоны для hover состояний
+  --hover-bg: #f9f9f9;
+  --hover-bg-strong: #e9ecef;
+
+  // Цвета для скелетона (градиент)
+  --skeleton-base: #{$bg-light};
+  --skeleton-highlight: #{color.scale($bg-light, $lightness: 2%)};
+  --skeleton-code-base: #{color.scale($bg-light, $lightness: -2%)};
+  --skeleton-code-highlight: #{color.scale($bg-light, $lightness: 1%)};
+
+  // Тени
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.15);
+
+  // Переходы
+  --transition-base: all 0.2s ease;
+}
+
+:root[data-theme='dark'] {
+  --text-color: #e0e0e0;
+  --text-dark: #ffffff;
+  --text-gray: #b0b0b0;
+  --text-light-gray: #888888;
+  --text-lighter-gray: #666666;
+  --bg-light: #2a2a2a;
+  --bg-white: #1e1e1e;
+  --bg-code: #252525;
+  --border-color: #404040;
+  --primary-color: #42b883;
+  --primary-hover: #35a372;
+
+  // Цвета типов ответов (адаптированные для тёмной темы)
+  --answer-en-bg: rgba(77, 166, 255, 0.15);
+  --answer-en-border: #4da6ff;
+  --answer-en-color: #6bb6ff;
+  --answer-en-hover-bg: rgba(77, 166, 255, 0.25);
+  --answer-en-hover-border: #66bfff;
+  --answer-en-hover-color: #8cc8ff;
+
+  --answer-ru-bg: rgba(102, 179, 102, 0.15);
+  --answer-ru-border: #66b366;
+  --answer-ru-color: #85c985;
+  --answer-ru-hover-bg: rgba(102, 179, 102, 0.25);
+  --answer-ru-hover-border: #7ab87a;
+  --answer-ru-hover-color: #9dd59d;
+
+  --senior-bg: rgba(255, 215, 0, 0.15);
+  --senior-border: #ffd700;
+  --senior-color: #ffeb3b;
+  --senior-hover-bg: rgba(255, 215, 0, 0.25);
+  --senior-hover-border: #ffed4e;
+  --senior-hover-color: #fff176;
+
+  // Цвета ошибок и уведомлений (адаптированные для тёмной темы)
+  --error-bg: rgba(231, 76, 60, 0.15);
+  --error-border: #e74c3c;
+  --error-color: #ff6b5a;
+
+  --success-bg: rgba(66, 184, 131, 0.15);
+  --success-border: #42b883;
+  --success-color: #5dd69f;
+
+  --warning-color: #ffd700;
+  --warning-bg: rgba(255, 215, 0, 0.15);
+  --warning-border: #ffd700;
+  --warning-text: #ffeb3b;
+
+  // Акцентные цвета (адаптированные для тёмной темы)
+  --accent-bg: rgba(77, 166, 255, 0.15);
+  --accent-border: #4da6ff;
+  --accent-text: #6bb6ff;
+  --accent-hover-bg: rgba(77, 166, 255, 0.25);
+
+  // Дополнительные фоны для hover состояний
+  --hover-bg: rgba(255, 255, 255, 0.05);
+  --hover-bg-strong: rgba(255, 255, 255, 0.1);
+
+  // Цвета для скелетона (градиент для темной темы)
+  --skeleton-base: #2a2a2a;
+  --skeleton-highlight: #343434;
+  --skeleton-code-base: #242424;
+  --skeleton-code-highlight: #2d2d2d;
+
+  // Тени (более тёмные для тёмной темы)
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.6);
+
+  // Переходы
+  --transition-base: all 0.2s ease;
+}
 
 * {
   margin: 0;
@@ -13,8 +164,9 @@ body {
   font-family:
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   line-height: 1.6;
-  color: $text-gray;
-  background: $bg-light;
+  color: var(--text-gray, $text-gray);
+  background: var(--bg-light, $bg-light);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .app {
@@ -97,13 +249,13 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 1rem;
-  background: #f8f9fa;
-  border: 1px solid #e0e0e0;
+  background: var(--bg-light, #f8f9fa);
+  border: 1px solid var(--border-color, #e0e0e0);
   @include rounded-md;
   @include transition(all, 0.2s, ease);
 
   &:hover {
-    border-color: #42b883;
+    border-color: var(--primary-color, #42b883);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 }
@@ -115,13 +267,13 @@ body {
     margin: 0 0 0.5rem 0;
     font-size: 1rem;
     font-weight: 600;
-    color: #1e1e1e;
+    color: var(--text-dark, #1e1e1e);
   }
 
   .section-meta {
     margin: 0;
     font-size: 0.8125rem;
-    color: #666;
+    color: var(--text-lighter-gray, #666);
   }
 }
 
@@ -135,7 +287,7 @@ body {
 .empty-state {
   padding: 2rem;
   text-align: center;
-  color: #666;
+  color: var(--text-lighter-gray, #666);
 }
 
 @media (max-width: 768px) {

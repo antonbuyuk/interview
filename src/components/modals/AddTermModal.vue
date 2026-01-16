@@ -209,11 +209,13 @@ watch(
 
         // Показываем предупреждение только для критических ошибок (квота, авторизация)
         if (errorType.includes('quota') || errorType.includes('authentication')) {
-          console.warn('AI недоступен:', errorMessage);
+          const { showToast } = await import('../../composables/useToast');
+          showToast('AI недоступен: ' + errorMessage, 'warning');
           // Можно показать уведомление пользователю, но не блокируем работу формы
         } else {
           // Для остальных ошибок просто логируем
-          console.warn('Не удалось получить AI-предложения:', errorMessage);
+          const { showToast } = await import('../../composables/useToast');
+          showToast('Не удалось получить AI-предложения: ' + errorMessage, 'warning');
         }
       } finally {
         suggestionsLoading.value = false;
@@ -286,7 +288,8 @@ const handleSubmit = async () => {
   } catch (error) {
     console.error('Ошибка сохранения термина:', error);
     const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
-    alert('Ошибка сохранения: ' + errorMessage);
+    const { showToast } = await import('../../composables/useToast');
+    showToast('Ошибка сохранения: ' + errorMessage, 'error');
   } finally {
     loading.value = false;
   }

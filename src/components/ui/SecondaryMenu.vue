@@ -61,7 +61,7 @@ const openLoginModal = () => {
   display: flex;
   z-index: 100;
   gap: 1rem;
-  background-color: white;
+  background-color: var(--bg-white);
   @include rounded-md;
   padding: 1rem;
   box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
@@ -79,6 +79,7 @@ const openLoginModal = () => {
     font-size: 1.125rem;
     cursor: pointer;
     border-radius: 6px;
+    color: var(--text-dark);
     @include transition;
 
     .nav-icon {
@@ -88,7 +89,7 @@ const openLoginModal = () => {
     }
 
     &:hover {
-      background: #f0f0f0;
+      background: var(--hover-bg);
     }
 
     &:active {

@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue';
 import { fileURLToPath, URL } from 'node:url';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 // Base URL для GitHub Pages (имя репозитория)
 // В production используем /interview/, в dev - /
@@ -35,7 +36,21 @@ const copy404Plugin = (): Plugin => {
 
 export default defineConfig({
   base,
-  plugins: [vue(), copy404Plugin()],
+  plugins: [
+    vue(),
+    copy404Plugin(),
+    // Bundle analyzer (только в production или при явном указании)
+    ...(process.env.ANALYZE
+      ? [
+          visualizer({
+            open: true,
+            filename: 'dist/stats.html',
+            gzipSize: true,
+            brotliSize: true,
+          }),
+        ]
+      : []),
+  ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -56,5 +71,17 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Выделяем vendor библиотеки в отдельные чанки
+          'vue-vendor': ['vue', 'vue-router', 'pinia'],
+          'ui-vendor': ['@heroicons/vue'],
+          'editor-vendor': ['@tiptap/vue-3', '@tiptap/starter-kit', '@tiptap/extension-code-block'],
+          'markdown-vendor': ['marked', 'highlight.js'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000, // Предупреждение при размере чанка > 1MB
   },
 });

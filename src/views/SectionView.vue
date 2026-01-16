@@ -41,11 +41,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, watch, nextTick, defineAsyncComponent } from 'vue';
 import { useRoute } from 'vue-router';
-import QuestionNav from '../components/question/QuestionNav.vue';
-import QuestionContent from '../components/question/QuestionContent.vue';
-import Skeleton from '../components/ui/Skeleton.vue';
+const QuestionNav = defineAsyncComponent(() => import('../components/question/QuestionNav.vue'));
+const Skeleton = defineAsyncComponent(() => import('../components/ui/Skeleton.vue'));
+const QuestionContent = defineAsyncComponent(
+  () => import('../components/question/QuestionContent.vue')
+);
 import { useAdminAuth } from '../composables/useAdminAuth';
 import { getQuestions } from '../api/questions';
 import { useSectionsStore } from '../stores/sections';
@@ -294,10 +296,10 @@ watch(
 }
 
 .question-content {
-  background: $bg-white;
+  background: var(--bg-white);
   border-radius: 12px;
   padding: 3rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
   line-height: 1.8;
   max-width: 60rem;
   margin-inline: auto;
@@ -312,12 +314,12 @@ watch(
 }
 
 .error {
-  background: #fee;
-  border: 1px solid #fcc;
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
   @include rounded-md;
   padding: 2rem;
   text-align: center;
-  color: #c33;
+  color: var(--error-color);
 
   h2 {
     margin-bottom: 0.5rem;
@@ -327,7 +329,7 @@ watch(
 .retry-btn {
   margin-top: 1rem;
   padding: 0.5rem 1rem;
-  background: $primary-color;
+  background: var(--primary-color);
   color: white;
   border: none;
   border-radius: 4px;
@@ -336,7 +338,7 @@ watch(
   transition: background 0.2s;
 
   &:hover {
-    background: $primary-hover;
+    background: var(--primary-hover);
   }
 }
 
@@ -361,14 +363,14 @@ watch(
 }
 
 .filter-modal {
-  background: $bg-white;
+  background: var(--bg-white);
   border-radius: 12px;
   width: 100%;
   max-width: 500px;
   max-height: calc(100vh - 56px - 2rem);
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-xl);
   overflow: hidden;
 
   @media (max-width: $breakpoint-mobile) {
@@ -382,8 +384,8 @@ watch(
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid $border-color;
-  background: $bg-light;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-light);
 
   @media (max-width: $breakpoint-mobile) {
     padding: 0.875rem 1rem;
@@ -393,7 +395,7 @@ watch(
     font-size: 1.125rem;
     font-weight: 600;
     margin: 0;
-    color: $text-dark;
+    color: var(--text-dark);
 
     @media (max-width: $breakpoint-mobile) {
       font-size: 1rem;
@@ -404,7 +406,7 @@ watch(
 .filter-close-btn {
   background: transparent;
   border: none;
-  color: $text-lighter-gray;
+  color: var(--text-lighter-gray);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -428,8 +430,8 @@ watch(
   @include transition;
 
   &:hover {
-    background: $border-color;
-    color: $text-gray;
+    background: var(--hover-bg);
+    color: var(--text-gray);
   }
 }
 

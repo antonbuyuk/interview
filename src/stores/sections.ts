@@ -14,6 +14,11 @@ export interface SectionsStoreReturn {
   getSectionById: (id: string) => Section | undefined;
   getSectionByPath: (path: string) => Section | undefined;
   getSectionsArray: () => Section[];
+  // Оптимистичные обновления
+  optimisticAddSection: (section: Section) => void;
+  optimisticUpdateSection: (id: string, updates: Partial<Section>) => void;
+  optimisticRemoveSection: (id: string) => void;
+  rollbackOptimisticUpdate: () => void;
 }
 
 export const useSectionsStore = defineStore('sections', (): SectionsStoreReturn => {
@@ -23,6 +28,9 @@ export const useSectionsStore = defineStore('sections', (): SectionsStoreReturn 
 
   // Промис текущей загрузки для предотвращения дублирования запросов
   let loadPromise: Promise<Section[]> | null = null;
+
+  // Состояние для отката оптимистичных обновлений
+  let previousSections: Section[] | null = null;
 
   const loadSections = async (force = false): Promise<void> => {
     try {
@@ -99,6 +107,34 @@ export const useSectionsStore = defineStore('sections', (): SectionsStoreReturn 
     return sections.value;
   };
 
+  // Оптимистичное добавление раздела
+  const optimisticAddSection = (section: Section): void => {
+    previousSections = [...sections.value];
+    sections.value = [section, ...sections.value];
+  };
+
+  // Оптимистичное обновление раздела
+  const optimisticUpdateSection = (id: string, updates: Partial<Section>): void => {
+    previousSections = [...sections.value];
+    sections.value = sections.value.map(section =>
+      section.id === id ? { ...section, ...updates } : section
+    );
+  };
+
+  // Оптимистичное удаление раздела
+  const optimisticRemoveSection = (id: string): void => {
+    previousSections = [...sections.value];
+    sections.value = sections.value.filter(section => section.id !== id);
+  };
+
+  // Откат оптимистичного обновления
+  const rollbackOptimisticUpdate = (): void => {
+    if (previousSections) {
+      sections.value = previousSections;
+      previousSections = null;
+    }
+  };
+
   return {
     // State
     sections: computed(() => sections.value),
@@ -111,5 +147,11 @@ export const useSectionsStore = defineStore('sections', (): SectionsStoreReturn 
     getSectionById,
     getSectionByPath,
     getSectionsArray,
+
+    // Optimistic updates
+    optimisticAddSection,
+    optimisticUpdateSection,
+    optimisticRemoveSection,
+    rollbackOptimisticUpdate,
   };
 });

@@ -1,17 +1,16 @@
 import type { RouteRecordRaw } from 'vue-router';
-import HomeView from '../views/HomeView.vue';
-import VocabularyView from '../views/VocabularyView.vue';
 
+// Lazy loading для всех роутов для оптимизации code splitting
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'home',
-    component: HomeView,
+    component: () => import('../views/HomeView.vue'),
   },
   {
     path: '/vocabulary',
     name: 'vocabulary',
-    component: VocabularyView,
+    component: () => import('../views/VocabularyView.vue'),
   },
 ];
 

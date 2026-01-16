@@ -19,6 +19,8 @@ model Section {
   questions   Question[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+
+  @@index([path]) // Индекс для быстрого поиска по пути
 }
 
 model Question {

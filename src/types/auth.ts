@@ -9,4 +9,12 @@ export interface LoginRequest {
 export interface LoginResponse {
   success: boolean;
   error?: string;
+  accessToken?: string;
+  message?: string;
+}
+
+export interface RefreshResponse {
+  success: boolean;
+  accessToken?: string;
+  error?: string;
 }

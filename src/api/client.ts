@@ -79,16 +79,80 @@ function extractErrorFromResponse(error: unknown): ApiErrorResponse {
   return { error: 'Unknown error occurred' };
 }
 
+/**
+ * Retry логика с exponential backoff
+ */
+async function retryRequest(
+  requestFn: () => Promise<Response>,
+  maxRetries: number = 3,
+  initialDelay: number = 1000
+): Promise<Response> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await requestFn();
+
+      // Если успешный ответ или ошибка, которую не стоит повторять, возвращаем сразу
+      if (
+        response.ok ||
+        (response.status >= 400 && response.status < 500 && response.status !== 429)
+      ) {
+        return response;
+      }
+
+      // Для временных ошибок (503, 502, 500, 429) повторяем
+      if (
+        response.status === 503 ||
+        response.status === 502 ||
+        response.status === 500 ||
+        response.status === 429
+      ) {
+        if (attempt === maxRetries - 1) {
+          return response; // Последняя попытка, возвращаем ответ
+        }
+        // Вычисляем задержку с exponential backoff
+        const delay = initialDelay * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+
+      return response;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+
+      // Для сетевых ошибок повторяем
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        if (attempt === maxRetries - 1) {
+          throw lastError;
+        }
+        // Вычисляем задержку с exponential backoff
+        const delay = initialDelay * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+
+      // Для других ошибок не повторяем
+      throw lastError;
+    }
+  }
+
+  throw lastError || new Error('Request failed after retries');
+}
+
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const url = `${API_URL}${endpoint}`;
 
-  // Получаем токен авторизации из localStorage
-  const authToken = localStorage.getItem('is_auth_admin');
+  // Получаем JWT токен или старый токен из localStorage
+  const accessToken = localStorage.getItem('admin_access_token');
+  const legacyToken = localStorage.getItem('is_auth_admin');
 
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    // Отправляем токен в заголовке, если он есть
-    ...(authToken === 'true' && { 'X-Admin-Auth': 'true' }),
+    // Приоритет: JWT токен в заголовке Authorization
+    ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+    // Для обратной совместимости: старый метод через заголовок
+    ...(!accessToken && legacyToken === 'true' && { 'X-Admin-Auth': 'true' }),
     ...(options.headers as Record<string, string>),
   };
 
@@ -111,7 +175,50 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   }
 
   try {
-    const response = await fetch(url, config);
+    // Используем retry логику для запроса
+    const response = await retryRequest(() => fetch(url, config), 3, 1000);
+
+    // Если получили 401 и есть access token, пытаемся обновить его
+    if (response.status === 401 && accessToken) {
+      try {
+        const refreshResponse = await fetch(`${API_URL}/admin/refresh`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          if (refreshData.accessToken) {
+            // Сохраняем новый токен
+            localStorage.setItem('admin_access_token', refreshData.accessToken);
+            // Повторяем оригинальный запрос с новым токеном
+            const newHeaders = {
+              ...headers,
+              Authorization: `Bearer ${refreshData.accessToken}`,
+            };
+            const newConfig = { ...config, headers: newHeaders };
+            const retryResponse = await fetch(url, newConfig);
+            if (retryResponse.ok) {
+              if (retryResponse.status === 204) {
+                return null as T;
+              }
+              try {
+                return (await retryResponse.json()) as T;
+              } catch {
+                return {} as T;
+              }
+            }
+          }
+        }
+      } catch {
+        // Если не удалось обновить токен, удаляем его
+        localStorage.removeItem('admin_access_token');
+        localStorage.removeItem('is_auth_admin');
+      }
+    }
 
     if (!response.ok) {
       let errorData: ApiErrorResponse;

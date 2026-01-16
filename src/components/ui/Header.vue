@@ -53,10 +53,36 @@
     </div>
 
     <div class="header-right">
+      <!-- Offline индикатор -->
+      <div v-if="!isOnline" class="offline-indicator" title="Работа в offline режиме">
+        <svg class="offline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414"
+          />
+        </svg>
+        <span class="offline-text">Offline</span>
+      </div>
+
       <!-- Поиск -->
       <div class="search-wrapper">
         <Search :current-section="currentSection || null" :questions="currentQuestions" />
       </div>
+
+      <!-- Переключатель темы -->
+      <button
+        class="header-icon-btn"
+        aria-label="Переключить тему"
+        :title="
+          effectiveTheme === 'dark' ? 'Переключить на светлую тему' : 'Переключить на темную тему'
+        "
+        @click="toggleTheme"
+      >
+        <SunIcon v-if="effectiveTheme === 'dark'" class="icon-btn" />
+        <MoonIcon v-else class="icon-btn" />
+      </button>
 
       <!-- English Only Toggle -->
       <button
@@ -146,6 +172,8 @@ import { storeToRefs } from 'pinia';
 import { useAdminAuth } from '../../composables/useAdminAuth';
 import { useTrainingMode } from '../../composables/useTrainingMode';
 import { useSectionsStore } from '../../stores/sections';
+import { useOffline } from '../../utils/offline';
+import { useTheme } from '../../composables/useTheme';
 import AdminLoginModal from '../modals/AdminLoginModal.vue';
 import Search from './Search.vue';
 import {
@@ -156,6 +184,8 @@ import {
   ClipboardDocumentListIcon,
   Cog6ToothIcon,
   XMarkIcon,
+  SunIcon,
+  MoonIcon,
 } from '@heroicons/vue/24/outline';
 import type { Section, Question } from '../../types/api';
 
@@ -170,6 +200,8 @@ const currentQuestions = ref<Question[]>([]);
 
 const { isAdmin } = useAdminAuth();
 const { englishOnly, settings } = useTrainingMode();
+const { isOnline } = useOffline();
+const { effectiveTheme, toggleTheme } = useTheme();
 const sectionsStore = useSectionsStore();
 const { sections } = storeToRefs(sectionsStore);
 
@@ -290,8 +322,8 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   height: 64px;
-  background: $bg-white;
-  color: $text-dark;
+  background: var(--bg-white);
+  color: var(--text-dark);
   z-index: 102;
   @include shadow-md;
   display: flex;
@@ -299,7 +331,7 @@ onUnmounted(() => {
   justify-content: space-between;
   padding: 0 1.5rem;
   gap: 1.5rem;
-  border-bottom: 1px solid $border-color;
+  border-bottom: 1px solid var(--border-color);
 
   @include mobile {
     height: 56px;
@@ -330,7 +362,7 @@ onUnmounted(() => {
   font-size: 1.25rem;
   font-weight: 700;
   margin: 0;
-  color: $text-dark;
+  color: var(--text-dark);
   white-space: nowrap;
   display: flex;
   align-items: center;
@@ -339,7 +371,7 @@ onUnmounted(() => {
   .logo-icon {
     width: 1.5rem;
     height: 1.5rem;
-    color: $primary-color;
+    color: var(--primary-color);
     flex-shrink: 0;
   }
 
@@ -393,7 +425,7 @@ onUnmounted(() => {
   padding: 0.5rem 1rem;
   background: transparent;
   border: none;
-  color: $text-dark;
+  color: var(--text-dark);
   font-size: 0.9375rem;
   font-weight: 500;
   cursor: pointer;
@@ -402,11 +434,11 @@ onUnmounted(() => {
   @include transition;
 
   &:hover {
-    background: $bg-light;
+    background: var(--hover-bg);
   }
 
   &.active {
-    color: $primary-color;
+    color: var(--primary-color);
   }
 
   .dropdown-arrow {
@@ -422,7 +454,7 @@ onUnmounted(() => {
   padding: 0.5rem 1rem;
   background: transparent;
   border: none;
-  color: $text-dark;
+  color: var(--text-dark);
   font-size: 0.9375rem;
   font-weight: 500;
   text-decoration: none;
@@ -436,11 +468,11 @@ onUnmounted(() => {
   }
 
   &:hover {
-    background: $bg-light;
+    background: var(--hover-bg);
   }
 
   &.active {
-    color: $primary-color;
+    color: var(--primary-color);
   }
 }
 
@@ -451,8 +483,8 @@ onUnmounted(() => {
   min-width: 240px;
   max-width: 320px;
   max-height: 500px;
-  background: $bg-white;
-  border: 1px solid $border-color;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
   @include rounded-md;
   @include shadow-lg;
   z-index: 1000;
@@ -467,20 +499,20 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid $border-color;
-  background: $bg-light;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-light);
 }
 
 .dropdown-title {
   font-weight: 600;
-  color: $text-dark;
+  color: var(--text-dark);
   font-size: 0.875rem;
 }
 
 .manage-sections-btn {
   background: transparent;
   border: none;
-  color: $text-lighter-gray;
+  color: var(--text-lighter-gray);
   font-size: 0.875rem;
   cursor: pointer;
   padding: 0.25rem 0.5rem;
@@ -497,8 +529,8 @@ onUnmounted(() => {
   }
 
   &:hover {
-    background: $bg-white;
-    color: $primary-color;
+    background: var(--bg-white);
+    color: var(--primary-color);
   }
 }
 
@@ -514,9 +546,9 @@ onUnmounted(() => {
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   text-decoration: none;
-  color: $text-dark;
+  color: var(--text-dark);
   @include transition;
-  border-bottom: 1px solid $border-color;
+  border-bottom: 1px solid var(--border-color);
   background: transparent;
   border-left: none;
   border-right: none;
@@ -528,13 +560,13 @@ onUnmounted(() => {
   font-family: inherit;
 
   &:hover {
-    background: $bg-light;
-    color: $primary-color;
+    background: var(--hover-bg);
+    color: var(--primary-color);
   }
 
   &.active {
-    background: #f0f7ff;
-    color: $primary-color;
+    background: var(--accent-bg);
+    color: var(--primary-color);
     font-weight: 500;
   }
 
@@ -560,6 +592,32 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
+.offline-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  border-radius: 6px;
+  color: var(--warning-text);
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+
+  .offline-icon {
+    width: 1rem;
+    height: 1rem;
+    stroke-width: 2;
+  }
+
+  .offline-text {
+    @include mobile {
+      display: none;
+    }
+  }
+}
+
 .header-icon-btn {
   position: relative;
   display: flex;
@@ -569,7 +627,7 @@ onUnmounted(() => {
   height: 40px;
   background: transparent;
   border: none;
-  color: $text-dark;
+  color: var(--text-dark);
   font-size: 1.125rem;
   cursor: pointer;
   border-radius: 6px;
@@ -582,8 +640,8 @@ onUnmounted(() => {
   }
 
   &:hover {
-    background: $bg-light;
-    color: $primary-color;
+    background: var(--hover-bg);
+    color: var(--primary-color);
   }
 
   &:active {
@@ -591,7 +649,7 @@ onUnmounted(() => {
   }
 
   &.active {
-    background: $primary-color;
+    background: var(--primary-color);
     color: white;
   }
 
@@ -611,7 +669,7 @@ onUnmounted(() => {
   position: absolute;
   top: 4px;
   right: 4px;
-  background: #e74c3c;
+  background: var(--error-color);
   color: white;
   font-size: 0.625rem;
   font-weight: 600;
@@ -637,7 +695,7 @@ onUnmounted(() => {
 .menu-toggle-btn {
   background: transparent;
   border: none;
-  color: $text-dark;
+  color: var(--text-dark);
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0.5rem;
@@ -654,7 +712,7 @@ onUnmounted(() => {
   }
 
   &:hover {
-    background: $bg-light;
+    background: var(--hover-bg);
   }
 
   &:active {
@@ -678,7 +736,7 @@ onUnmounted(() => {
   left: 0;
   width: 280px;
   height: calc(100vh - 56px);
-  background: $bg-white;
+  background: var(--bg-white);
   @include shadow-md;
   display: flex;
   flex-direction: column;
@@ -691,21 +749,21 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid $border-color;
-  background: $bg-light;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-light);
 
   h3 {
     font-size: 1.125rem;
     font-weight: 600;
     margin: 0;
-    color: $text-dark;
+    color: var(--text-dark);
   }
 }
 
 .close-btn {
   background: transparent;
   border: none;
-  color: $text-lighter-gray;
+  color: var(--text-lighter-gray);
   font-size: 1.5rem;
   cursor: pointer;
   width: 32px;
@@ -723,8 +781,8 @@ onUnmounted(() => {
   }
 
   &:hover {
-    background: $bg-white;
-    color: $text-gray;
+    background: var(--bg-white);
+    color: var(--text-gray);
   }
 }
 
@@ -738,19 +796,19 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1.5rem;
-  color: $text-dark;
+  color: var(--text-dark);
   text-decoration: none;
   @include transition;
   border-left: 3px solid transparent;
 
   &:hover {
-    background: $bg-light;
+    background: var(--hover-bg);
   }
 
   &.router-link-active {
-    background: #f0f7ff;
-    border-left-color: $primary-color;
-    color: $primary-color;
+    background: var(--accent-bg);
+    border-left-color: var(--primary-color);
+    color: var(--primary-color);
     font-weight: 500;
   }
 
@@ -777,7 +835,7 @@ onUnmounted(() => {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: $text-lighter-gray;
+  color: var(--text-lighter-gray);
   font-weight: 600;
   margin: 0;
 }

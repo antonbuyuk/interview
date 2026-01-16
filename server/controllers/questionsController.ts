@@ -1,4 +1,5 @@
 import prisma from '../utils/prisma.js';
+import cache from '../utils/cache.js';
 import { translate } from '@vitalets/google-translate-api';
 import { Prisma } from '@prisma/client';
 import type { Response, NextFunction } from 'express';
@@ -11,16 +12,41 @@ import type {
   ReorderQuestionsBody,
 } from '../types/api';
 
+const CACHE_TTL_QUESTIONS = 2 * 60 * 1000; // 2 минуты для вопросов
+
 const getQuestions = async (
   req: ExtendedRequest<unknown, unknown, unknown, GetQuestionsQuery>,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { sectionId } = req.query;
+    const { sectionId, page, limit } = req.query;
 
     const where = sectionId ? { sectionId } : {};
 
+    // Пагинация опциональна - если не указана, возвращаем все данные
+    const usePagination = page !== undefined || limit !== undefined;
+    const pageNumber = page ? Math.max(1, parseInt(page, 10)) : 1;
+    const pageSize = limit ? Math.min(100, Math.max(1, parseInt(limit, 10))) : 50; // Максимум 100, по умолчанию 50
+    const skip = usePagination ? (pageNumber - 1) * pageSize : undefined;
+    const take = usePagination ? pageSize : undefined;
+
+    // Ключ кеша зависит от параметров запроса
+    const cacheKey = `questions:${sectionId || 'all'}:${pageNumber}:${pageSize}`;
+
+    // Проверяем кеш только для непагинированных запросов (для обратной совместимости)
+    if (!usePagination) {
+      const cached = cache.get<unknown[]>(cacheKey);
+      if (cached) {
+        res.json(cached);
+        return;
+      }
+    }
+
+    // Получаем общее количество для пагинации (только если используется пагинация)
+    const total = usePagination ? await prisma.question.count({ where }) : undefined;
+
+    // Получаем вопросы
     const questions = await prisma.question.findMany({
       where,
       include: {
@@ -32,9 +58,29 @@ const getQuestions = async (
         },
       },
       orderBy: [{ sectionId: 'asc' }, { number: 'asc' }],
+      ...(skip !== undefined && { skip }),
+      ...(take !== undefined && { take }),
     });
 
-    res.json(questions);
+    // Если используется пагинация, возвращаем с метаинформацией
+    if (usePagination && total !== undefined) {
+      res.json({
+        data: questions,
+        pagination: {
+          page: pageNumber,
+          limit: pageSize,
+          total,
+          totalPages: Math.ceil(total / pageSize),
+          hasNextPage: pageNumber * pageSize < total,
+          hasPreviousPage: pageNumber > 1,
+        },
+      });
+    } else {
+      // Для обратной совместимости возвращаем просто массив
+      // Сохраняем в кеш только непагинированные запросы
+      cache.set(cacheKey, questions, CACHE_TTL_QUESTIONS);
+      res.json(questions);
+    }
   } catch (error) {
     next(error);
   }
@@ -138,6 +184,10 @@ const createQuestion = async (
         },
       });
     });
+
+    // Инвалидируем кеш вопросов для этого раздела
+    cache.deletePattern(`questions:${sectionId}:`);
+    cache.deletePattern('questions:all:');
 
     res.status(201).json(newQuestion);
   } catch (error) {
@@ -267,6 +317,10 @@ const updateQuestion = async (
         });
       });
 
+      // Инвалидируем кеш вопросов
+      cache.deletePattern(`questions:${targetSectionId}:`);
+      cache.deletePattern('questions:all:');
+
       res.json(updatedQuestion);
       return;
     }
@@ -289,6 +343,10 @@ const updateQuestion = async (
       },
     });
 
+    // Инвалидируем кеш вопросов для этого раздела
+    cache.deletePattern(`questions:${currentQuestion.sectionId}:`);
+    cache.deletePattern('questions:all:');
+
     res.json(updatedQuestion);
   } catch (error) {
     next(error);
@@ -303,9 +361,21 @@ const deleteQuestion = async (
   try {
     const { id } = req.params;
 
+    // Получаем вопрос перед удалением для инвалидации кеша
+    const question = await prisma.question.findUnique({
+      where: { id },
+      select: { sectionId: true },
+    });
+
     await prisma.question.delete({
       where: { id },
     });
+
+    // Инвалидируем кеш вопросов
+    if (question) {
+      cache.deletePattern(`questions:${question.sectionId}:`);
+    }
+    cache.deletePattern('questions:all:');
 
     res.status(204).send();
   } catch (error) {

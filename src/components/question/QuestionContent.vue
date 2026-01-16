@@ -21,21 +21,48 @@
     </draggable>
 
     <template v-else>
-      <QuestionItem
-        v-for="question in questions"
-        :key="question.id"
-        :question="question"
-        :is-admin="isAdmin"
-        :english-only="englishOnly"
-        @edit-question="handleEditQuestion"
-      />
+      <div
+        v-if="questions.length > 20"
+        ref="virtualizerParentRef"
+        class="virtual-container"
+        style="height: 100%; overflow: auto"
+      >
+        <div :style="{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }">
+          <QuestionItem
+            v-for="virtualRow in virtualizer.getVirtualItems()"
+            :key="String(virtualRow.key)"
+            :style="{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              transform: `translateY(${virtualRow.start}px)`,
+            }"
+            :question="questions[virtualRow.index]!"
+            :is-admin="isAdmin"
+            :english-only="englishOnly"
+            @edit-question="handleEditQuestion"
+          />
+        </div>
+      </div>
+      <template v-else>
+        <QuestionItem
+          v-for="question in questions"
+          :key="question.id"
+          :question="question"
+          :is-admin="isAdmin"
+          :english-only="englishOnly"
+          @edit-question="handleEditQuestion"
+        />
+      </template>
     </template>
   </article>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import draggable from 'vuedraggable';
+import { useVirtualizer } from '@tanstack/vue-virtual';
 import { useTrainingMode } from '../../composables/useTrainingMode';
 import QuestionItem from './QuestionItem.vue';
 import { reorderQuestions } from '../../api/questions';
@@ -54,6 +81,18 @@ const { englishOnly } = useTrainingMode();
 // Local copy of questions for drag & drop
 const localQuestions = ref<Question[]>([]);
 
+// Виртуализация для больших списков
+const virtualizerParentRef = ref<HTMLElement | null>(null);
+const questionsCount = computed(() => props.questions.length);
+const virtualizer = useVirtualizer({
+  // @tanstack/vue-virtual принимает computed ref напрямую
+
+  count: questionsCount as any,
+  getScrollElement: () => virtualizerParentRef.value,
+  estimateSize: () => 200, // Примерная высота одного вопроса
+  overscan: 5, // Количество элементов для предзагрузки
+});
+
 // Sync localQuestions with props.questions
 watch(
   () => props.questions,
@@ -67,7 +106,7 @@ const handleEditQuestion = (question: Question) => {
   emit('edit-question', question);
 };
 
-const handleDragEnd = async () => {
+const handleDragEnd = async (): Promise<void> => {
   if (!props.isAdmin || !props.sectionId) {
     return;
   }
@@ -85,7 +124,8 @@ const handleDragEnd = async () => {
     console.error('Ошибка изменения порядка вопросов:', error);
     // Revert to original order on error
     localQuestions.value = [...props.questions];
-    alert('Не удалось изменить порядок вопросов. Попробуйте еще раз.');
+    const { showToast } = await import('../../composables/useToast');
+    showToast('Не удалось изменить порядок вопросов. Попробуйте еще раз.', 'error');
   }
 };
 </script>
@@ -93,26 +133,13 @@ const handleDragEnd = async () => {
 <style lang="scss" scoped>
 @use '../../styles/variables' as *;
 
-.question-content {
-  background: $bg-white;
-  border-radius: 12px;
-  padding: 3rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  line-height: 1.8;
-  max-width: 60rem;
-  margin-inline: auto;
-
-  @media (max-width: $breakpoint-mobile) {
-    max-width: 100%;
-    padding: 1rem;
-    border-radius: 0;
-    font-size: 0.9375rem;
-  }
-}
-
 .draggable-list {
   display: flex;
   flex-direction: column;
+}
+
+.virtual-container {
+  width: 100%;
 }
 
 // Styles for drag & drop

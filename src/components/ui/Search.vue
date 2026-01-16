@@ -2,6 +2,7 @@
   <div class="search-container">
     <div class="search-input-wrapper">
       <input
+        ref="searchInputRef"
         v-model="searchQuery"
         type="text"
         class="search-input"
@@ -51,7 +52,36 @@
       <!-- Локальные результаты (текущая секция) -->
       <div v-if="localResults.length > 0" class="results-section">
         <h4 class="results-title">В текущем разделе ({{ localResults.length }})</h4>
-        <div class="results-list">
+        <div
+          v-if="localResults.length > 20"
+          ref="localVirtualizerParentRef"
+          class="virtual-results-container"
+          style="max-height: 300px; overflow: auto"
+        >
+          <div :style="{ height: `${localVirtualizer.getTotalSize()}px`, position: 'relative' }">
+            <a
+              v-for="virtualRow in localVirtualizer.getVirtualItems()"
+              :key="String(virtualRow.key)"
+              :href="`#${localResults[virtualRow.index]?.id || ''}`"
+              class="result-item"
+              :style="{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${virtualRow.start}px)`,
+              }"
+              @click.prevent="scrollToResult(localResults[virtualRow.index]?.id || '')"
+            >
+              <span class="result-number">{{ localResults[virtualRow.index]?.number || 0 }}.</span>
+              <span
+                class="result-text"
+                v-html="highlightText(localResults[virtualRow.index]?.text || '', searchQuery)"
+              ></span>
+            </a>
+          </div>
+        </div>
+        <div v-else class="results-list">
           <a
             v-for="result in localResults"
             :key="result.id"
@@ -68,7 +98,40 @@
       <!-- Глобальные результаты (другие разделы) -->
       <div v-if="globalResults.length > 0" class="results-section">
         <h4 class="results-title">В других разделах ({{ globalResults.length }})</h4>
-        <div class="results-list">
+        <div
+          v-if="globalResults.length > 20"
+          ref="globalVirtualizerParentRef"
+          class="virtual-results-container"
+          style="max-height: 300px; overflow: auto"
+        >
+          <div :style="{ height: `${globalVirtualizer.getTotalSize()}px`, position: 'relative' }">
+            <router-link
+              v-for="virtualRow in globalVirtualizer.getVirtualItems()"
+              :key="String(virtualRow.key)"
+              :to="`${globalResults[virtualRow.index]?.path || ''}#${globalResults[virtualRow.index]?.id || ''}`"
+              class="result-item"
+              :style="{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${virtualRow.start}px)`,
+              }"
+              @click="handleGlobalResultClick(globalResults[virtualRow.index]?.id || '')"
+            >
+              <span class="result-section">{{
+                globalResults[virtualRow.index]?.sectionTitle || ''
+              }}</span>
+              <span
+                class="result-text"
+                v-html="
+                  highlightText(globalResults[virtualRow.index]?.questionText || '', searchQuery)
+                "
+              ></span>
+            </router-link>
+          </div>
+        </div>
+        <div v-else class="results-list">
           <router-link
             v-for="result in globalResults"
             :key="result.id"
@@ -97,15 +160,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import { ref, watch, nextTick, onMounted, onUnmounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { storeToRefs } from 'pinia';
+import { useVirtualizer } from '@tanstack/vue-virtual';
 import { useSectionsStore } from '../../stores/sections';
-import { getQuestions } from '../../api/questions.js';
+import { getQuestions } from '../../api/questions';
 import { MagnifyingGlassIcon, MicrophoneIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { StopIcon as StopIconSolid } from '@heroicons/vue/24/solid';
 import type { Section, Question } from '../../types/api';
-
+import { useToast } from '../../composables/useToast';
 // Типы для результатов поиска
 interface LocalSearchResult {
   id: string;
@@ -187,6 +251,7 @@ const emit = defineEmits<{
 const route = useRoute();
 const searchQuery = ref('');
 const isFocused = ref(false);
+const searchInputRef = ref<HTMLInputElement | null>(null);
 const localResults = ref<LocalSearchResult[]>([]);
 const globalResults = ref<GlobalSearchResult[]>([]);
 const searchCache = ref<Map<string, GlobalSearchResult[]>>(new Map());
@@ -197,7 +262,30 @@ const recognition = ref<SpeechRecognition | null>(null);
 const isSpeechSupported = ref(false);
 const sectionsStore = useSectionsStore();
 const { sections: allSections } = storeToRefs(sectionsStore);
+const { showToast } = useToast();
 
+// Виртуализация для результатов поиска
+const localVirtualizerParentRef = ref<HTMLElement | null>(null);
+const localResultsCount = computed(() => localResults.value.length);
+const localVirtualizer = useVirtualizer({
+  // @tanstack/vue-virtual принимает computed ref напрямую
+
+  count: localResultsCount as any,
+  getScrollElement: () => localVirtualizerParentRef.value,
+  estimateSize: () => 60, // Примерная высота одного результата
+  overscan: 3,
+});
+
+const globalVirtualizerParentRef = ref<HTMLElement | null>(null);
+const globalResultsCount = computed(() => globalResults.value.length);
+const globalVirtualizer = useVirtualizer({
+  // @tanstack/vue-virtual принимает computed ref напрямую
+
+  count: globalResultsCount as any,
+  getScrollElement: () => globalVirtualizerParentRef.value,
+  estimateSize: () => 60, // Примерная высота одного результата
+  overscan: 3,
+});
 // Поиск с задержкой (debounce)
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -229,14 +317,14 @@ const initSpeechRecognition = () => {
       }
     };
 
-    recognition.value.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognition.value.onerror = async (event: SpeechRecognitionErrorEvent) => {
       console.error('Ошибка распознавания речи:', event.error);
       isRecording.value = false;
 
       if (event.error === 'no-speech') {
-        alert('Речь не распознана. Попробуйте еще раз.');
+        showToast('Речь не распознана. Попробуйте еще раз.', 'warning');
       } else if (event.error === 'not-allowed') {
-        alert('Доступ к микрофону запрещен. Разрешите доступ в настройках браузера.');
+        showToast('Доступ к микрофону запрещен. Разрешите доступ в настройках браузера.', 'error');
       }
     };
 
@@ -246,12 +334,23 @@ const initSpeechRecognition = () => {
   }
 };
 
+// Обработчик события открытия поиска
+const handleOpenSearch = (): void => {
+  isFocused.value = true;
+  nextTick(() => {
+    searchInputRef.value?.focus();
+  });
+};
+
 // Инициализация при монтировании
 onMounted(() => {
   initSpeechRecognition();
+  // Слушаем событие открытия поиска (Ctrl/Cmd + K)
+  window.addEventListener('open-search', handleOpenSearch);
 });
 
 onUnmounted(() => {
+  window.removeEventListener('open-search', handleOpenSearch);
   if (recognition.value && isRecording.value) {
     recognition.value.stop();
   }
@@ -499,10 +598,11 @@ const handleGlobalResultClick = (questionId: string) => {
 };
 
 // Голосовой поиск
-const startVoiceSearch = () => {
+const startVoiceSearch = async () => {
   if (!isSpeechSupported.value) {
-    alert(
-      'Голосовой поиск не поддерживается в вашем браузере. Используйте Chrome, Edge или Safari.'
+    showToast(
+      'Голосовой поиск не поддерживается в вашем браузере. Используйте Chrome, Edge или Safari.',
+      'warning'
     );
     return;
   }
@@ -519,7 +619,7 @@ const startVoiceSearch = () => {
   } catch (err) {
     console.error('Ошибка запуска распознавания:', err);
     isRecording.value = false;
-    alert('Не удалось запустить распознавание речи. Проверьте доступ к микрофону.');
+    showToast('Не удалось запустить распознавание речи. Проверьте доступ к микрофону.', 'error');
   }
 };
 
@@ -647,38 +747,33 @@ watch(
 .search-input {
   width: 100%;
   padding: 0.625rem 2.5rem 0.625rem 2rem;
-  background: white;
-  border: 1px solid $border-color;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
   @include rounded-md;
-  color: #333;
+  color: var(--text-dark);
   font-size: 0.875rem;
   @include transition;
 }
 
 .search-input.recording {
-  border-color: $error-color;
+  border-color: var(--error-color);
   box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
 }
 
 .search-input:disabled {
-  background: #f9f9f9;
+  background: var(--hover-bg);
   cursor: not-allowed;
-}
-
-.search-input.recording {
-  border-color: #e74c3c;
-  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
 }
 
 .search-input:focus {
   outline: none;
-  border-color: $primary-color;
-  background: white;
+  border-color: var(--primary-color);
+  background: var(--bg-white);
   @include shadow-focus;
 }
 
 .search-input::placeholder {
-  color: $text-light-gray;
+  color: var(--text-light-gray);
 }
 
 .search-icon {
@@ -686,7 +781,7 @@ watch(
   left: 0.625rem;
   width: 0.875rem;
   height: 0.875rem;
-  color: $text-light-gray;
+  color: var(--text-light-gray);
   pointer-events: none;
 }
 
@@ -695,7 +790,7 @@ watch(
   right: 0.4rem;
   background: transparent;
   border: none;
-  color: $text-light-gray;
+  color: var(--text-light-gray);
   cursor: pointer;
   font-size: 1rem;
   width: 24px;
@@ -715,18 +810,18 @@ watch(
 }
 
 .voice-btn:hover {
-  background: $bg-light;
-  color: #42b883;
+  background: var(--hover-bg);
+  color: var(--primary-color);
 }
 
 .voice-btn.recording {
-  color: $error-color;
+  color: var(--error-color);
   animation: pulse 1.5s ease-in-out infinite;
 }
 
 .voice-btn.recording:hover {
-  background: $error-bg;
-  color: $error-color;
+  background: var(--error-bg);
+  color: var(--error-color);
 }
 
 @keyframes pulse {
@@ -746,7 +841,7 @@ watch(
   right: 0.4rem;
   background: transparent;
   border: none;
-  color: $text-light-gray;
+  color: var(--text-light-gray);
   cursor: pointer;
   font-size: 1rem;
   width: 20px;
@@ -766,8 +861,8 @@ watch(
 }
 
 .clear-btn:hover {
-  background: $bg-light;
-  color: #333;
+  background: var(--hover-bg);
+  color: var(--text-dark);
 }
 
 .recording-indicator {
@@ -779,18 +874,18 @@ watch(
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  background: $error-bg;
-  border: 1px solid $error-color;
+  background: var(--error-bg);
+  border: 1px solid var(--error-color);
   border-radius: 6px;
   font-size: 0.8125rem;
-  color: $error-color;
+  color: var(--error-color);
   z-index: 1101;
 }
 
 .recording-dot {
   width: 8px;
   height: 8px;
-  background: $error-color;
+  background: var(--error-color);
   border-radius: 50%;
   animation: blink 1s ease-in-out infinite;
 }
@@ -815,8 +910,8 @@ watch(
   right: 0;
   max-height: 400px;
   overflow-y: auto;
-  background: white;
-  border: 1px solid $border-color;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
   min-width: 25rem;
   @include rounded-md;
   @include shadow-lg;
@@ -842,11 +937,15 @@ watch(
   font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #666;
+  color: var(--text-lighter-gray);
   padding: 0.4rem 0.75rem;
   margin: 0;
   font-weight: 600;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.virtual-results-container {
+  width: 100%;
 }
 
 .results-list {
@@ -859,14 +958,14 @@ watch(
   align-items: flex-start;
   padding: 0.5rem 0.75rem;
   text-decoration: none;
-  color: #333;
+  color: var(--text-dark);
   @include transition;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .result-item:hover {
-  background: #f5f5f5;
-  color: #42b883;
+  background: var(--hover-bg);
+  color: var(--primary-color);
 }
 
 .result-item:last-child {
@@ -875,14 +974,14 @@ watch(
 
 .result-number {
   font-weight: 600;
-  color: #42b883;
+  color: var(--primary-color);
   margin-right: 0.5rem;
   flex-shrink: 0;
 }
 
 .result-section {
   font-size: 0.75rem;
-  color: #666;
+  color: var(--text-lighter-gray);
   margin-right: 0.5rem;
   flex-shrink: 0;
   font-weight: 500;
@@ -896,7 +995,7 @@ watch(
 
 .result-text :deep(mark) {
   background: rgba(66, 184, 131, 0.3);
-  color: #42b883;
+  color: var(--primary-color);
   padding: 0 2px;
   border-radius: 2px;
   font-weight: 600;
@@ -908,11 +1007,11 @@ watch(
   left: 0;
   right: 0;
   padding: 1.5rem;
-  background: white;
-  border: 1px solid #e0e0e0;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
   @include rounded-md;
   text-align: center;
-  color: $text-light-gray;
+  color: var(--text-light-gray);
   font-size: 0.875rem;
   z-index: 1100 !important;
 }
@@ -925,17 +1024,17 @@ watch(
 
 .search-results::-webkit-scrollbar-track,
 .results-list::-webkit-scrollbar-track {
-  background: $bg-light;
+  background: var(--bg-light);
 }
 
 .search-results::-webkit-scrollbar-thumb,
 .results-list::-webkit-scrollbar-thumb {
-  background: $border-color;
+  background: var(--border-color);
   border-radius: 3px;
 }
 
 .search-results::-webkit-scrollbar-thumb:hover,
 .results-list::-webkit-scrollbar-thumb:hover {
-  background: $text-light-gray;
+  background: var(--text-light-gray);
 }
 </style>

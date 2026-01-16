@@ -350,8 +350,17 @@ import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import CodeBlock from '@tiptap/extension-code-block';
-import { marked } from 'marked';
 import TurndownService from 'turndown';
+import { useToast } from '../../composables/useToast';
+
+// Динамический импорт для тяжелой библиотеки
+let marked: typeof import('marked') | null = null;
+const loadMarked = async () => {
+  if (!marked) {
+    marked = await import('marked');
+  }
+  return marked;
+};
 import {
   createQuestion,
   updateQuestion,
@@ -390,7 +399,7 @@ const translating = ref(false);
 const sectionsStore = useSectionsStore();
 const { sections, loading: sectionsLoading } = sectionsStore;
 const activeTab = ref<'ru' | 'en' | 'senior'>('ru');
-
+const { showToast } = useToast();
 const formData = ref({
   sectionId: '',
   number: 1,
@@ -450,7 +459,7 @@ onBeforeUnmount(() => {
 
 watch(
   () => props.isOpen,
-  (newVal: boolean) => {
+  async (newVal: boolean) => {
     if (newVal && props.question) {
       // Заполняем форму данными вопроса
       formData.value = {
@@ -466,15 +475,18 @@ watch(
       const answerEn = props.question.answers?.find(a => a.type === 'en')?.content || '';
       const answerSenior = props.question.answers?.find(a => a.type === 'senior')?.content || '';
 
-      if (editorRu.value) {
+      // Загружаем marked если еще не загружен
+      await loadMarked();
+
+      if (editorRu.value && marked) {
         const htmlRu = answerRu ? marked.parse(answerRu) : '';
         editorRu.value.commands.setContent(htmlRu);
       }
-      if (editorEn.value) {
+      if (editorEn.value && marked) {
         const htmlEn = answerEn ? marked.parse(answerEn) : '';
         editorEn.value.commands.setContent(htmlEn);
       }
-      if (editorSenior.value) {
+      if (editorSenior.value && marked) {
         const htmlSenior = answerSenior ? marked.parse(answerSenior) : '';
         editorSenior.value.commands.setContent(htmlSenior);
       }
@@ -541,6 +553,7 @@ const handleSubmit = async () => {
         return markdown.trim();
       } catch (error) {
         console.error('Ошибка конвертации HTML в Markdown:', error);
+        showToast('Ошибка конвертации HTML в Markdown', 'error');
         return '';
       }
     };
@@ -628,7 +641,7 @@ const handleSubmit = async () => {
   } catch (error) {
     console.error('Ошибка сохранения вопроса:', error);
     const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
-    alert('Ошибка сохранения: ' + errorMessage);
+    showToast('Ошибка сохранения: ' + errorMessage, 'error');
   } finally {
     loading.value = false;
   }
@@ -636,7 +649,7 @@ const handleSubmit = async () => {
 
 const handleAutoTranslate = async () => {
   if (!formData.value.questionRaw || formData.value.questionRaw.trim() === '') {
-    alert('Сначала введите текст вопроса на русском языке');
+    showToast('Сначала введите текст вопроса на русском языке', 'warning');
     return;
   }
 
@@ -645,23 +658,25 @@ const handleAutoTranslate = async () => {
     const result = await translateText(formData.value.questionRaw, 'ru', 'en');
     if (result.translatedText) {
       formData.value.questionEn = result.translatedText;
+      showToast('Перевод выполнен успешно', 'success');
     } else {
-      alert('Не удалось получить перевод. Попробуйте позже.');
+      showToast('Не удалось получить перевод. Попробуйте позже.', 'error');
     }
   } catch (error) {
     console.error('Ошибка перевода:', error);
     if (error && typeof error === 'object' && 'response' in error) {
       const response = (error as { response?: { status?: number } }).response;
       if (response?.status === 429) {
-        alert(
-          'Сервис перевода временно недоступен из-за большого количества запросов. Пожалуйста, попробуйте позже.'
+        showToast(
+          'Сервис перевода временно недоступен из-за большого количества запросов. Пожалуйста, попробуйте позже.',
+          'warning'
         );
         translating.value = false;
         return;
       }
     }
     const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
-    alert('Ошибка перевода: ' + errorMessage);
+    showToast('Ошибка перевода: ' + errorMessage, 'error');
   } finally {
     translating.value = false;
   }
@@ -673,26 +688,31 @@ const handleDelete = async () => {
   }
 
   const questionText = props.question.question?.substring(0, 50) || 'этот вопрос';
-  if (
-    !confirm(
-      `Вы уверены, что хотите удалить вопрос "${questionText}${props.question.question?.length > 50 ? '...' : ''}"?\n\nЭто действие нельзя отменить.`
-    )
-  ) {
-    return;
-  }
+  const fullQuestionText = `${questionText}${props.question.question?.length > 50 ? '...' : ''}`;
 
-  deleting.value = true;
-  try {
-    await deleteQuestion(props.question.id);
-    emit('deleted', props.question.id);
-    close();
-  } catch (error) {
-    console.error('Ошибка удаления вопроса:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
-    alert('Ошибка удаления: ' + errorMessage);
-  } finally {
-    deleting.value = false;
-  }
+  const { showConfirmDialog } = await import('../../composables/useConfirmDialog').then(m => m);
+  showConfirmDialog(
+    {
+      message: `Вы уверены, что хотите удалить вопрос "${fullQuestionText}"?\n\nЭто действие нельзя отменить.`,
+      title: 'Удаление вопроса',
+      confirmType: 'danger',
+    },
+    async () => {
+      deleting.value = true;
+      try {
+        await deleteQuestion(props.question?.id || '');
+        emit('deleted', props.question?.id || '');
+        showToast('Вопрос успешно удален', 'success');
+        close();
+      } catch (error) {
+        console.error('Ошибка удаления вопроса:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+        showToast('Ошибка удаления: ' + errorMessage, 'error');
+      } finally {
+        deleting.value = false;
+      }
+    }
+  );
 };
 </script>
 

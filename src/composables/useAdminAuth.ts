@@ -3,6 +3,7 @@ import { api, ApiError } from '../api/client';
 import type { LoginRequest, LoginResponse } from '../types/api';
 
 const STORAGE_KEY = 'is_auth_admin';
+const ACCESS_TOKEN_KEY = 'admin_access_token';
 
 interface UseAdminAuthReturn {
   isAdmin: ComputedRef<boolean>;
@@ -23,18 +24,57 @@ export function useAdminAuth(): UseAdminAuthReturn {
 
   /**
    * Проверяет наличие токена в localStorage
+   * Поддерживает как старый метод (is_auth_admin), так и новый (JWT)
    */
   const checkAuthStatus = (): boolean => {
+    // Проверяем новый JWT токен
+    const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (accessToken) {
+      // Проверяем, не истек ли токен (базовая проверка)
+      try {
+        const tokenParts = accessToken.split('.');
+        if (tokenParts.length !== 3 || !tokenParts[1]) {
+          localStorage.removeItem(ACCESS_TOKEN_KEY);
+          isAdmin.value = false;
+          return false;
+        }
+        const payload = JSON.parse(atob(tokenParts[1]));
+        const now = Math.floor(Date.now() / 1000);
+        if (payload.exp && payload.exp > now) {
+          isAdmin.value = true;
+          return true;
+        } else {
+          // Токен истек, удаляем его
+          localStorage.removeItem(ACCESS_TOKEN_KEY);
+        }
+      } catch {
+        // Невалидный токен, удаляем
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+      }
+    }
+
+    // Проверяем старый метод для обратной совместимости
     const stored = localStorage.getItem(STORAGE_KEY);
-    isAdmin.value = stored === 'true';
-    return isAdmin.value;
+    if (stored === 'true') {
+      isAdmin.value = true;
+      return true;
+    }
+
+    isAdmin.value = false;
+    return false;
   };
 
   /**
    * Сохраняет токен авторизации в localStorage
    */
-  const saveAuthToken = (): void => {
-    localStorage.setItem(STORAGE_KEY, 'true');
+  const saveAuthToken = (accessToken?: string): void => {
+    if (accessToken) {
+      // Сохраняем JWT токен
+      localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+    } else {
+      // Для обратной совместимости сохраняем старый метод
+      localStorage.setItem(STORAGE_KEY, 'true');
+    }
     isAdmin.value = true;
     // Уведомляем другие вкладки об изменении
     window.dispatchEvent(
@@ -47,9 +87,20 @@ export function useAdminAuth(): UseAdminAuthReturn {
   /**
    * Удаляет токен авторизации из localStorage
    */
-  const removeAuthToken = (): void => {
+  const removeAuthToken = async (): Promise<void> => {
+    // Удаляем оба типа токенов
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
     isAdmin.value = false;
+
+    // Вызываем API для очистки refresh token cookie
+    try {
+      await api.post('/admin/logout');
+    } catch (error) {
+      // Игнорируем ошибки при logout
+      console.warn('Ошибка при выходе из системы:', error);
+    }
+
     // Уведомляем другие вкладки об изменении
     window.dispatchEvent(
       new CustomEvent('admin-auth-changed', {
@@ -86,8 +137,9 @@ export function useAdminAuth(): UseAdminAuthReturn {
       const response = await api.post<LoginResponse>('/admin/login', { password } as LoginRequest);
 
       if (response.success) {
-        // Сохраняем токен в localStorage
-        saveAuthToken();
+        // Сохраняем JWT токен в localStorage
+        const accessToken = (response as { accessToken?: string }).accessToken;
+        saveAuthToken(accessToken);
         return { success: true };
       } else {
         const errorMessage = response.error || 'Login failed';
@@ -111,8 +163,8 @@ export function useAdminAuth(): UseAdminAuthReturn {
   /**
    * Выход из системы администратора
    */
-  const logout = (): void => {
-    removeAuthToken();
+  const logout = async (): Promise<void> => {
+    await removeAuthToken();
   };
 
   // Проверяем статус при монтировании

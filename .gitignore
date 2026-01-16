@@ -9,3 +9,6 @@ public/*/
 .output
 .nuxt
 .env
+coverage
+playwright-report
+test-results

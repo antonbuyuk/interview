@@ -101,10 +101,10 @@ watch(
 
 .error-message {
   padding: 0.75rem;
-  background: $error-bg;
-  border: 1px solid $error-color;
+  background: var(--error-bg);
+  border: 1px solid var(--error-color);
   border-radius: 6px;
-  color: $error-color;
+  color: var(--error-color);
   font-size: 0.875rem;
   margin-bottom: 1rem;
 }
@@ -113,14 +113,16 @@ watch(
   input[type='password'] {
     width: 100%;
     padding: 0.75rem;
-    border: 1px solid $border-color;
+    border: 1px solid var(--border-color);
+    background: var(--bg-white);
+    color: var(--text-dark);
     border-radius: 6px;
     font-size: 0.9375rem;
     transition: border-color 0.2s ease;
 
     &:focus {
       outline: none;
-      border-color: $primary-color;
+      border-color: var(--primary-color);
     }
 
     &:disabled {

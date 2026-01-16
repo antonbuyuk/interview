@@ -8,6 +8,7 @@ import type {
   GetTermsQuery,
   GetTermSuggestionsBody,
 } from '../types/api';
+import logger from '../utils/logger.js';
 
 /**
  * Вспомогательная функция для задержки
@@ -78,9 +79,13 @@ async function retryRequest<T>(
 
       // Вычисляем задержку с экспоненциальным backoff
       const delay = initialDelay * Math.pow(2, attempt);
-      console.log(
-        `Attempt ${attempt + 1} failed, retrying in ${delay}ms...`,
-        `Error: ${errorMessage.substring(0, 100)}`
+      logger.warn(
+        {
+          attempt: attempt + 1,
+          delay,
+          error: errorMessage.substring(0, 100),
+        },
+        'Request failed, retrying...'
       );
 
       await sleep(delay);
@@ -175,7 +180,7 @@ const getTermByExactName = async (
 ): Promise<void> => {
   try {
     const { term: termName } = req.params;
-    console.log('getTermByExactName called with term:', termName);
+    logger.debug({ term: termName }, 'getTermByExactName called');
 
     if (!termName || termName.trim().length === 0) {
       res.status(400).json({ error: 'Term name is required' });
@@ -206,7 +211,7 @@ const getTermByExactName = async (
 
     res.json(terms[0]);
   } catch (error) {
-    console.error('Error in getTermByExactName:', error);
+    logger.error({ error, term: termName }, 'Error in getTermByExactName');
     next(error);
   }
 };
@@ -438,11 +443,17 @@ const getTermSuggestions = async (
         .trim();
       suggestions = JSON.parse(cleanedContent);
     } catch (parseError) {
-      console.error('Failed to parse Groq response:', content);
-      console.error('Parse error:', (parseError as Error).message);
+      logger.error(
+        {
+          error: parseError instanceof Error ? parseError.message : String(parseError),
+          content: content.substring(0, 500), // Ограничиваем длину для логов
+          term,
+        },
+        'Failed to parse Groq response'
+      );
       res.status(500).json({
         error: 'Failed to parse AI response',
-        details: (parseError as Error).message,
+        details: parseError instanceof Error ? parseError.message : String(parseError),
       });
       return;
     }
@@ -463,13 +474,6 @@ const getTermSuggestions = async (
       examples: suggestions.examples.filter(e => e && e.trim()).map(e => e.trim()),
     });
   } catch (error) {
-    console.error('Error getting term suggestions:', error);
-    console.error(
-      'Full error object:',
-      JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
-    );
-
-    // Извлекаем статус код из разных возможных мест
     const statusCode =
       (error as { status?: number }).status ||
       (error as { statusCode?: number }).statusCode ||
@@ -477,16 +481,15 @@ const getTermSuggestions = async (
       (error as { code?: number }).code;
     const errorMessage = (error as Error).message || 'Unknown error';
 
-    console.error('Error details:', {
-      message: errorMessage,
-      status: (error as { status?: number }).status,
-      statusCode: (error as { statusCode?: number }).statusCode,
-      responseStatus: (error as { response?: { status?: number } }).response?.status,
-      code: (error as { code?: number }).code,
-      type: (error as { constructor?: { name?: string } }).constructor?.name,
-      name: (error as { name?: string }).name,
-      stack: (error as { stack?: string }).stack,
-    });
+    logger.error(
+      {
+        error: errorMessage,
+        statusCode,
+        term,
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+      'Error getting term suggestions'
+    );
 
     // Обработка ошибок Groq API - проверка API ключа
     if (

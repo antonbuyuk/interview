@@ -1,7 +1,11 @@
 import prisma from '../utils/prisma.js';
+import cache from '../utils/cache.js';
 import type { Response, NextFunction } from 'express';
 import type { ExtendedRequest } from '../types/express';
 import type { CreateSectionBody, UpdateSectionBody } from '../types/api';
+
+const CACHE_KEY_SECTIONS = 'sections:all';
+const CACHE_TTL_SECTIONS = 5 * 60 * 1000; // 5 минут
 
 const getSections = async (
   req: ExtendedRequest,
@@ -9,6 +13,13 @@ const getSections = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    // Проверяем кеш
+    const cached = cache.get<unknown[]>(CACHE_KEY_SECTIONS);
+    if (cached) {
+      res.json(cached);
+      return;
+    }
+
     const sections = await prisma.section.findMany({
       include: {
         _count: {
@@ -21,6 +32,9 @@ const getSections = async (
         title: 'asc',
       },
     });
+
+    // Сохраняем в кеш
+    cache.set(CACHE_KEY_SECTIONS, sections, CACHE_TTL_SECTIONS);
 
     res.json(sections);
   } catch (error) {
@@ -113,6 +127,9 @@ const createSection = async (
       },
     });
 
+    // Инвалидируем кеш разделов
+    cache.delete(CACHE_KEY_SECTIONS);
+
     res.status(201).json(newSection);
   } catch (error) {
     next(error);
@@ -160,6 +177,9 @@ const updateSection = async (
       },
     });
 
+    // Инвалидируем кеш разделов
+    cache.delete(CACHE_KEY_SECTIONS);
+
     res.json(updatedSection);
   } catch (error) {
     next(error);
@@ -202,6 +222,9 @@ const deleteSection = async (
     await prisma.section.delete({
       where: { id },
     });
+
+    // Инвалидируем кеш разделов
+    cache.delete(CACHE_KEY_SECTIONS);
 
     res.status(204).send();
   } catch (error) {

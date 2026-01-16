@@ -150,9 +150,9 @@ const textLines = computed(() => {
   height: 1rem;
   background: linear-gradient(
     90deg,
-    $bg-light 0%,
-    color.scale($bg-light, $lightness: 2%) 50%,
-    $bg-light 100%
+    var(--skeleton-base) 0%,
+    var(--skeleton-highlight) 50%,
+    var(--skeleton-base) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
@@ -221,14 +221,14 @@ const textLines = computed(() => {
 // Section Card Variant
 .skeleton__section-card {
   padding: 1.5rem;
-  background: $bg-white;
+  background: var(--bg-white);
   @include rounded-md;
-  border: 1px solid $border-color;
+  border: 1px solid var(--border-color);
   min-height: 120px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
   pointer-events: none;
 }
 
@@ -245,9 +245,9 @@ const textLines = computed(() => {
   height: 1.5rem;
   background: linear-gradient(
     90deg,
-    $bg-light 0%,
-    color.scale($bg-light, $lightness: 2%) 50%,
-    $bg-light 100%
+    var(--skeleton-base) 0%,
+    var(--skeleton-highlight) 50%,
+    var(--skeleton-base) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
@@ -258,7 +258,7 @@ const textLines = computed(() => {
 .skeleton__footer {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid $border-color;
+  border-top: 1px solid var(--border-color);
 }
 
 // Question Variant
@@ -283,31 +283,31 @@ const textLines = computed(() => {
   height: 150px;
   background: linear-gradient(
     90deg,
-    color.scale($bg-light, $lightness: -2%) 0%,
-    color.scale($bg-light, $lightness: 1%) 50%,
-    color.scale($bg-light, $lightness: -2%) 100%
+    var(--skeleton-code-base) 0%,
+    var(--skeleton-code-highlight) 50%,
+    var(--skeleton-code-base) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
   border-radius: 6px;
   margin: 1rem 0;
-  border: 1px solid $border-color;
+  border: 1px solid var(--border-color);
 }
 
 .skeleton__answer {
   margin-top: 1.5rem;
   padding: 1rem;
-  background: color.scale($bg-light, $lightness: 1%);
+  background: var(--skeleton-base);
   @include rounded-md;
   &.is-type {
     &--ru {
-      background: $answer-ru-bg;
+      background: var(--answer-ru-bg);
     }
     &--en {
-      background: $answer-en-bg;
+      background: var(--answer-en-bg);
     }
     &--senior {
-      background: $senior-bg;
+      background: var(--senior-bg);
     }
   }
 }
@@ -317,9 +317,9 @@ const textLines = computed(() => {
   height: 32px;
   background: linear-gradient(
     90deg,
-    $bg-light 0%,
-    color.scale($bg-light, $lightness: 2%) 50%,
-    $bg-light 100%
+    var(--skeleton-base) 0%,
+    var(--skeleton-highlight) 50%,
+    var(--skeleton-base) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
@@ -329,11 +329,11 @@ const textLines = computed(() => {
 
 // Vocabulary Card Variant
 .skeleton__vocabulary-card {
-  background: $bg-white;
+  background: var(--bg-white);
   @include rounded-md;
   padding: 1.5rem;
-  border: 1px solid $border-color;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
   pointer-events: none;
 }
 
@@ -344,7 +344,7 @@ const textLines = computed(() => {
   gap: 1rem;
   margin-bottom: 1rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid $border-color;
+  border-bottom: 2px solid var(--border-color);
 }
 
 .skeleton__vocabulary-body {
@@ -377,9 +377,9 @@ const textLines = computed(() => {
   height: 1.75rem;
   background: linear-gradient(
     90deg,
-    $bg-light 0%,
-    color.scale($bg-light, $lightness: 2%) 50%,
-    $bg-light 100%
+    var(--skeleton-base) 0%,
+    var(--skeleton-highlight) 50%,
+    var(--skeleton-base) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
@@ -405,9 +405,9 @@ const textLines = computed(() => {
 // Card Variant
 .skeleton__card {
   padding: 1.5rem;
-  background: $bg-white;
+  background: var(--bg-white);
   @include rounded-md;
-  border: 1px solid $border-color;
+  border: 1px solid var(--border-color);
 }
 
 // Анимация shimmer
