@@ -21,5 +21,5 @@ COPY . .
 # Railway автоматически установит переменную PORT
 EXPOSE 3001
 
-# Запускаем приложение
-CMD ["node", "server/index.js"]
+# Запускаем приложение через tsx (TypeScript execution)
+CMD ["npx", "tsx", "server/index.ts"]
