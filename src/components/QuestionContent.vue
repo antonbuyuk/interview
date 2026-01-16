@@ -6,8 +6,8 @@
       :animation="200"
       handle=".question-item__drag-handle"
       item-key="id"
-      @end="handleDragEnd"
       class="draggable-list"
+      @end="handleDragEnd"
     >
       <template #item="{ element: question }">
         <QuestionItem
@@ -57,7 +57,7 @@ const localQuestions = ref<Question[]>([]);
 // Sync localQuestions with props.questions
 watch(
   () => props.questions,
-  (newQuestions) => {
+  newQuestions => {
     localQuestions.value = [...newQuestions];
   },
   { immediate: true, deep: true }
@@ -74,7 +74,7 @@ const handleDragEnd = async () => {
 
   try {
     // Extract question IDs in the new order
-    const questionIds = localQuestions.value.map((q) => q.id);
+    const questionIds = localQuestions.value.map(q => q.id);
 
     // Call API to update order
     await reorderQuestions(questionIds, props.sectionId);

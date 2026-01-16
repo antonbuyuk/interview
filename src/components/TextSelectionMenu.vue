@@ -96,10 +96,12 @@ const checkTermExists = async (termText: string) => {
     } catch (error) {
       // Игнорируем 404 ошибки (термин не найден - это нормально)
       const isNotFoundError =
-        (error instanceof Error && 'status' in error && (error as { status: number }).status === 404) ||
+        (error instanceof Error &&
+          'status' in error &&
+          (error as { status: number }).status === 404) ||
         (error instanceof Error && error.message.includes('404')) ||
         (error instanceof Error && error.message.includes('not found'));
-      
+
       if (!isNotFoundError) {
         console.error('Ошибка проверки термина:', error);
       }

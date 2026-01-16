@@ -81,7 +81,9 @@ onMounted(() => {
 
 .answer {
   &-accordion {
-    margin: 1rem 0 2rem 0;
+    &:not(:last-child) {
+      margin-bottom: 2rem;
+    }
 
     &.is-answer-ru & {
       margin-top: 1rem;

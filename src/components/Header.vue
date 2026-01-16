@@ -161,7 +161,6 @@ import type { Section, Question } from '../types/api';
 
 const route = useRoute();
 const isMobile = ref(false);
-const showUserMenu = ref(false);
 const filterOpen = ref(false);
 const mobileMenuOpen = ref(false);
 const questionsCount = ref(0);
@@ -176,19 +175,6 @@ const { sections } = storeToRefs(sectionsStore);
 
 const checkMobile = () => {
   isMobile.value = window.innerWidth <= 768;
-};
-
-const hideUserMenu = () => {
-  setTimeout(() => {
-    showUserMenu.value = false;
-  }, 200);
-};
-
-const handleUserMenuClickOutside = (event: Event) => {
-  const target = event.target as HTMLElement;
-  if (!target.closest('.user-menu-dropdown')) {
-    showUserMenu.value = false;
-  }
 };
 
 const toggleEnglishOnly = () => {
@@ -217,7 +203,6 @@ const openManageSections = () => {
   const event = new CustomEvent('open-manage-sections');
   window.dispatchEvent(event);
   closeMobileMenu();
-  hideUserMenu();
 };
 
 const isSectionActive = (path: string): boolean => {
@@ -241,9 +226,8 @@ watch(
     if (section) {
       currentSection.value = section;
     }
-    // Закрываем мобильное меню и пользовательское меню при смене маршрута
+    // Закрываем мобильное меню при смене маршрута
     closeMobileMenu();
-    hideUserMenu();
   }
 );
 
@@ -293,7 +277,6 @@ onUnmounted(() => {
   window.removeEventListener('resize', checkMobile);
   window.removeEventListener('sections-updated', handleSectionsUpdated);
   window.removeEventListener('open-login-modal', handleOpenLoginModal);
-  document.removeEventListener('click', handleUserMenuClickOutside);
 });
 </script>
 
@@ -649,24 +632,6 @@ onUnmounted(() => {
     min-width: 150px;
     max-width: 200px;
   }
-}
-
-.user-menu-dropdown {
-  position: relative;
-}
-
-.user-menu-btn {
-  position: relative;
-  // Стили уже определены в .header-icon-btn
-}
-
-.user-menu {
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  right: 0;
-  left: auto;
-  min-width: 200px;
-  z-index: 1001;
 }
 
 .menu-toggle-btn {

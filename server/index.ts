@@ -33,7 +33,10 @@ const normalizeOrigin = (origin: string): string => {
 
 app.use(
   cors({
-    origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    origin: function (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void
+    ) {
       // Разрешаем запросы без origin (например, Postman, мобильные приложения, server-to-server)
       if (!origin) {
         callback(null, true);
@@ -102,6 +105,24 @@ app.use((_req: ExtendedRequest, res: Response) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
+
+// Graceful shutdown
+const gracefulShutdown = (signal: string) => {
+  console.log(`\n${signal} received. Shutting down gracefully...`);
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+
+  // Force close after 10 seconds
+  setTimeout(() => {
+    console.error('Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));

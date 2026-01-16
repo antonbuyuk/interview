@@ -10,7 +10,7 @@
     "dev": "vite",
     "dev:server": "npx tsx watch server/index.ts",
     "dev:client": "vite",
-    "dev:all": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:all": "concurrently --kill-others-on-fail --handle-input --raw \"npm run dev:server\" \"npm run dev:client\"",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "deploy": "npm run build && echo 'Build completed. Push to main branch to deploy via GitHub Actions.'",
@@ -26,7 +26,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "fix": "prettier --write . && eslint . --fix && vue-tsc --noEmit"
   },
   "dependencies": {
     "@heroicons/vue": "^2.2.0",

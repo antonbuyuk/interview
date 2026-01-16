@@ -12,7 +12,7 @@ export interface ExtendedRequest<
   P = Record<string, string>,
   ResBody = unknown,
   ReqBody = unknown,
-  ReqQuery = Record<string, unknown>
+  ReqQuery = Record<string, unknown>,
 > extends Request<P, ResBody, ReqBody, ReqQuery> {
   // Можно добавить дополнительные поля, если нужно
   // Например: user?: User;
