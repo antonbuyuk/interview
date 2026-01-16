@@ -228,10 +228,6 @@ const isSectionsActive = computed(() => {
   return sections.value.some((section: Section) => isSectionActive(section.path));
 });
 
-const isVocabularyActive = computed(() => {
-  return route.path === '/vocabulary';
-});
-
 const showQuestionFilter = computed(() => {
   // Показываем фильтр только на страницах разделов
   return sections.value.some((section: Section) => route.path.startsWith(section.path));

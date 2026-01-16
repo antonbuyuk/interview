@@ -359,7 +359,6 @@ import {
   updateAnswer,
   deleteAnswer,
   deleteQuestion,
-  getQuestions,
   translateText,
 } from '../api/questions';
 import { useSectionsStore } from '../stores/sections';
@@ -432,7 +431,6 @@ const editorSenior = useEditor({
     },
   },
 });
-
 
 onMounted(() => {
   // Секции уже загружены в App.vue через store
@@ -511,7 +509,6 @@ watch(
     }
   }
 );
-
 
 const close = () => {
   // Очищаем редакторы при закрытии
