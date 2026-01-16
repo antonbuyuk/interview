@@ -32,6 +32,11 @@ export interface UpdateQuestionBody {
   rawMarkdown?: string;
 }
 
+export interface ReorderQuestionsBody {
+  questionIds: string[]; // Array of question IDs in the new order
+  sectionId: string; // Section ID to ensure questions belong to the same section
+}
+
 export interface CreateAnswerBody {
   type: 'ru' | 'en' | 'senior';
   content: string;

@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" class="modal-overlay" @click="close">
+  <div v-if="isOpen" class="modal-overlay">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
         <h2>{{ editingQuestion ? 'Редактировать вопрос' : 'Добавить вопрос' }}</h2>
@@ -17,11 +17,6 @@
               {{ section.title }}
             </option>
           </select>
-        </div>
-
-        <div class="form-group">
-          <label>Номер вопроса:</label>
-          <input v-model.number="formData.number" type="number" min="1" required />
         </div>
 
         <div class="form-group">
@@ -438,24 +433,6 @@ const editorSenior = useEditor({
   },
 });
 
-// Вычисление следующего номера вопроса для выбранного раздела
-const calculateNextQuestionNumber = async (sectionId: string): Promise<number> => {
-  if (!sectionId) {
-    return 1;
-  }
-
-  try {
-    const questions = await getQuestions(sectionId);
-    if (questions.length === 0) {
-      return 1;
-    }
-    const maxNumber = Math.max(...questions.map(q => q.number));
-    return maxNumber + 1;
-  } catch (error) {
-    console.error('Ошибка вычисления следующего номера:', error);
-    return 1;
-  }
-};
 
 onMounted(() => {
   // Секции уже загружены в App.vue через store
@@ -513,18 +490,11 @@ watch(
       const defaultSectionId = props.defaultSectionId || '';
       formData.value = {
         sectionId: defaultSectionId,
-        number: 1,
+        number: 1, // Всегда создаем с номером 1 (в начале списка)
         question: '',
         questionRaw: '',
         questionEn: '',
       };
-
-      // Вычисляем следующий номер для выбранного раздела
-      if (defaultSectionId) {
-        calculateNextQuestionNumber(defaultSectionId).then(nextNumber => {
-          formData.value.number = nextNumber;
-        });
-      }
 
       // Очищаем редакторы
       if (editorRu.value) {
@@ -542,17 +512,6 @@ watch(
   }
 );
 
-// Отслеживаем изменение раздела для автоматического вычисления номера
-watch(
-  () => formData.value.sectionId,
-  async (newSectionId: string, oldSectionId: string | undefined) => {
-    // Обновляем номер только при создании нового вопроса (не при редактировании)
-    if (!editingQuestion.value && newSectionId && newSectionId !== oldSectionId) {
-      const nextNumber = await calculateNextQuestionNumber(newSectionId);
-      formData.value.number = nextNumber;
-    }
-  }
-);
 
 const close = () => {
   // Очищаем редакторы при закрытии
@@ -633,10 +592,9 @@ const handleSubmit = async () => {
     }
 
     if (editingQuestion.value && props.question) {
-      // Обновление существующего вопроса
+      // Обновление существующего вопроса (номер не изменяется при редактировании, только через drag & drop)
       await updateQuestion(props.question.id, {
         sectionId: questionData.sectionId,
-        number: questionData.number,
         question: questionData.question,
         questionRaw: questionData.questionRaw,
         questionEn: questionData.questionEn,

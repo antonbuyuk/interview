@@ -12,6 +12,7 @@ router.post('/', authAdmin, questionsController.createQuestion);
 router.put('/:id', authAdmin, questionsController.updateQuestion);
 router.delete('/:id', authAdmin, questionsController.deleteQuestion);
 router.post('/translate', questionsController.translateText);
+router.post('/reorder', authAdmin, questionsController.reorderQuestions);
 
 // Nested routes for answers
 router.get('/:questionId/answers', answersController.getAnswersByQuestion);

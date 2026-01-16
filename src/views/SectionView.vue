@@ -17,7 +17,9 @@
         ref="contentRef"
         :questions="fullQuestionsData"
         :is-admin="isAdmin"
+        :section-id="currentSectionId || ''"
         @edit-question="openEditQuestion"
+        @reordered="handleQuestionsReordered"
       />
     </div>
 
@@ -169,6 +171,11 @@ const loadContent = async () => {
 
 // Обработчик перезагрузки контента после сохранения/удаления вопроса
 const handleQuestionsNeedReload = () => {
+  loadContent();
+};
+
+// Обработчик изменения порядка вопросов через drag & drop
+const handleQuestionsReordered = () => {
   loadContent();
 };
 

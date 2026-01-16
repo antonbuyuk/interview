@@ -8,15 +8,28 @@
       @mouseout="handleMouseOut"
     >
       <h3 v-html="highlightedQuestion"></h3>
-      <button
-        v-if="isAdmin"
-        class="question-item__edit-btn"
-        type="button"
-        title="Редактировать вопрос"
-        @click="handleEdit"
-      >
-        <PencilIcon class="question-item__icon" />
-      </button>
+      <div v-if="isAdmin" class="question-item__actions">
+        <div class="question-item__drag-handle" title="Перетащить для изменения порядка">
+          <svg
+            class="question-item__drag-icon"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M7 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM7 8a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM7 14a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM13 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM13 8a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM13 14a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"
+            />
+          </svg>
+        </div>
+        <button
+          class="question-item__edit-btn"
+          type="button"
+          title="Редактировать вопрос"
+          @click="handleEdit"
+        >
+          <PencilIcon class="question-item__icon" />
+        </button>
+      </div>
     </div>
 
     <CodeBlock
@@ -183,6 +196,39 @@ const handleEdit = () => {
       margin: 1.5rem 0 0.75rem 0;
       padding-top: 0.75rem;
     }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  &__drag-handle {
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.375rem;
+    opacity: 0.5;
+    @include transition(all, 0.2s, ease);
+    border-radius: 4px;
+
+    &:hover {
+      opacity: 1;
+      background: rgba(66, 184, 131, 0.1);
+    }
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+
+  &__drag-icon {
+    width: 1rem;
+    height: 1rem;
+    color: $text-gray;
   }
 
   &__edit-btn {

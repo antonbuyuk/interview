@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" class="modal-overlay" @click="close">
+  <div v-if="isOpen" class="modal-overlay">
     <div class="modal-content" :class="{ 'is-small': isSmall }" @click.stop>
       <div class="modal-header">
         <h2>Авторизация администратора</h2>

@@ -3,7 +3,7 @@
     <Header />
     <main class="main-content">
       <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
+        <transition v-if="Component" name="fade" mode="out-in">
           <component :is="Component" />
         </transition>
       </router-view>
@@ -111,18 +111,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import Header from './components/Header.vue';
-import AddSectionModal from './components/AddSectionModal.vue';
-import AddTermModal from './components/AddTermModal.vue';
-import AddQuestionModal from './components/AddQuestionModal.vue';
-import TextSelectionMenu from './components/TextSelectionMenu.vue';
-import TermTooltip from './components/TermTooltip.vue';
+import { ref, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
+
+const Header = defineAsyncComponent(() => import('./components/Header.vue'));
+const AddSectionModal = defineAsyncComponent(() => import('./components/AddSectionModal.vue'));
+const AddTermModal = defineAsyncComponent(() => import('./components/AddTermModal.vue'));
+const AddQuestionModal = defineAsyncComponent(() => import('./components/AddQuestionModal.vue'));
+const TextSelectionMenu = defineAsyncComponent(() => import('./components/TextSelectionMenu.vue'));
+const TermTooltip = defineAsyncComponent(() => import('./components/TermTooltip.vue'));
+const SecondaryMenu = defineAsyncComponent(() => import('./components/SecondaryMenu.vue'));
+
 import { deleteSection as deleteSectionApi } from './api/sections';
 import { useSectionsStore } from './stores/sections';
 import { useAdminAuth } from './composables/useAdminAuth';
 import { useDictionaryHighlight } from './composables/useDictionaryHighlight';
-import SecondaryMenu from './components/SecondaryMenu.vue';
 import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import type { Section, Question, Term } from './types/api';
 import type { EditQuestionEvent, CurrentSectionUpdatedEvent, TermHoverEvent } from './types/events';
