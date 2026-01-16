@@ -1,167 +1,49 @@
 /**
- * Типы для API на основе Prisma схемы
+ * Главный файл экспорта всех типов API
+ * Реэкспортирует типы из отдельных модулей для обратной совместимости
  */
 
-export type AnswerType = 'ru' | 'en' | 'senior';
+// Section types
+export type {
+  Section,
+  SectionId,
+  CreateSectionRequest,
+  UpdateSectionRequest,
+  SectionWithCount,
+  SectionWithoutQuestions,
+} from './section';
 
-export interface TermExample {
-  id: string;
-  termId: string;
-  example: string;
-  createdAt: string;
-}
+// Question and Answer types
+export type {
+  AnswerType,
+  CodeBlock,
+  Answer,
+  Question,
+  CreateAnswerRequest,
+  UpdateAnswerRequest,
+  CreateQuestionRequest,
+  UpdateQuestionRequest,
+  TranslateTextRequest,
+  TranslateTextResponse,
+  QuestionWithAnswers,
+  QuestionWithSection,
+  QuestionFull,
+} from './question';
 
-export interface TermPhrase {
-  id: string;
-  termId: string;
-  phrase: string;
-  createdAt: string;
-}
+// Term types
+export type {
+  TermExample,
+  TermPhrase,
+  Term,
+  CreateTermRequest,
+  UpdateTermRequest,
+  GetTermsFilters,
+  TermSuggestionsRequest,
+  TermSuggestionsResponse,
+  TermWithExamples,
+  TermWithPhrases,
+  TermFull,
+} from './term';
 
-export interface Term {
-  id: string;
-  term: string;
-  translation: string;
-  examples?: TermExample[];
-  phrases?: TermPhrase[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Answer {
-  id: string;
-  questionId: string;
-  type: AnswerType;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CodeBlock {
-  language: string;
-  code: string;
-}
-
-export interface Question {
-  id: string;
-  sectionId: string;
-  section?: Section;
-  number: number;
-  question: string;
-  questionRaw: string;
-  questionEn: string | null;
-  codeBlocks: CodeBlock[] | null;
-  rawMarkdown: string;
-  answers?: Answer[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Section {
-  id: string;
-  sectionId: string;
-  title: string;
-  path: string;
-  dir: string;
-  questions?: Question[];
-  _count?: {
-    questions: number;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Request/Response типы для API
-
-export interface CreateSectionRequest {
-  sectionId: string;
-  title: string;
-  path: string;
-  dir: string;
-}
-
-export interface UpdateSectionRequest {
-  sectionId?: string;
-  title?: string;
-  path?: string;
-  dir?: string;
-}
-
-export interface CreateQuestionRequest {
-  sectionId: string;
-  number: number;
-  question: string;
-  questionRaw: string;
-  questionEn?: string | null;
-  codeBlocks?: CodeBlock[] | null;
-  rawMarkdown: string;
-  answers?: CreateAnswerRequest[];
-}
-
-export interface UpdateQuestionRequest {
-  sectionId?: string;
-  number?: number;
-  question?: string;
-  questionRaw?: string;
-  questionEn?: string | null;
-  codeBlocks?: CodeBlock[] | null;
-  rawMarkdown?: string;
-}
-
-export interface CreateAnswerRequest {
-  type: AnswerType;
-  content: string;
-}
-
-export interface UpdateAnswerRequest {
-  type?: AnswerType;
-  content?: string;
-}
-
-export interface CreateTermRequest {
-  term: string;
-  translation: string;
-  examples?: string[];
-  phrases?: string[];
-}
-
-export interface UpdateTermRequest {
-  term?: string;
-  translation?: string;
-  examples?: string[];
-  phrases?: string[];
-}
-
-export interface GetTermsFilters {
-  search?: string;
-  sortBy?: string;
-}
-
-export interface TranslateTextRequest {
-  text: string;
-  from?: string;
-  to?: string;
-}
-
-export interface TranslateTextResponse {
-  translatedText: string;
-}
-
-export interface TermSuggestionsRequest {
-  term: string;
-}
-
-export interface TermSuggestionsResponse {
-  translation: string;
-  phrases: string[];
-  examples: string[];
-}
-
-export interface LoginRequest {
-  password: string;
-}
-
-export interface LoginResponse {
-  success: boolean;
-  error?: string;
-}
+// Auth types
+export type { LoginRequest, LoginResponse } from './auth';

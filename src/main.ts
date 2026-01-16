@@ -44,17 +44,39 @@ async function loadSectionsRoutes(): Promise<void> {
         props: { section },
       });
     });
-
-    console.log(
-      `Добавлено ${loadedSections.length} маршрутов для разделов:`,
-      loadedSections.map(s => s.path)
-    );
   } catch (error) {
     console.error('Ошибка загрузки разделов для роутинга:', error);
   }
 }
 
 // Загружаем разделы и монтируем приложение
-loadSectionsRoutes().then(() => {
-  app.mount('#app');
-});
+loadSectionsRoutes()
+  .then(async () => {
+    // Сохраняем текущий путь до монтирования
+    const currentPath = window.location.pathname;
+
+    // Если текущий путь не является базовым маршрутом,
+    // проверяем, что он найден после добавления динамических маршрутов
+    if (currentPath !== base && currentPath !== `${base}/`) {
+      const matched = router.resolve(currentPath);
+      // Если маршрут найден, устанавливаем его как текущий перед монтированием
+      if (matched.name) {
+        try {
+          // Используем replace, чтобы не добавлять запись в историю
+          // Это нужно сделать ДО монтирования, чтобы роутер знал о маршруте
+          await router.replace(currentPath);
+        } catch (error) {
+          // Игнорируем ошибки навигации
+          console.warn('Ошибка навигации при инициализации:', error);
+        }
+      }
+    }
+
+    // Монтируем приложение после установки правильного маршрута
+    app.mount('#app');
+  })
+  .catch(error => {
+    console.error('Ошибка инициализации приложения:', error);
+    // Монтируем приложение даже при ошибке, чтобы показать хотя бы базовые страницы
+    app.mount('#app');
+  });

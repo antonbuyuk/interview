@@ -94,3 +94,16 @@ export async function translateText(
     to,
   } as TranslateTextRequest);
 }
+
+/**
+ * Изменить порядок вопросов
+ */
+export async function reorderQuestions(
+  questionIds: string[],
+  sectionId: string
+): Promise<Question[]> {
+  return api.post<Question[]>('/questions/reorder', {
+    questionIds,
+    sectionId,
+  });
+}

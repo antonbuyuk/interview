@@ -3,7 +3,7 @@
     <Header />
     <main class="main-content">
       <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
+        <transition v-if="Component" name="fade" mode="out-in">
           <component :is="Component" />
         </transition>
       </router-view>
@@ -111,20 +111,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import Header from './components/Header.vue';
-import AddSectionModal from './components/AddSectionModal.vue';
-import AddTermModal from './components/AddTermModal.vue';
-import AddQuestionModal from './components/AddQuestionModal.vue';
-import TextSelectionMenu from './components/TextSelectionMenu.vue';
-import TermTooltip from './components/TermTooltip.vue';
+import { ref, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
+
+const Header = defineAsyncComponent(() => import('./components/Header.vue'));
+const AddSectionModal = defineAsyncComponent(() => import('./components/AddSectionModal.vue'));
+const AddTermModal = defineAsyncComponent(() => import('./components/AddTermModal.vue'));
+const AddQuestionModal = defineAsyncComponent(() => import('./components/AddQuestionModal.vue'));
+const TextSelectionMenu = defineAsyncComponent(() => import('./components/TextSelectionMenu.vue'));
+const TermTooltip = defineAsyncComponent(() => import('./components/TermTooltip.vue'));
+const SecondaryMenu = defineAsyncComponent(() => import('./components/SecondaryMenu.vue'));
+
 import { deleteSection as deleteSectionApi } from './api/sections';
 import { useSectionsStore } from './stores/sections';
 import { useAdminAuth } from './composables/useAdminAuth';
 import { useDictionaryHighlight } from './composables/useDictionaryHighlight';
-import SecondaryMenu from './components/SecondaryMenu.vue';
 import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import type { Section, Question, Term } from './types/api';
+import type { EditQuestionEvent, CurrentSectionUpdatedEvent, TermHoverEvent } from './types/events';
 
 const sectionsStore = useSectionsStore();
 const { sections, loading: sectionsLoading, refreshSections } = sectionsStore;
@@ -239,17 +242,17 @@ const handleTermSaved = () => {
   window.dispatchEvent(new CustomEvent('terms-updated'));
 };
 
-const handleTermHover = (event: { term?: { id: string }; position?: { x: number; y: number } }) => {
-  if (!event || !event.term) {
+const handleTermHover = (event: TermHoverEvent) => {
+  if (!event.detail?.term) {
     hoveredTerm.value = null;
     return;
   }
 
   // Используем уже загруженные данные из словаря
-  const term = findTermById(event.term.id);
+  const term = findTermById(event.detail.term.id);
   if (term) {
     hoveredTerm.value = term;
-    tooltipPosition.value = event.position || { x: 0, y: 0 };
+    tooltipPosition.value = event.detail.position || { x: 0, y: 0 };
   } else {
     hoveredTerm.value = null;
   }
@@ -266,10 +269,9 @@ const handleOpenAddQuestion = () => {
   }
 };
 
-const handleEditQuestion = (event: Event) => {
-  const customEvent = event as CustomEvent<{ question: Question }>;
-  if (isAdmin.value && customEvent.detail?.question) {
-    editingQuestion.value = customEvent.detail.question;
+const handleEditQuestion = (event: EditQuestionEvent) => {
+  if (isAdmin.value && event.detail?.question) {
+    editingQuestion.value = event.detail.question;
     showQuestionModal.value = true;
   }
 };
@@ -293,13 +295,12 @@ const handleQuestionDeleted = () => {
   window.dispatchEvent(new CustomEvent('questions-need-reload'));
 };
 
-const handleCurrentSectionUpdated = (event: Event) => {
-  const customEvent = event as CustomEvent<{ sectionId?: string; section?: Section }>;
+const handleCurrentSectionUpdated = (event: CurrentSectionUpdatedEvent) => {
   // Получаем UUID раздела из события (приоритет sectionId, затем section.id)
-  if (customEvent.detail?.sectionId) {
-    currentSectionId.value = customEvent.detail.sectionId;
-  } else if (customEvent.detail?.section?.id) {
-    currentSectionId.value = customEvent.detail.section.id;
+  if (event.detail?.sectionId) {
+    currentSectionId.value = event.detail.sectionId;
+  } else if (event.detail?.section?.id) {
+    currentSectionId.value = event.detail.section.id;
   }
 };
 
@@ -325,13 +326,7 @@ onMounted(async () => {
   // Слушаем событие обновления текущего раздела
   window.addEventListener('current-section-updated', handleCurrentSectionUpdated);
   // Слушаем событие hover на термине
-  window.addEventListener('term-hover', (e: Event) => {
-    const customEvent = e as CustomEvent<{
-      term?: { id: string };
-      position?: { x: number; y: number };
-    }>;
-    handleTermHover(customEvent.detail || {});
-  });
+  window.addEventListener('term-hover', handleTermHover);
   // Слушаем обновление словаря для перезагрузки
   window.addEventListener('terms-updated', () => {
     const { refreshDictionary } = useDictionaryHighlight();
@@ -353,13 +348,7 @@ onUnmounted(() => {
   window.removeEventListener('open-add-question', handleOpenAddQuestion);
   window.removeEventListener('edit-question', handleEditQuestion);
   window.removeEventListener('current-section-updated', handleCurrentSectionUpdated);
-  window.removeEventListener('term-hover', (e: Event) => {
-    const customEvent = e as CustomEvent<{
-      term?: { id: string };
-      position?: { x: number; y: number };
-    }>;
-    handleTermHover(customEvent.detail || {});
-  });
+  window.removeEventListener('term-hover', handleTermHover);
 });
 </script>
 
