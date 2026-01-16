@@ -12,8 +12,7 @@ import type {
 /**
  * Вспомогательная функция для задержки
  */
-const sleep = (ms: number): Promise<void> =>
-  new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * Выполняет запрос к Groq API с повторными попытками при временных ошибках
@@ -553,8 +552,7 @@ const getTermSuggestions = async (
       if (!apiKey || apiKey.trim() === '') {
         res.status(503).json({
           error: 'Groq API key not configured',
-          message:
-            'GROQ_API_KEY environment variable is not set. Please add it to your .env file.',
+          message: 'GROQ_API_KEY environment variable is not set. Please add it to your .env file.',
         });
         return;
       }

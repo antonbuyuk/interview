@@ -40,7 +40,7 @@
 <script setup lang="ts">
 import { useSectionsStore } from '../stores/sections';
 import { PlusIcon } from '@heroicons/vue/24/outline';
-import Skeleton from '../components/Skeleton.vue';
+import Skeleton from '../components/ui/Skeleton.vue';
 import { storeToRefs } from 'pinia';
 
 const sectionsStore = useSectionsStore();

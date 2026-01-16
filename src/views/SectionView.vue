@@ -43,9 +43,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
-import QuestionNav from '../components/QuestionNav.vue';
-import QuestionContent from '../components/QuestionContent.vue';
-import Skeleton from '../components/Skeleton.vue';
+import QuestionNav from '../components/question/QuestionNav.vue';
+import QuestionContent from '../components/question/QuestionContent.vue';
+import Skeleton from '../components/ui/Skeleton.vue';
 import { useAdminAuth } from '../composables/useAdminAuth';
 import { getQuestions } from '../api/questions';
 import { useSectionsStore } from '../stores/sections';

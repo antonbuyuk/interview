@@ -360,10 +360,10 @@ import {
   deleteAnswer,
   deleteQuestion,
   translateText,
-} from '../api/questions';
-import { useSectionsStore } from '../stores/sections';
+} from '../../api/questions';
+import { useSectionsStore } from '../../stores/sections';
 import { TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline';
-import type { Question, CreateAnswerRequest } from '../types/api';
+import type { Question, CreateAnswerRequest } from '../../types/api';
 
 // Инициализация Turndown для конвертации HTML в Markdown
 const turndownService = new TurndownService({
@@ -697,5 +697,5 @@ const handleDelete = async () => {
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/modals' as *;
+@use '../../styles/modals' as *;
 </style>

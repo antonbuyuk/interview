@@ -52,10 +52,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import CodeBlock from './CodeBlock.vue';
+import CodeBlock from '../content/CodeBlock.vue';
 import AnswerAccordion from './AnswerAccordion.vue';
 import { PencilIcon } from '@heroicons/vue/24/outline';
-import { useDictionaryHighlight } from '../composables/useDictionaryHighlight';
+import { useDictionaryHighlight } from '../../composables/useDictionaryHighlight';
 
 const props = defineProps({
   question: {
@@ -79,11 +79,11 @@ const { highlightTermsInText } = useDictionaryHighlight();
 const sortedAnswers = computed(() => {
   const answers = props.question.answers || [];
   // Сортируем ответы: ru, en, senior
-  const order = { ru: 0, en: 1, senior: 2 };
+  const order: Record<string, number> = { ru: 0, en: 1, senior: 2 };
   return [...answers].sort((a, b) => {
-    return (
-      (order[a.type as keyof typeof order] || 99) - (order[b.type as keyof typeof order] || 99)
-    );
+    const orderA = order[a.type] ?? 99;
+    const orderB = order[b.type] ?? 99;
+    return orderA - orderB;
   });
 });
 
@@ -154,8 +154,8 @@ const handleEdit = () => {
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/variables' as *;
-@use '../styles/mixins' as *;
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
 
 .question-item {
   margin-bottom: 2rem;

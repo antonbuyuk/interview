@@ -143,10 +143,10 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { storeToRefs } from 'pinia';
-import { useAdminAuth } from '../composables/useAdminAuth';
-import { useTrainingMode } from '../composables/useTrainingMode';
-import { useSectionsStore } from '../stores/sections';
-import AdminLoginModal from './AdminLoginModal.vue';
+import { useAdminAuth } from '../../composables/useAdminAuth';
+import { useTrainingMode } from '../../composables/useTrainingMode';
+import { useSectionsStore } from '../../stores/sections';
+import AdminLoginModal from '../modals/AdminLoginModal.vue';
 import Search from './Search.vue';
 import {
   HomeIcon,
@@ -157,7 +157,7 @@ import {
   Cog6ToothIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline';
-import type { Section, Question } from '../types/api';
+import type { Section, Question } from '../../types/api';
 
 const route = useRoute();
 const isMobile = ref(false);
@@ -281,8 +281,8 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/variables' as *;
-@use '../styles/mixins' as *;
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
 
 .app-header {
   position: fixed;

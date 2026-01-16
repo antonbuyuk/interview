@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { useAdminAuth } from '../composables/useAdminAuth';
+import { useAdminAuth } from '../../composables/useAdminAuth';
 import {
   LockClosedIcon,
   QuestionMarkCircleIcon,
@@ -52,8 +52,8 @@ const openLoginModal = () => {
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/mixins' as *;
-@use '../styles/variables' as *;
+@use '../../styles/mixins' as *;
+@use '../../styles/variables' as *;
 .secondary-menu {
   bottom: 1rem;
   right: 1rem;

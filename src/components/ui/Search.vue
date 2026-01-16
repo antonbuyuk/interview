@@ -100,11 +100,11 @@
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { storeToRefs } from 'pinia';
-import { useSectionsStore } from '../stores/sections';
-import { getQuestions } from '../api/questions.js';
+import { useSectionsStore } from '../../stores/sections';
+import { getQuestions } from '../../api/questions.js';
 import { MagnifyingGlassIcon, MicrophoneIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { StopIcon as StopIconSolid } from '@heroicons/vue/24/solid';
-import type { Section, Question } from '../types/api';
+import type { Section, Question } from '../../types/api';
 
 // Типы для результатов поиска
 interface LocalSearchResult {
@@ -630,8 +630,8 @@ watch(
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/variables' as *;
-@use '../styles/mixins' as *;
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
 
 .search-container {
   position: relative;

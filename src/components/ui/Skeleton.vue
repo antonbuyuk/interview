@@ -133,8 +133,8 @@ const textLines = computed(() => {
 
 <style lang="scss" scoped>
 @use 'sass:color';
-@use '../styles/variables' as *;
-@use '../styles/mixins' as *;
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
 
 .skeleton {
   position: relative;

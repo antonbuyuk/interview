@@ -36,10 +36,10 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import draggable from 'vuedraggable';
-import { useTrainingMode } from '../composables/useTrainingMode';
+import { useTrainingMode } from '../../composables/useTrainingMode';
 import QuestionItem from './QuestionItem.vue';
-import { reorderQuestions } from '../api/questions';
-import type { Question } from '../types/api';
+import { reorderQuestions } from '../../api/questions';
+import type { Question } from '../../types/api';
 
 const props = defineProps({
   questions: { type: Array as () => Question[], default: () => [] },
@@ -91,7 +91,7 @@ const handleDragEnd = async () => {
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/variables' as *;
+@use '../../styles/variables' as *;
 
 .question-content {
   background: $bg-white;

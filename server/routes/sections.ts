@@ -1,8 +1,8 @@
 import express from 'express';
 const router = express.Router();
 import * as sectionsController from '../controllers/sectionsController';
-import errorHandler from '../middleware/errorHandler.js';
-import authAdmin from '../middleware/authAdmin.js';
+import errorHandler from '../middleware/errorHandler';
+import authAdmin from '../middleware/authAdmin';
 
 router.get('/', sectionsController.getSections);
 router.get('/:id', sectionsController.getSectionById);
