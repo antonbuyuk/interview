@@ -11,11 +11,46 @@ import type {
 } from '../types/api';
 
 /**
- * Получить вопросы по разделу
+ * Интерфейс для пагинации
+ */
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+/**
+ * Ответ API с пагинацией
+ */
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: PaginationMeta;
+}
+
+/**
+ * Получить вопросы по разделу (без пагинации, для обратной совместимости)
  */
 export async function getQuestions(sectionId: string | null = null): Promise<Question[]> {
   const params = sectionId ? `?sectionId=${sectionId}` : '';
   return api.get<Question[]>(`/questions${params}`);
+}
+
+/**
+ * Получить вопросы по разделу с поддержкой пагинации
+ */
+export async function getQuestionsPaginated(
+  sectionId: string | null = null,
+  page: number = 1,
+  limit: number = 50
+): Promise<PaginatedResponse<Question>> {
+  const params = new URLSearchParams();
+  if (sectionId) params.append('sectionId', sectionId);
+  params.append('page', page.toString());
+  params.append('limit', limit.toString());
+  return api.get<PaginatedResponse<Question>>(`/questions?${params.toString()}`);
 }
 
 /**

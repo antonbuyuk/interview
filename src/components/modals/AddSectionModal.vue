@@ -84,7 +84,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 interface Emits {
   (e: 'close'): void;
-  (e: 'saved'): void;
+  (e: 'saved', section?: Section): void;
 }
 
 const emit = defineEmits<Emits>();
@@ -141,18 +141,20 @@ const handleSubmit = async () => {
       dir: formData.value.dir,
     };
 
+    let result: Section;
     if (editingSection.value && props.section) {
-      await updateSection(props.section.id, sectionData);
+      result = await updateSection(props.section.id, sectionData);
     } else {
-      await createSection(sectionData);
+      result = await createSection(sectionData);
     }
 
-    emit('saved');
+    emit('saved', result);
     close();
   } catch (error) {
     console.error('Ошибка сохранения раздела:', error);
     const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
-    alert('Ошибка сохранения: ' + errorMessage);
+    const { showToast } = await import('../../composables/useToast');
+    showToast('Ошибка сохранения: ' + errorMessage, 'error');
   } finally {
     loading.value = false;
   }

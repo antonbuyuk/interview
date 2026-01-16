@@ -50,55 +50,14 @@
     </div>
 
     <div v-else class="vocabulary-grid">
-      <div v-for="term in filteredTerms" :key="term.id || term.term" class="vocabulary-card">
-        <div class="card-header">
-          <div class="term-header-row">
-            <h3 class="term-title">{{ term.term }}</h3>
-            <button
-              class="play-btn"
-              :class="{ disabled: !isSupported }"
-              :title="isSupported ? 'Воспроизвести термин' : 'Браузер не поддерживает озвучку'"
-              :disabled="!isSupported"
-              @click.stop="speakTerm(term.term)"
-            >
-              <SpeakerWaveIcon class="icon-small" />
-            </button>
-          </div>
-          <div v-if="isAdmin" class="card-actions-top">
-            <button class="edit-btn" title="Редактировать" @click="editTerm(term)">
-              <PencilIcon class="icon-small" />
-            </button>
-            <button class="delete-btn" title="Удалить" @click="deleteTerm(term)">
-              <TrashIcon class="icon-small" />
-            </button>
-          </div>
-        </div>
-
-        <div class="card-body">
-          <div class="translation-section">
-            <span class="translation-label">Перевод:</span>
-            <span class="translation-text">{{ term.translation || '—' }}</span>
-          </div>
-
-          <div v-if="term.phrases && term.phrases.length > 0" class="phrases-section">
-            <span class="phrases-label">Примеры словосочетаний:</span>
-            <div class="phrases-list">
-              <span v-for="(phrase, idx) in term.phrases" :key="idx" class="phrase-tag">
-                {{ phrase.phrase }}
-              </span>
-            </div>
-          </div>
-
-          <div v-if="term.examples && term.examples.length > 0" class="examples-section">
-            <span class="examples-label">Примеры использования:</span>
-            <ul class="examples-list">
-              <li v-for="(example, idx) in term.examples" :key="idx" class="example-item">
-                {{ example.example }}
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
+      <TermCard
+        v-for="term in filteredTerms"
+        :key="term.id || term.term"
+        :term="term"
+        :is-admin="isAdmin"
+        @edit="editTerm"
+        @delete="deleteTerm"
+      />
     </div>
 
     <!-- Модальное окно для добавления/редактирования термина -->
@@ -116,14 +75,11 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { getTerms, deleteTerm as deleteTermApi } from '../api/terms';
 import AddTermModal from '../components/modals/AddTermModal.vue';
 import Skeleton from '../components/ui/Skeleton.vue';
+import TermCard from '../components/vocabulary/TermCard.vue';
 import { useAdminAuth } from '../composables/useAdminAuth';
-import { useTextToSpeech } from '../composables/useTextToSpeech';
 import {
   BookOpenIcon,
   MagnifyingGlassIcon,
-  PencilIcon,
-  TrashIcon,
-  SpeakerWaveIcon,
 } from '@heroicons/vue/24/outline';
 
 interface VocabularyItem {
@@ -141,9 +97,9 @@ const sortBy = ref('term');
 const showAddModal = ref(false);
 const editingTerm = ref<VocabularyItem | null>(null);
 const searchDebounceTimer = ref<ReturnType<typeof setTimeout> | null>(null);
+const isMounted = ref(false);
 
 const { isAdmin } = useAdminAuth();
-const { isSupported, speak } = useTextToSpeech();
 
 // Загружаем словарь через API
 const loadTerms = async () => {
@@ -172,6 +128,7 @@ const loadTerms = async () => {
 
 onMounted(() => {
   loadTerms();
+  isMounted.value = true;
   // Слушаем событие обновления терминов из глобального модального окна
   window.addEventListener('terms-updated', loadTerms);
 });
@@ -200,12 +157,16 @@ watch(
   }
 );
 
-// Перезагружаем при изменении сортировки (без debounce)
+// Перезагружаем при изменении сортировки (без debounce, но только после монтирования)
 watch(
   () => sortBy.value,
   () => {
-    loadTerms();
-  }
+    // Предотвращаем дублирование запроса при инициализации
+    if (isMounted.value) {
+      loadTerms();
+    }
+  },
+  { immediate: false }
 );
 
 // Фильтрация и сортировка (теперь выполняется на сервере, но оставляем для совместимости)
@@ -233,22 +194,27 @@ const handleTermSaved = () => {
 };
 
 const deleteTerm = async (term: VocabularyItem) => {
-  if (!confirm(`Удалить термин "${term.term}"?`)) {
-    return;
-  }
+  const { showConfirmDialog } = await import('../composables/useConfirmDialog').then(m => m);
+  const { showToast } = await import('../composables/useToast').then(m => m);
 
-  try {
-    await deleteTermApi(term.id);
-    loadTerms();
-  } catch (error) {
-    console.error('Ошибка удаления термина:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
-    alert('Ошибка удаления: ' + errorMessage);
-  }
-};
-
-const speakTerm = (termText: string) => {
-  speak(termText, { lang: 'en-GB' });
+  showConfirmDialog(
+    {
+      message: `Удалить термин "${term.term}"?`,
+      title: 'Удаление термина',
+      confirmType: 'danger',
+    },
+    async () => {
+      try {
+        await deleteTermApi(term.id);
+        loadTerms();
+        showToast('Термин успешно удален', 'success');
+      } catch (error) {
+        console.error('Ошибка удаления термина:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+        showToast('Ошибка удаления: ' + errorMessage, 'error');
+      }
+    }
+  );
 };
 </script>
 
@@ -273,7 +239,7 @@ const speakTerm = (termText: string) => {
     font-size: 2.5rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
-    color: $text-dark;
+    color: var(--text-dark);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -282,7 +248,7 @@ const speakTerm = (termText: string) => {
     .title-icon {
       width: 2.5rem;
       height: 2.5rem;
-      color: $primary-color;
+      color: var(--primary-color);
       flex-shrink: 0;
     }
 
@@ -317,7 +283,7 @@ const speakTerm = (termText: string) => {
 
 .subtitle {
   font-size: 1.125rem;
-  color: $text-lighter-gray;
+  color: var(--text-lighter-gray);
 }
 
 .controls-panel {
@@ -334,13 +300,19 @@ const speakTerm = (termText: string) => {
   width: 100%;
   padding: 0.75rem 1rem 0.75rem 2.5rem;
   font-size: 1rem;
-  border: 2px solid $border-color;
+  border: 2px solid var(--border-color);
   border-radius: 6px;
+  background: var(--bg-white);
+  color: var(--text-dark);
   @include transition(border-color);
 
   &:focus {
     outline: none;
-    border-color: $primary-color;
+    border-color: var(--primary-color);
+  }
+
+  &::placeholder {
+    color: var(--text-light-gray);
   }
 }
 
@@ -351,7 +323,7 @@ const speakTerm = (termText: string) => {
   transform: translateY(-50%);
   width: 1.125rem;
   height: 1.125rem;
-  color: $text-lighter-gray;
+  color: var(--text-lighter-gray);
   pointer-events: none;
 }
 
@@ -379,16 +351,17 @@ const speakTerm = (termText: string) => {
 .filter-label {
   font-size: 0.9375rem;
   font-weight: 500;
-  color: $text-gray;
+  color: var(--text-gray);
   white-space: nowrap;
 }
 
 .filter-select {
   padding: 0.5rem 0.75rem;
   font-size: 0.9375rem;
-  border: 1px solid $border-color;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
-  background: $bg-white;
+  background: var(--bg-white);
+  color: var(--text-dark);
   cursor: pointer;
   @include transition(border-color);
 
@@ -398,18 +371,18 @@ const speakTerm = (termText: string) => {
 
   &:focus {
     outline: none;
-    border-color: $primary-color;
+    border-color: var(--primary-color);
   }
 }
 
 .results-info {
   font-size: 0.9375rem;
-  color: $text-lighter-gray;
+  color: var(--text-lighter-gray);
   padding-top: 1rem;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border-color);
 
   strong {
-    color: $primary-color;
+    color: var(--primary-color);
     font-weight: 600;
   }
 }
@@ -418,14 +391,14 @@ const speakTerm = (termText: string) => {
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  color: $text-lighter-gray;
+  color: var(--text-lighter-gray);
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #f0f0f0;
-  border-top-color: $primary-color;
+  border: 4px solid var(--border-color);
+  border-top-color: var(--primary-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem;
@@ -455,12 +428,13 @@ const speakTerm = (termText: string) => {
 
 .edit-btn,
 .delete-btn {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid $border-color;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   padding: 0.5rem;
   cursor: pointer;
   font-size: 1rem;
+  color: var(--text-dark);
   @include transition;
   display: flex;
   align-items: center;
@@ -474,20 +448,21 @@ const speakTerm = (termText: string) => {
 }
 
 .edit-btn:hover {
-  background: #f0f7ff;
-  border-color: $primary-color;
+  background: var(--accent-bg);
+  border-color: var(--primary-color);
 }
 
 .delete-btn:hover {
-  background: #fff5f5;
-  border-color: #ff4444;
+  background: var(--error-bg);
+  border-color: var(--error-color);
+  color: var(--error-color);
 }
 
 .card-header {
   @include flex-between;
   margin-bottom: 1rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid #f0f0f0;
+  border-bottom: 2px solid var(--border-color);
 
   @include mobile {
     flex-direction: column;
@@ -505,14 +480,14 @@ const speakTerm = (termText: string) => {
 .term-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: $text-dark;
+  color: var(--text-dark);
   margin: 0;
   flex: 1;
 }
 
 .play-btn {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid $border-color;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   padding: 0.5rem;
   cursor: pointer;
@@ -521,7 +496,7 @@ const speakTerm = (termText: string) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: $primary-color;
+  color: var(--primary-color);
 
   .icon-small {
     width: 1rem;
@@ -530,8 +505,8 @@ const speakTerm = (termText: string) => {
   }
 
   &:hover:not(.disabled) {
-    background: #f0f7ff;
-    border-color: $primary-color;
+    background: var(--accent-bg);
+    border-color: var(--primary-color);
     transform: scale(1.05);
   }
 
@@ -542,12 +517,12 @@ const speakTerm = (termText: string) => {
   &.disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    color: $text-lighter-gray;
+    color: var(--text-lighter-gray);
 
     &:hover {
       transform: none;
-      background: rgba(255, 255, 255, 0.9);
-      border-color: $border-color;
+      background: var(--bg-white);
+      border-color: var(--border-color);
     }
   }
 }
@@ -569,14 +544,14 @@ const speakTerm = (termText: string) => {
 .translation-label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: $text-lighter-gray;
+  color: var(--text-lighter-gray);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .translation-text {
   font-size: 1.125rem;
-  color: $text-dark;
+  color: var(--text-dark);
   font-weight: 500;
 }
 
@@ -591,7 +566,7 @@ const speakTerm = (termText: string) => {
 .examples-label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: $text-lighter-gray;
+  color: var(--text-lighter-gray);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -605,10 +580,10 @@ const speakTerm = (termText: string) => {
 .phrase-tag {
   font-size: 0.875rem;
   padding: 0.375rem 0.75rem;
-  background: $bg-light;
+  background: var(--bg-light);
   border-radius: 4px;
-  color: $text-gray;
-  border: 1px solid $border-color;
+  color: var(--text-gray);
+  border: 1px solid var(--border-color);
 }
 
 .examples-list {
@@ -622,7 +597,7 @@ const speakTerm = (termText: string) => {
 
 .example-item {
   font-size: 0.9375rem;
-  color: $text-light-gray;
+  color: var(--text-light-gray);
   line-height: 1.6;
   padding-left: 1rem;
   position: relative;
@@ -631,7 +606,7 @@ const speakTerm = (termText: string) => {
     content: '•';
     position: absolute;
     left: 0;
-    color: $primary-color;
+    color: var(--primary-color);
     font-weight: bold;
   }
 }

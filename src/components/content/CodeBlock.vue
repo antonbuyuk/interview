@@ -21,9 +21,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import hljs from 'highlight.js';
+import { ref, computed, onMounted } from 'vue';
 import { CheckIcon, ClipboardDocumentIcon } from '@heroicons/vue/24/outline';
+
+// Динамический импорт для тяжелой библиотеки
+
+let hljs: any = null;
+const libraryLoaded = ref(false);
+
+// Загружаем библиотеку асинхронно
+onMounted(async () => {
+  try {
+    const hljsModule = await import('highlight.js');
+    // highlight.js экспортируется как default, нужно получить его
+    hljs = hljsModule.default || hljsModule;
+    libraryLoaded.value = true;
+  } catch (error) {
+    console.error('Ошибка загрузки highlight.js:', error);
+  }
+});
 
 const props = defineProps({
   code: {
@@ -43,14 +59,19 @@ const highlightedCode = computed(() => {
     return '';
   }
 
+  // Если библиотека еще не загружена, возвращаем экранированный код
+  if (!libraryLoaded.value || !hljs) {
+    return escapeHtml(props.code);
+  }
+
   try {
     const lang = props.language || '';
 
-    if (lang && hljs.getLanguage(lang)) {
-      const result = hljs.highlight(props.code, { language: lang });
+    if (lang && (hljs as any).getLanguage && (hljs as any).getLanguage(lang)) {
+      const result = (hljs as any).highlight(props.code, { language: lang });
       return result.value;
     } else {
-      const result = hljs.highlightAuto(props.code);
+      const result = (hljs as any).highlightAuto(props.code);
       return result.value;
     }
   } catch (err) {

@@ -14,8 +14,10 @@ export interface ExtendedRequest<
   ReqBody = unknown,
   ReqQuery = Record<string, unknown>,
 > extends Request<P, ResBody, ReqBody, ReqQuery> {
-  // Можно добавить дополнительные поля, если нужно
-  // Например: user?: User;
+  // Информация о пользователе после аутентификации
+  user?: {
+    admin: boolean;
+  };
 }
 
 /**

@@ -70,7 +70,7 @@ const openManageSections = () => {
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 1rem;
-  color: #1e1e1e;
+  color: var(--text-dark);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -79,7 +79,7 @@ const openManageSections = () => {
   .title-icon {
     width: 2.5rem;
     height: 2.5rem;
-    color: #42b883;
+    color: var(--primary-color);
     flex-shrink: 0;
   }
 
@@ -95,7 +95,7 @@ const openManageSections = () => {
 
 .description {
   font-size: 1.125rem;
-  color: #666;
+  color: var(--text-lighter-gray);
   max-width: 600px;
   margin: 0 auto;
 }
@@ -107,14 +107,14 @@ const openManageSections = () => {
 }
 
 .section-card {
-  background: white;
+  background: var(--bg-white);
   @include rounded-md;
   padding: 1.5rem;
   text-decoration: none;
   color: inherit;
   @include transition(all, 0.3s, ease);
   @include shadow-sm;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -129,18 +129,18 @@ const openManageSections = () => {
 .card-header h3 {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #1e1e1e;
+  color: var(--text-dark);
   margin: 0;
 }
 
 .card-footer {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border-color);
 }
 
 .card-link {
-  color: #42b883;
+  color: var(--primary-color);
   font-size: 0.875rem;
   font-weight: 500;
 }
@@ -148,7 +148,7 @@ const openManageSections = () => {
 .manage-sections-btn {
   margin-top: 1.5rem;
   padding: 0.75rem 1.5rem;
-  background: #42b883;
+  background: var(--primary-color);
   color: white;
   border: none;
   border-radius: 6px;
@@ -170,7 +170,7 @@ const openManageSections = () => {
   }
 
   &:hover {
-    background: #35a372;
+    background: var(--primary-hover);
     transform: translateY(-1px);
     @include shadow-hover;
   }
@@ -184,8 +184,8 @@ const openManageSections = () => {
   display: inline-block;
   margin-top: 0.5rem;
   padding: 0.25rem 0.5rem;
-  background: #f0f7ff;
-  color: #42b883;
+  background: var(--accent-bg);
+  color: var(--primary-color);
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 500;

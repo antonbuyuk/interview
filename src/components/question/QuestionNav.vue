@@ -110,16 +110,19 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
 .question-nav {
   position: sticky !important;
   top: 2rem !important;
   align-self: start;
-  background: white;
+  background: var(bg-light);
   @include rounded-md;
   padding: 1rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border-color);
   max-height: calc(100vh - 4rem);
   overflow-y: auto;
   overflow-x: visible;
@@ -143,20 +146,20 @@ onUnmounted(() => {
   justify-content: space-between;
   margin-bottom: 0.75rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .question-nav-header h3 {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #1e1e1e;
+  color: var(--text-dark);
   margin: 0;
 }
 
 .question-count {
   font-size: 0.75rem;
-  color: #666;
-  background: #f5f5f5;
+  color: var(--text-dark);
+  background: var(--bg-card);
   padding: 0.2rem 0.4rem;
   border-radius: 10px;
 }
@@ -176,27 +179,27 @@ onUnmounted(() => {
   align-items: flex-start;
   padding: 0.5rem 0.625rem;
   text-decoration: none;
-  color: #333;
+  color: var(--text-dark);
   border-radius: 4px;
   @include transition;
   border-left: 2px solid transparent;
 }
 
 .question-link:hover {
-  background: #f5f5f5;
-  color: #42b883;
+  background: var(--bg-card);
+  color: $primary-color;
 }
 
 .question-link.active {
-  background: #f0fdf4;
-  border-left-color: #42b883;
-  color: #42b883;
+  background: var(--bg-light);
+  border-left-color: $primary-color;
+  color: $primary-color;
   font-weight: 500;
 }
 
 .question-number {
   font-weight: 600;
-  color: #42b883;
+  color: $primary-color;
   margin-right: 0.4rem;
   flex-shrink: 0;
   font-size: 0.8125rem;

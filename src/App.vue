@@ -1,113 +1,118 @@
 <template>
-  <div class="app">
-    <Header />
-    <main class="main-content">
-      <router-view v-slot="{ Component }">
-        <transition v-if="Component" name="fade" mode="out-in">
-          <component :is="Component" />
-        </transition>
-      </router-view>
-    </main>
+  <ErrorBoundary>
+    <div class="app">
+      <Header />
+      <main class="main-content">
+        <router-view v-slot="{ Component }">
+          <transition v-if="Component" name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </main>
+      <Toast />
 
-    <!-- Глобальное модальное окно управления разделами -->
-    <div v-if="showSectionsModal && isAdmin" class="modal-overlay" @click="closeSectionsModal">
-      <div class="modal-content sections-modal" @click.stop>
-        <div class="modal-header">
-          <h2>Управление разделами</h2>
-          <button class="close-btn" @click="closeSectionsModal">
-            <XMarkIcon class="icon-small" />
-          </button>
-        </div>
-
-        <div class="modal-body">
-          <button v-if="isAdmin" class="add-section-btn" @click="openAddSectionModal">
-            <PlusIcon class="icon-inline" />
-            Добавить раздел
-          </button>
-
-          <div v-if="sectionsLoading" class="loading-state">
-            <p>Загрузка разделов...</p>
+      <!-- Глобальное модальное окно управления разделами -->
+      <div v-if="showSectionsModal && isAdmin" class="modal-overlay" @click="closeSectionsModal">
+        <div class="modal-content sections-modal" @click.stop>
+          <div class="modal-header">
+            <h2>Управление разделами</h2>
+            <button class="close-btn" @click="closeSectionsModal">
+              <XMarkIcon class="icon-small" />
+            </button>
           </div>
 
-          <div v-else-if="sections.length === 0" class="empty-state">
-            <p>Разделы не найдены</p>
-          </div>
+          <div class="modal-body">
+            <button v-if="isAdmin" class="add-section-btn" @click="openAddSectionModal">
+              <PlusIcon class="icon-inline" />
+              Добавить раздел
+            </button>
 
-          <div v-else class="sections-list">
-            <div v-for="section in sections" :key="section.id" class="section-item">
-              <div class="section-info">
-                <h4>{{ section.title }}</h4>
-                <p class="section-meta">
-                  ID: {{ section.sectionId }} | Путь: {{ section.path }} | Вопросов:
-                  {{ section._count?.questions ?? 0 }}
-                </p>
-              </div>
-              <div v-if="isAdmin" class="section-actions">
-                <button
-                  class="action-btn edit-btn"
-                  title="Редактировать"
-                  @click="editSection(section)"
-                >
-                  <PencilIcon class="icon-small" />
-                </button>
-                <button
-                  class="action-btn delete-btn"
-                  title="Удалить"
-                  :disabled="(section._count?.questions ?? 0) > 0"
-                  @click="deleteSection(section)"
-                >
-                  <TrashIcon class="icon-small" />
-                </button>
+            <div v-if="sectionsLoading" class="loading-state">
+              <p>Загрузка разделов...</p>
+            </div>
+
+            <div v-else-if="sections.length === 0" class="empty-state">
+              <p>Разделы не найдены</p>
+            </div>
+
+            <div v-else class="sections-list">
+              <div v-for="section in sections" :key="section.id" class="section-item">
+                <div class="section-info">
+                  <h4>{{ section.title }}</h4>
+                  <p class="section-meta">
+                    ID: {{ section.sectionId }} | Путь: {{ section.path }} | Вопросов:
+                    {{ section._count?.questions ?? 0 }}
+                  </p>
+                </div>
+                <div v-if="isAdmin" class="section-actions">
+                  <button
+                    class="action-btn edit-btn"
+                    title="Редактировать"
+                    @click="editSection(section)"
+                  >
+                    <PencilIcon class="icon-small" />
+                  </button>
+                  <button
+                    class="action-btn delete-btn"
+                    title="Удалить"
+                    :disabled="(section._count?.questions ?? 0) > 0"
+                    @click="deleteSection(section)"
+                  >
+                    <TrashIcon class="icon-small" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Модальное окно для добавления/редактирования раздела -->
+      <AddSectionModal
+        :is-open="showAddSectionModal"
+        :section="editingSection || undefined"
+        @close="closeAddSectionModal"
+        @saved="handleSectionSaved"
+      />
+
+      <!-- Модальное окно для добавления/редактирования термина -->
+      <AddTermModal
+        :is-open="showAddTermModal"
+        :term="editingTerm || undefined"
+        :initial-term="initialTerm"
+        @close="closeAddTermModal"
+        @saved="handleTermSaved"
+      />
+
+      <!-- Модальное окно для добавления/редактирования вопросов -->
+      <AddQuestionModal
+        :is-open="showQuestionModal"
+        :question="editingQuestion || undefined"
+        :default-section-id="currentSectionId || undefined"
+        :is-admin="isAdmin"
+        @close="closeQuestionModal"
+        @saved="handleQuestionSaved"
+        @deleted="handleQuestionDeleted"
+      />
+
+      <!-- Контекстное меню для выделенного текста -->
+      <TextSelectionMenu
+        :is-admin="isAdmin"
+        @add-to-dictionary="handleAddToDictionaryFromSelection"
+      />
+
+      <!-- Tooltip для терминов из словаря -->
+      <TermTooltip
+        :term="hoveredTerm || undefined"
+        :position="tooltipPosition"
+        @close="handleTermTooltipClose"
+      />
+
+      <SecondaryMenu />
+      <Toast />
+      <ConfirmDialog />
     </div>
-
-    <!-- Модальное окно для добавления/редактирования раздела -->
-    <AddSectionModal
-      :is-open="showAddSectionModal"
-      :section="editingSection || undefined"
-      @close="closeAddSectionModal"
-      @saved="handleSectionSaved"
-    />
-
-    <!-- Модальное окно для добавления/редактирования термина -->
-    <AddTermModal
-      :is-open="showAddTermModal"
-      :term="editingTerm || undefined"
-      :initial-term="initialTerm"
-      @close="closeAddTermModal"
-      @saved="handleTermSaved"
-    />
-
-    <!-- Модальное окно для добавления/редактирования вопросов -->
-    <AddQuestionModal
-      :is-open="showQuestionModal"
-      :question="editingQuestion || undefined"
-      :default-section-id="currentSectionId || undefined"
-      :is-admin="isAdmin"
-      @close="closeQuestionModal"
-      @saved="handleQuestionSaved"
-      @deleted="handleQuestionDeleted"
-    />
-
-    <!-- Контекстное меню для выделенного текста -->
-    <TextSelectionMenu
-      :is-admin="isAdmin"
-      @add-to-dictionary="handleAddToDictionaryFromSelection"
-    />
-
-    <!-- Tooltip для терминов из словаря -->
-    <TermTooltip
-      :term="hoveredTerm || undefined"
-      :position="tooltipPosition"
-      @close="handleTermTooltipClose"
-    />
-
-    <SecondaryMenu />
-  </div>
+  </ErrorBoundary>
 </template>
 
 <script setup lang="ts">
@@ -126,15 +131,21 @@ const TextSelectionMenu = defineAsyncComponent(
 );
 const TermTooltip = defineAsyncComponent(() => import('./components/ui/TermTooltip.vue'));
 const SecondaryMenu = defineAsyncComponent(() => import('./components/ui/SecondaryMenu.vue'));
+const ErrorBoundary = defineAsyncComponent(() => import('./components/ErrorBoundary.vue'));
+const Toast = defineAsyncComponent(() => import('./components/ui/Toast.vue'));
+const ConfirmDialog = defineAsyncComponent(() => import('./components/modals/ConfirmDialog.vue'));
 
 import { deleteSection as deleteSectionApi } from './api/sections';
 import { useSectionsStore } from './stores/sections';
 import { useAdminAuth } from './composables/useAdminAuth';
 import { useDictionaryHighlight } from './composables/useDictionaryHighlight';
+import { useToast } from './composables/useToast';
 import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import type { Section, Question, Term } from './types/api';
 import type { EditQuestionEvent, CurrentSectionUpdatedEvent, TermHoverEvent } from './types/events';
 
+// Используем store - он будет доступен после монтирования приложения
+// так как App.vue монтируется после app.use(pinia) в main.ts
 const sectionsStore = useSectionsStore();
 const { sections, loading: sectionsLoading, refreshSections } = sectionsStore;
 const showSectionsModal = ref(false);
@@ -150,6 +161,7 @@ const editingQuestion = ref<Question | null>(null);
 const currentSectionId = ref<string | null>(null);
 const { isAdmin } = useAdminAuth();
 const { loadDictionary, findTermById } = useDictionaryHighlight();
+const { showToast } = useToast();
 
 const handleOpenManageSections = () => {
   if (isAdmin.value) {
@@ -180,42 +192,72 @@ const editSection = (section: Section) => {
 
 const deleteSection = async (section: Section) => {
   if ((section._count?.questions ?? 0) > 0) {
-    alert(
-      'Невозможно удалить раздел с существующими вопросами. Сначала удалите или переместите вопросы.'
+    showToast(
+      'Невозможно удалить раздел с существующими вопросами. Сначала удалите или переместите вопросы.',
+      'warning'
     );
     return;
   }
 
-  if (!confirm(`Вы уверены, что хотите удалить раздел "${section.title}"?`)) {
-    return;
+  const { showConfirmDialog } = await import('./composables/useConfirmDialog').then(m => m);
+  showConfirmDialog(
+    {
+      message: `Вы уверены, что хотите удалить раздел "${section.title}"?`,
+      title: 'Удаление раздела',
+      confirmType: 'danger',
+    },
+    async () => {
+      // Оптимистичное обновление
+      sectionsStore.optimisticRemoveSection(section.id);
+
+      try {
+        await deleteSectionApi(section.id);
+        // Обновляем список разделов для синхронизации с сервером
+        await refreshSections();
+        // Эмитим событие обновления разделов для Sidebar
+        window.dispatchEvent(new CustomEvent('sections-updated'));
+        showToast('Раздел успешно удален', 'success');
+      } catch (error) {
+        // Откатываем оптимистичное обновление при ошибке
+        sectionsStore.rollbackOptimisticUpdate();
+        console.error('Ошибка удаления раздела:', error);
+        const errorMessage =
+          (error instanceof Error && error.message) ||
+          (typeof error === 'object' &&
+          error !== null &&
+          'error' in error &&
+          typeof error.error === 'string'
+            ? error.error
+            : 'Неизвестная ошибка');
+        showToast(`Ошибка удаления: ${errorMessage}`, 'error');
+      }
+    }
+  );
+};
+
+const handleSectionSaved = async (newSection?: Section) => {
+  // Если передан новый раздел, делаем оптимистичное обновление
+  if (newSection) {
+    if (editingSection.value) {
+      sectionsStore.optimisticUpdateSection(editingSection.value.id, newSection);
+    } else {
+      sectionsStore.optimisticAddSection(newSection);
+    }
   }
 
   try {
-    await deleteSectionApi(section.id);
-    // Обновляем список разделов
     await refreshSections();
+    showAddSectionModal.value = false;
+    editingSection.value = null;
     // Эмитим событие обновления разделов для Sidebar
     window.dispatchEvent(new CustomEvent('sections-updated'));
   } catch (error) {
-    console.error('Ошибка удаления раздела:', error);
-    const errorMessage =
-      (error instanceof Error && error.message) ||
-      (typeof error === 'object' &&
-      error !== null &&
-      'error' in error &&
-      typeof error.error === 'string'
-        ? error.error
-        : 'Неизвестная ошибка');
-    alert(`Ошибка удаления: ${errorMessage}`);
+    // Откатываем при ошибке
+    if (newSection) {
+      sectionsStore.rollbackOptimisticUpdate();
+    }
+    throw error;
   }
-};
-
-const handleSectionSaved = async () => {
-  await refreshSections();
-  showAddSectionModal.value = false;
-  editingSection.value = null;
-  // Эмитим событие обновления разделов для Sidebar
-  window.dispatchEvent(new CustomEvent('sections-updated'));
 };
 
 const handleOpenAddTerm = () => {

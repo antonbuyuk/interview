@@ -9,6 +9,8 @@ import type { Prisma } from '@prisma/client';
  */
 export interface GetQuestionsQuery {
   sectionId?: string;
+  page?: string;
+  limit?: string;
 }
 
 export interface CreateQuestionBody {

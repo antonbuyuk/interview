@@ -34,7 +34,7 @@
 }
 
 @mixin modal-content {
-  background: $bg-white;
+  background: var(--bg-white);
   @include rounded-md;
   padding: 2rem;
   width: 100%;
@@ -73,7 +73,7 @@
   border: none;
   font-size: 2rem;
   cursor: pointer;
-  color: $text-lighter-gray;
+  color: var(--text-lighter-gray);
   line-height: 1;
   transition: color 0.2s;
   display: flex;
@@ -90,7 +90,7 @@
   }
 
   &:hover {
-    color: $text-dark;
+    color: var(--text-dark);
   }
 }
 
@@ -110,11 +110,11 @@
 
 @mixin button-primary {
   @include button-base;
-  background: $primary-color;
+  background: var(--primary-color);
   color: white;
 
   &:hover:not(:disabled) {
-    background: $primary-hover;
+    background: var(--primary-hover);
   }
 
   &:disabled {
@@ -125,23 +125,23 @@
 
 @mixin button-secondary {
   @include button-base;
-  background: $bg-light;
-  color: $text-dark;
-  border: 1px solid $border-color;
+  background: var(--bg-light);
+  color: var(--text-dark);
+  border: 1px solid var(--border-color);
 
   &:hover {
-    background: #e9ecef;
-    border-color: $primary-color;
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
   }
 }
 
 @mixin button-cancel {
   @include button-base;
-  background: #f0f0f0;
-  color: $text-gray;
+  background: var(--bg-light);
+  color: var(--text-gray);
 
   &:hover {
-    background: #e0e0e0;
+    background: var(--hover-bg);
   }
 }
 
@@ -160,22 +160,24 @@
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 500;
-    color: $text-dark;
+    color: var(--text-dark);
   }
 }
 
 @mixin form-input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 1rem;
   font-family: inherit;
   transition: border-color 0.2s;
+  background: var(--bg-white);
+  color: var(--text-dark);
 
   &:focus {
     outline: none;
-    border-color: $primary-color;
+    border-color: var(--primary-color);
     @include shadow-focus;
   }
 }
@@ -189,7 +191,7 @@
 @mixin form-select {
   @include form-input;
   cursor: pointer;
-  background: $bg-white;
+  background: var(--bg-white);
 }
 
 // ============================================
@@ -198,24 +200,24 @@
 
 @mixin custom-scrollbar(
   $width: 6px,
-  $track-color: $bg-light,
-  $thumb-color: #ccc,
-  $thumb-hover: #999
+  $track-color: var(--bg-light),
+  $thumb-color: var(--text-light-gray),
+  $thumb-hover: var(--text-lighter-gray)
 ) {
   &::-webkit-scrollbar {
     width: $width;
   }
 
   &::-webkit-scrollbar-track {
-    background: $track-color;
+    background: var(--track-color);
   }
 
   &::-webkit-scrollbar-thumb {
-    background: $thumb-color;
+    background: var(--thumb-color);
     border-radius: 3px;
 
     &:hover {
-      background: $thumb-hover;
+      background: var(--thumb-hover);
     }
   }
 }
@@ -227,9 +229,9 @@
 @mixin card {
   @include rounded-md;
   @include shadow-sm;
-  background: $bg-white;
+  background: var(--bg-white);
   padding: 1.5rem;
-  border: 1px solid $border-color;
+  border: 1px solid var(--border-color);
   transition: all 0.3s ease;
 
   &:hover {

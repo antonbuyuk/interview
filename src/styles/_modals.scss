@@ -65,7 +65,7 @@
 .btn-translate {
   @include button-base;
   background: rgba(66, 184, 131, 0.1);
-  color: $primary-color;
+  color: var(--primary-color);
   border: 1px solid rgba(66, 184, 131, 0.3);
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
@@ -74,7 +74,7 @@
 
   &:hover:not(:disabled) {
     background: rgba(66, 184, 131, 0.2);
-    border-color: $primary-color;
+    border-color: var(--primary-color);
     transform: translateY(-1px);
   }
 
@@ -118,7 +118,7 @@
 
 .btn-delete {
   @include button-base;
-  background: #e74c3c;
+  background: var(--error-color);
   color: white;
   margin-right: auto;
   display: flex;
@@ -154,16 +154,16 @@
 // ============================================
 
 .tabs-container {
-  border: 1px solid $border-color;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   overflow: hidden;
-  background: $bg-white;
+  background: var(--bg-white);
 }
 
 .tabs-header {
   display: flex;
-  border-bottom: 1px solid $border-color;
-  background: $bg-light;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-light);
   overflow-x: auto;
 
   @include custom-scrollbar(4px, transparent, #ccc, #999);
@@ -178,7 +178,7 @@
   padding: 0.75rem 1.5rem;
   border: none;
   background: transparent;
-  color: $text-gray;
+  color: var(--text-gray);
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
@@ -189,13 +189,13 @@
 
   &:hover {
     background: rgba(66, 184, 131, 0.1);
-    color: $primary-color;
+    color: var(--primary-color);
   }
 
   &.active {
-    color: $primary-color;
-    border-bottom-color: $primary-color;
-    background: $bg-white;
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    background: var(--bg-white);
   }
 
   @include mobile {
@@ -229,8 +229,8 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.5rem;
-  border-bottom: 1px solid $border-color;
-  background: $bg-light;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-light);
   flex-wrap: wrap;
 
   @include mobile {
@@ -243,7 +243,7 @@
   padding: 0.5rem 0.75rem;
   border: 1px solid transparent;
   background: transparent;
-  color: $text-gray;
+  color: var(--text-gray);
   font-size: 0.9rem;
   cursor: pointer;
   border-radius: 4px;
@@ -256,17 +256,17 @@
 
   &:hover {
     background: rgba(66, 184, 131, 0.1);
-    border-color: $primary-color;
-    color: $primary-color;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
   }
 
   &.active {
-    background: $primary-color;
+    background: var(--primary-color);
     color: white;
-    border-color: $primary-color;
+    border-color: var(--primary-color);
 
     &:hover {
-      background: $primary-hover;
+      background: var(--primary-hover);
     }
   }
 
@@ -281,7 +281,7 @@
 .toolbar-divider {
   width: 1px;
   height: 24px;
-  background: $border-color;
+  background: var(--border-color);
   margin: 0 0.25rem;
 
   @include mobile {
@@ -301,7 +301,7 @@
   padding: 1rem;
   font-size: 1rem;
   line-height: 1.6;
-  color: $text-dark;
+  color: var(--text-dark);
   overflow-y: auto;
 
   @include custom-scrollbar(6px, transparent, #ccc, #999);
@@ -327,7 +327,7 @@
     &.is-editor-empty:first-child::before {
       content: attr(data-placeholder);
       float: left;
-      color: $text-lighter-gray;
+      color: var(--text-lighter-gray);
       pointer-events: none;
       height: 0;
     }
@@ -386,12 +386,12 @@
 
   // Код
   code {
-    background: $bg-code;
+    background: var(--bg-code);
     padding: 0.2em 0.4em;
     border-radius: 3px;
     font-family: $mono-font;
     font-size: 0.9em;
-    color: $code-text-light;
+    color: var(--text-dark);
   }
 
   pre {
@@ -415,17 +415,17 @@
 
   // Цитаты
   blockquote {
-    border-left: 4px solid $primary-color;
+    border-left: 4px solid var(--primary-color);
     padding-left: 1rem;
     margin: 1rem 0;
-    color: $text-light-gray;
+    color: var(--text-light-gray);
     font-style: italic;
   }
 
   // Горизонтальная линия
   hr {
     border: none;
-    border-top: 1px solid $border-color;
+    border-top: 1px solid var(--border-color);
     margin: 1.5rem 0;
   }
 
@@ -442,11 +442,11 @@
 
   // Ссылки
   a {
-    color: $primary-color;
+    color: var(--primary-color);
     text-decoration: underline;
 
     &:hover {
-      color: $primary-hover;
+      color: var(--primary-hover);
     }
   }
 
@@ -473,13 +473,13 @@
 
     td,
     th {
-      border: 1px solid $border-color;
+      border: 1px solid var(--border-color);
       padding: 0.5rem;
       text-align: left;
     }
 
     th {
-      background: $bg-light;
+      background: var(--bg-light);
       font-weight: 600;
     }
   }
