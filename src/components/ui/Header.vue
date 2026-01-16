@@ -68,7 +68,23 @@
 
       <!-- Поиск -->
       <div class="search-wrapper">
-        <Search :current-section="currentSection || null" :questions="currentQuestions" />
+        <!-- Кнопка поиска для мобильных -->
+        <button
+          v-if="isMobile"
+          class="search-toggle-btn"
+          :class="{ active: searchOpen }"
+          aria-label="Открыть поиск"
+          title="Поиск"
+          @click="toggleSearch"
+        >
+          <MagnifyingGlassIcon class="icon-btn" />
+        </button>
+        <!-- Компонент поиска для десктопа -->
+        <Search
+          v-else
+          :current-section="currentSection || null"
+          :questions="currentQuestions"
+        />
       </div>
 
       <!-- Переключатель темы -->
@@ -155,6 +171,19 @@
       </div>
     </transition>
 
+    <!-- Выпадашка поиска для мобильных -->
+    <transition name="search-dropdown">
+      <div v-if="isMobile && searchOpen" class="search-dropdown-overlay" @click="closeSearch">
+        <div class="search-dropdown" @click.stop>
+          <Search
+            :current-section="currentSection || null"
+            :questions="currentQuestions"
+            @result-click="closeSearch"
+          />
+        </div>
+      </div>
+    </transition>
+
     <!-- Модальное окно авторизации -->
     <AdminLoginModal
       :is-open="showLoginModal"
@@ -186,6 +215,7 @@ import {
   XMarkIcon,
   SunIcon,
   MoonIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/vue/24/outline';
 import type { Section, Question } from '../../types/api';
 
@@ -193,6 +223,7 @@ const route = useRoute();
 const isMobile = ref(false);
 const filterOpen = ref(false);
 const mobileMenuOpen = ref(false);
+const searchOpen = ref(false);
 const questionsCount = ref(0);
 const showLoginModal = ref(false);
 const currentSection = ref<Section | null>(null);
@@ -225,6 +256,14 @@ const toggleMobileMenu = () => {
 
 const closeMobileMenu = () => {
   mobileMenuOpen.value = false;
+};
+
+const toggleSearch = () => {
+  searchOpen.value = !searchOpen.value;
+};
+
+const closeSearch = () => {
+  searchOpen.value = false;
 };
 
 const closeLoginModal = () => {
@@ -260,6 +299,8 @@ watch(
     }
     // Закрываем мобильное меню при смене маршрута
     closeMobileMenu();
+    // Закрываем выпадашку поиска при смене маршрута
+    closeSearch();
   }
 );
 
@@ -687,8 +728,9 @@ onUnmounted(() => {
   flex: 1;
 
   @include mobile {
-    min-width: 150px;
-    max-width: 200px;
+    min-width: auto;
+    max-width: none;
+    flex: 0;
   }
 }
 
@@ -863,5 +905,95 @@ onUnmounted(() => {
 .mobile-menu-leave-to {
   opacity: 0;
   transform: translateX(-100%);
+}
+
+.search-toggle-btn {
+  position: relative;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  color: var(--text-dark);
+  font-size: 1.125rem;
+  cursor: pointer;
+  border-radius: 6px;
+  @include transition;
+
+  .icon-btn {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: inherit;
+  }
+
+  &:hover {
+    background: var(--hover-bg);
+    color: var(--primary-color);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &.active {
+    background: var(--primary-color);
+    color: white;
+  }
+
+  @include mobile {
+    display: flex;
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+
+    .icon-btn {
+      width: 1.125rem;
+      height: 1.125rem;
+    }
+  }
+}
+
+.search-dropdown-overlay {
+  position: fixed;
+  top: 56px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1001;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding: 0.5rem 1rem;
+  padding-top: 0.5rem;
+}
+
+.search-dropdown {
+  position: relative;
+  width: 100%;
+  max-width: calc(100vw - 2rem);
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
+  @include rounded-md;
+  @include shadow-lg;
+  padding: 1rem;
+  z-index: 1002;
+}
+
+.search-dropdown-enter-active,
+.search-dropdown-leave-active {
+  transition: all 0.3s ease;
+}
+
+.search-dropdown-enter-from,
+.search-dropdown-leave-to {
+  opacity: 0;
+}
+
+.search-dropdown-enter-from .search-dropdown,
+.search-dropdown-leave-to .search-dropdown {
+  transform: translateY(-10px);
 }
 </style>
