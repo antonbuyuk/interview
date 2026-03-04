@@ -217,6 +217,7 @@ const handleEdit = () => {
     opacity: 0.5;
     @include transition(all, 0.2s, ease);
     border-radius: 4px;
+    color: var(--text-dark);
 
     &:hover {
       opacity: 1;
@@ -231,16 +232,17 @@ const handleEdit = () => {
   &__drag-icon {
     width: 1rem;
     height: 1rem;
-    color: $text-gray;
+    color: var(--text-dark);
   }
 
   &__edit-btn {
     background: rgba(66, 184, 131, 0.1);
-    border: 1px solid rgba(66, 184, 131, 0.3);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 0.375rem 0.625rem;
     cursor: pointer;
     font-size: 0.875rem;
+    color: var(--text-dark);
     @include transition(all, 0.2s, ease);
     flex-shrink: 0;
     opacity: 0.7;
@@ -250,7 +252,6 @@ const handleEdit = () => {
 
     &:hover {
       background: rgba(66, 184, 131, 0.2);
-      border-color: $primary-color;
       opacity: 1;
       transform: scale(1.05);
     }

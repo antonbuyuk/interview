@@ -9,6 +9,10 @@ RUN apk add --no-cache openssl openssl-dev
 COPY package*.json ./
 COPY prisma ./prisma/
 
+# Dummy DATABASE_URL для prisma generate (postinstall при npm ci)
+# Реальный URL передаётся при запуске контейнера
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+
 # Устанавливаем зависимости
 RUN npm ci
 
