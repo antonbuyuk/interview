@@ -245,13 +245,13 @@ defineExpose({
   min-width: 280px;
   max-width: 400px;
   width: max-content;
-  background: white;
-  border: 1px solid $border-color;
   @include rounded-md;
+  @include card;
   @include shadow-xl;
   pointer-events: auto;
   animation: fadeIn 0.2s ease-out;
   overflow: visible;
+
   // Добавляем невидимую область вокруг для легкого перехода курсора
   &::before {
     content: '';
@@ -279,14 +279,14 @@ defineExpose({
 
 .tooltip-header {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid $border-color;
-  background: $bg-light;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-light);
 }
 
 .tooltip-term-title {
   font-size: 1.125rem;
   font-weight: 700;
-  color: $text-dark;
+  color: var(--text-dark);
   margin: 0;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -309,14 +309,14 @@ defineExpose({
 .tooltip-label {
   font-size: 0.75rem;
   font-weight: 600;
-  color: $text-lighter-gray;
+  color: var(--text-color);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .tooltip-text {
   font-size: 0.9375rem;
-  color: $text-dark;
+  color: var(--text-color);
   font-weight: 500;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -324,17 +324,11 @@ defineExpose({
 
 .tooltip-example-text {
   font-size: 0.875rem;
-  color: $text-light-gray;
+  color: var(--text-color);
   font-style: italic;
   line-height: 1.4;
   word-wrap: break-word;
   overflow-wrap: break-word;
-}
-
-.tooltip-footer {
-  padding: 0.5rem 1rem;
-  border-top: 1px solid $border-color;
-  background: $bg-light;
 }
 
 .tooltip-view-btn {
@@ -344,7 +338,7 @@ defineExpose({
   gap: 0.5rem;
   width: 100%;
   padding: 0.5rem 0.75rem;
-  background: $primary-color;
+  background: var(--primary-color);
   color: white;
   border: none;
   @include rounded-md;

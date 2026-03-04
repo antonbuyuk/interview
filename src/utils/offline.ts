@@ -13,11 +13,10 @@ const isServiceWorkerRegistered = ref(false);
 export async function registerServiceWorker(): Promise<void> {
   if ('serviceWorker' in navigator) {
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js', {
+      await navigator.serviceWorker.register('/sw.js', {
         scope: '/',
       });
       isServiceWorkerRegistered.value = true;
-      console.log('Service Worker registered:', registration);
     } catch (error) {
       console.error('Service Worker registration failed:', error);
     }
